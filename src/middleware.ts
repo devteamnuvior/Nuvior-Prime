@@ -19,9 +19,12 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // Auth.js prefixes the session cookie with __Secure- on HTTPS; getToken must
+  // look for that name or every protected route bounces to /login in production.
   const token = await getToken({
     req,
     secret: process.env.AUTH_SECRET,
+    secureCookie: req.nextUrl.protocol === "https:",
   });
 
   if (!token?.id || token.status === "DISABLED") {
