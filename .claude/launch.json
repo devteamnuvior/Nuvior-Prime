@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "nuvior-prime-dev",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "AUTH_URL=http://localhost:3100 npx next dev -p 3100"],
+      "port": 3100,
+      "autoPort": false
+    }
+  ]
+}

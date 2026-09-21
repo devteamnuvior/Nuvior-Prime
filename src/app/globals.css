@@ -1,0 +1,366 @@
+@import "tailwindcss";
+
+/*
+  NUVIOR Prime design tokens.
+  Direction: warm off-white surfaces, deep near-black ink, subtle neutral
+  borders, muted medical teal accent, restrained warm amber for signals.
+*/
+:root {
+  /* Surfaces */
+  --paper: #faf9f6; /* app background — warm white */
+  --canvas: #f1efe9; /* recessed areas (map backdrop, wells) */
+  --panel: #ffffff; /* raised cards / panels */
+  --ink-surface: #16211f; /* inverse surface (primary buttons, start marker) */
+
+  /* Ink */
+  --ink: #191c1c; /* primary text */
+  --muted: #6b7273; /* secondary text */
+  --faint: #9aa1a0; /* tertiary / placeholder */
+
+  /* Borders */
+  --rule: #e2dfd6; /* standard border */
+  --rule-soft: #edebe3; /* hairline divider */
+
+  /* Accent — muted medical teal / deep green */
+  --accent: #14594f;
+  --accent-hover: #0f4a42;
+  --accent-tint: #e9efec;
+
+  /* Signal — warm amber for verify / revisit / caution */
+  --signal: #8a5a1c;
+  --signal-tint: #f6efe1;
+
+  /* Danger — muted clinical red, used sparingly */
+  --danger: #9c3a2c;
+  --danger-tint: #f7eae7;
+
+  /* Type */
+  --display: var(--font-sans-loaded), "Inter", ui-sans-serif, system-ui, sans-serif;
+  --body: var(--font-sans-loaded), "Inter", ui-sans-serif, system-ui, sans-serif;
+  --brand-serif: var(--font-serif-loaded), "Fraunces", Georgia, serif;
+  --mono: var(--font-mono-loaded), "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Motion — keep in sync with src/lib/motion.ts */
+  --nv-motion-fast: 180ms;
+  --nv-motion-reveal: 900ms;
+  --nv-motion-confirm: 420ms;
+  --nv-motion-map: 380ms;
+  --nv-motion-pulse: 2400ms;
+  --nv-motion-start: 3400ms;
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
+  --color-canvas: var(--canvas);
+  --color-panel: var(--panel);
+  --color-inkwell: var(--ink-surface);
+  --color-rule: var(--rule);
+  --color-rule-soft: var(--rule-soft);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-tint: var(--accent-tint);
+  --color-signal: var(--signal);
+  --color-signal-tint: var(--signal-tint);
+  --color-danger: var(--danger);
+  --color-danger-tint: var(--danger-tint);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --font-display: var(--display);
+  --font-body: var(--body);
+  --font-mono: var(--mono);
+  --shadow-card: 0 1px 2px rgb(22 28 27 / 0.06);
+  --shadow-float: 0 2px 6px rgb(22 28 27 / 0.07), 0 12px 32px rgb(22 28 27 / 0.14);
+  --shadow-sheet: 0 -8px 32px rgb(22 28 27 / 0.16);
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--body);
+  font-feature-settings: "cv11", "ss01";
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--accent-tint);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* ---------- Route map markers (Google Advanced Markers + Leaflet divIcons) ---------- */
+.nv-pin {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--body);
+  font-size: 12px;
+  font-weight: 600;
+  border: 2px solid #fff;
+  box-shadow:
+    0 1px 3px rgb(20 32 28 / 0.4),
+    0 4px 10px rgb(20 32 28 / 0.18);
+  cursor: pointer;
+  transition:
+    transform var(--nv-motion-fast) ease,
+    background var(--nv-motion-fast) ease,
+    box-shadow var(--nv-motion-fast) ease;
+}
+.nv-pin:hover,
+.nv-pin--hover {
+  transform: scale(1.1);
+  box-shadow:
+    0 2px 5px rgb(20 32 28 / 0.45),
+    0 6px 14px rgb(20 32 28 / 0.22);
+}
+.nv-pin--revisit {
+  background: var(--signal);
+}
+/* Opening-hours warning: small amber badge dot */
+.nv-pin--warn::after {
+  content: "";
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 9999px;
+  background: var(--signal);
+  border: 2px solid #fff;
+}
+.nv-pin--selected {
+  transform: scale(1.32);
+  background: var(--ink-surface);
+  z-index: 1000;
+}
+.nv-pin--selected:hover {
+  transform: scale(1.32);
+}
+/* One-shot expanding ring on selection */
+.nv-pin--selected::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 9999px;
+  border: 2px solid var(--accent);
+  animation: nv-select-ring 480ms ease-out forwards;
+  pointer-events: none;
+}
+.nv-pin--candidate {
+  width: 10px;
+  height: 10px;
+  background: var(--accent);
+  opacity: 0.42;
+  border: 1.5px solid #fff;
+  box-shadow: none;
+  font-size: 0;
+  cursor: default;
+  pointer-events: none;
+}
+.nv-pin--cand-revisit {
+  background: var(--signal);
+}
+.nv-pin--cand-verify {
+  background: var(--ink-surface);
+  opacity: 0.5;
+}
+.nv-pin--cand-nuvior {
+  background: var(--accent);
+  opacity: 0.7;
+}
+.nv-pin--cluster {
+  width: 18px;
+  height: 18px;
+  font-size: 9px;
+  font-weight: 700;
+  opacity: 0.75;
+  pointer-events: none;
+}
+.nv-pin--start {
+  width: 26px;
+  height: 26px;
+  background: var(--ink-surface);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+.nv-pin--start .nv-pin__halo {
+  position: absolute;
+  inset: -8px;
+  border-radius: 9999px;
+  border: 1.5px solid var(--accent);
+  opacity: 0.28;
+  animation: nv-start-halo var(--nv-motion-start) ease-in-out infinite;
+  pointer-events: none;
+}
+.nv-pin--candidate,
+.nv-pin--candidate.nv-pin-in {
+  animation: none;
+}
+/* Calm fade when a route arrives — set --pin-i on the marker */
+.nv-pin-in {
+  animation: nv-pin-fade var(--nv-motion-fast) ease backwards;
+  animation-delay: calc(var(--pin-i, 0) * 28ms);
+}
+.nv-pin--arrive {
+  animation: nv-pin-arrive var(--nv-motion-confirm) cubic-bezier(0.2, 0.7, 0.25, 1);
+}
+/* Draft polygon vertex */
+.nv-vertex {
+  width: 12px;
+  height: 12px;
+  border-radius: 9999px;
+  background: var(--accent);
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgb(20 32 28 / 0.35);
+  cursor: pointer;
+  transition: transform 140ms ease;
+}
+.nv-vertex:hover {
+  transform: scale(1.35);
+}
+.nv-vertex--first {
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border: 3px solid var(--accent);
+}
+
+/* ---------- Motion ---------- */
+@keyframes nv-pin-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes nv-pin-arrive {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.18);
+  }
+  100% {
+    transform: scale(1.32);
+  }
+}
+@keyframes nv-start-halo {
+  0%,
+  100% {
+    opacity: 0.18;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.34;
+    transform: scale(1.08);
+  }
+}
+@keyframes nv-select-ring {
+  from {
+    opacity: 0.9;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.65);
+  }
+}
+@keyframes nv-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes nv-sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes nv-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.nv-fade-up {
+  animation: nv-fade-up 260ms cubic-bezier(0.2, 0.8, 0.3, 1) backwards;
+}
+.nv-sheet-up {
+  animation: nv-sheet-up 320ms cubic-bezier(0.2, 0.8, 0.25, 1) backwards;
+}
+.nv-fade-in {
+  animation: nv-fade-in 200ms ease backwards;
+}
+/* Clinic drawer: bottom sheet on mobile, floating card fade on desktop */
+.nv-drawer-in {
+  animation: nv-sheet-up 320ms cubic-bezier(0.2, 0.8, 0.25, 1) backwards;
+}
+@media (min-width: 768px) {
+  .nv-drawer-in {
+    animation: nv-fade-up 260ms cubic-bezier(0.2, 0.8, 0.3, 1) backwards;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nv-pin,
+  .nv-pin::before,
+  .nv-pin-in,
+  .nv-pin--arrive,
+  .nv-pin--start .nv-pin__halo,
+  .nv-vertex,
+  .nv-fade-up,
+  .nv-sheet-up,
+  .nv-fade-in,
+  .nv-drawer-in {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+.leaflet-div-icon {
+  background: transparent;
+  border: none;
+}
+.leaflet-container {
+  font-family: var(--body);
+  background: var(--canvas);
+}
+.leaflet-control-attribution {
+  font-size: 9px !important;
+  background: rgb(250 249 246 / 0.75) !important;
+  color: var(--faint) !important;
+}
+.leaflet-control-attribution a {
+  color: var(--muted) !important;
+}
+
+/* ---------- Thin scrollbars for panels ---------- */
+.nv-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule) transparent;
+}
+.nv-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.nv-scroll::-webkit-scrollbar-thumb {
+  background: var(--rule);
+  border-radius: 3px;
+}

@@ -1,0 +1,637 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Stored codes; display labels live in src/domain/terminology.ts (exact spec wording).
+enum OrganizationType {
+  INDEPENDENT
+  CHAIN_LOCATION
+  CHAIN_HEAD_OFFICE
+  HOSPITAL_OR_ACADEMIC
+}
+
+enum LeadProduct {
+  APTOS
+  DERMACEUTIC
+  FIDIA_HY_TISSUE_PRP
+  GESKE
+  APTOS_3_LEVEL_CERTIFICATION
+  APTOS_4_LEVEL_CERTIFICATION
+}
+
+enum CertificationPathway {
+  THREE_LEVEL
+  FOUR_LEVEL
+  NONE
+}
+
+enum PricePositioning {
+  VALUE
+  MID
+  PREMIUM
+  UNKNOWN
+}
+
+enum VisitType {
+  FIRST_VISIT
+  RE_VISIT
+  FOLLOW_UP_ON_A_QUOTE
+}
+
+enum Season {
+  WINTER
+  SPRING
+  SUMMER
+  AUTUMN
+}
+
+enum EvidenceSourceType {
+  PLACES
+  WEBSITE
+  CRM
+  MANUAL
+  MOCK
+}
+
+enum VerificationState {
+  VERIFIED_SOURCE
+  DERIVED
+  AMBIGUOUS
+  UNKNOWN
+  MANUAL_VERIFY
+  CONFLICT
+}
+
+model TaxonomySegment {
+  id           String             @id @default(cuid())
+  number       Int                @unique
+  name         String
+  subtitle     String?
+  priorityNote String?
+  categories   TaxonomyCategory[]
+}
+
+model TaxonomyCategory {
+  id        String          @id @default(cuid())
+  segmentId String
+  segment   TaxonomySegment @relation(fields: [segmentId], references: [id])
+  number    Int
+  label     String
+  @@unique([segmentId, number])
+}
+
+model ProductDefinition {
+  id                     String  @id @default(cuid())
+  code                   String  @unique
+  displayName            String
+  isActivePortfolio      Boolean
+  mayRecommendAsLead     Boolean
+  requiresInjectionScope Boolean @default(false)
+  notes                  String?
+}
+
+model KeywordBankEntry {
+  id               String   @id @default(cuid())
+  brandGroup       String
+  isCompetitorBank Boolean  @default(false)
+  terms            String[]
+}
+
+model ProvinceScopeRule {
+  id                  String   @id @default(cuid())
+  provinceCode        String
+  provinceName        String
+  productCode         String
+  eligibleCredentials String[]
+  notes               String
+  uvSeasonNote        String?
+
+  @@unique([provinceCode, productCode])
+}
+
+model Account {
+  id                String                  @id @default(cuid())
+  businessName      String
+  parentGroupName   String?
+  organizationType  OrganizationType
+  segmentNumber     Int
+  categoryNumber    Int
+  categoryLabel     String
+  streetAddress     String
+  unitSuite         String?
+  city              String
+  provinceCode      String
+  postalCode        String
+  googleMapsUrl     String?
+  placeId           String?                 @unique
+  latitude          Float
+  longitude         Float
+  parkingAccessNote String?
+  dataCompleteness  String                  @default("needs_verification")
+  publicProfile     AccountPublicProfile?
+  internalStatus    AccountInternalStatus?
+  people            AccountPerson[]
+  fieldEvidence     FieldEvidence[]
+  qualifications    AccountQualification[]
+  visitListItems    VisitListItem[]
+  preVisitBriefs    PreVisitBrief[]
+  visitRecords      VisitRecord[]
+  assignments       AccountAssignment[]
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+}
+
+model AccountPublicProfile {
+  id                             String           @id @default(cuid())
+  accountId                      String           @unique
+  account                        Account          @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  mainPhone                      String           @default("UNKNOWN, verify")
+  generalEmail                   String           @default("UNKNOWN, verify")
+  website                        String?
+  onlineBookingUrl               String?
+  instagramHandle                String?
+  instagramFollowers             Int?
+  tiktokHandle                   String?
+  linkedinUrl                    String?
+  serviceMenuSummary             String           @default("UNKNOWN, verify")
+  injectablesOffered             String           @default("UNKNOWN, verify")
+  threadsOffered                 String           @default("UNKNOWN, verify")
+  devicesOnSite                  String           @default("UNKNOWN, verify")
+  skincareLines                  String           @default("UNKNOWN, verify")
+  competitorBrandsVisible        String           @default("UNKNOWN, verify")
+  distributorRelationshipVisible String           @default("UNKNOWN, verify")
+  advertisesThreadLifting        Boolean?
+  googleRating                   Float?
+  googleReviewCount              Int?
+  pricePositioning               PricePositioning @default(UNKNOWN)
+  yearsInBusiness                String           @default("UNKNOWN, verify")
+  expansionSignals               String           @default("UNKNOWN, verify")
+  openingHoursJson               Json?
+  closedDays                     String           @default("UNKNOWN, verify")
+  bestDropInWindow               String           @default("UNKNOWN, verify")
+  dropInPolicy                   String           @default("UNKNOWN, verify")
+}
+
+model AccountInternalStatus {
+  id                        String               @id @default(cuid())
+  accountId                 String               @unique
+  account                   Account              @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  hasAcademyAccount         Boolean?
+  aptosCertificationLevel   String?
+  aptosPathway              CertificationPathway @default(NONE)
+  staffEligibleFor4Level    String?
+  formerMesoesteticCustomer Boolean              @default(false)
+  mesoesteticRetentionFlag  Boolean              @default(false)
+  lastOrderDate             DateTime?
+  doNotContact              Boolean              @default(false)
+  crmExternalId             String?
+  assignedRep               String?
+  internalAccountStatus     String?
+  lastVisitDate             DateTime?
+  nextRevisitDueDate        DateTime?
+  visitNotes                String?
+  historicalProductInterest String?
+}
+
+model AccountPerson {
+  id                  String  @id @default(cuid())
+  accountId           String
+  account             Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  name                String
+  credentials         String
+  role                String
+  performsInjectables Boolean?
+}
+
+model FieldEvidence {
+  id                String             @id @default(cuid())
+  accountId         String
+  account           Account            @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  fieldPath         String
+  valueSnapshot     String
+  sourceType        EvidenceSourceType
+  sourceUrl         String?
+  sourceTitle       String?
+  snippet           String?
+  capturedAt        DateTime           @default(now())
+  confidence        Float?
+  verificationState VerificationState  @default(UNKNOWN)
+  needsVerification Boolean            @default(false)
+  contentHash       String?
+}
+
+model AccountQualification {
+  id                      String               @id @default(cuid())
+  accountId               String
+  account                 Account              @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  fitScore                Int
+  recommendedLeadProduct  LeadProduct
+  certificationPathwayFit CertificationPathway
+  openingAngle            String
+  scopeBlockedProducts    String[]             @default([])
+  exclusionReason         String?
+  verifiedByRep           Boolean?
+  computedAt              DateTime             @default(now())
+}
+
+model VisitListRun {
+  id                String          @id @default(cuid())
+  provinceCode      String
+  startQuery        String
+  startLat          Float
+  startLng          Float
+  /// Original start input (address / postal)
+  startInputRaw     String?
+  startGeocodeProvider String?
+  startGeocodedAt   DateTime?
+  dailyVisitTarget  Int
+  maxRadiusKm       Float
+  maxDriveMinutes   Int?
+  dayStartClock     String?
+  dayEndClock       String?
+  minFitScore       Int
+  alreadyVisitedRaw String
+  revisitsDueRaw    String
+  radiusExhausted   Boolean         @default(false)
+  placesProvider    String?
+  crmProvider       String?
+  enrichmentProvider String?
+  routingProvider   String?
+  routeSummaryJson  Json?
+  providerMode      String?
+  repIdPlaceholder  String?
+  createdByUserId   String?
+  createdByUser     User?           @relation("VisitRunsCreated", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  status            String          @default("completed")
+  items             VisitListItem[]
+  createdAt         DateTime        @default(now())
+
+  @@index([createdByUserId])
+  @@index([provinceCode])
+}
+
+model VisitListItem {
+  id                      String       @id @default(cuid())
+  runId                   String
+  run                     VisitListRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  accountId               String
+  account                 Account      @relation(fields: [accountId], references: [id])
+  sortDistanceKm          Float
+  postalCodePrefix        String
+  isRevisit               Boolean      @default(false)
+  fitScore                Int
+  leadProduct             LeadProduct
+  openingAngle            String
+  needsManualVerification Boolean      @default(false)
+  rank                    Int
+  crmExternalId           String?
+  crmMatchState           String?
+  exclusionReason         String?
+  lastOrderStatusSnapshot String?
+  /// Phase 8 immutable route snapshot fields
+  plannedSequence         Int?
+  arrivalEstimate         String?
+  departureEstimate       String?
+  travelMinutesFromPrev   Float?
+  travelDistanceKmFromPrev Float?
+  cumulativeDriveMinutes  Float?
+  plannedVisitMinutes     Int?
+  openingHoursFeasibility String?
+  routeProvider           String?
+  routeCalculatedAt       DateTime?
+  routeReasons            String[]     @default([])
+  durationIsGeodesicEstimate Boolean?  @default(false)
+}
+
+/// Phase 8 — travel leg cache (no secrets).
+model RouteCache {
+  id               String   @id @default(cuid())
+  cacheKey         String   @unique
+  originLat        Float
+  originLng        Float
+  destLat          Float
+  destLng          Float
+  mode             String
+  trafficAware     Boolean  @default(false)
+  distanceKm       Float
+  durationMinutes  Int?
+  provider         String
+  /// Phase 8.6 — JSON array of encoded Routes API polyline segments (geometry rows only)
+  encodedPolyline  String?
+  fetchedAt        DateTime
+  expiresAt        DateTime
+  createdAt        DateTime @default(now())
+
+  @@index([expiresAt])
+}
+
+model PreVisitBrief {
+  id           String    @id @default(cuid())
+  accountId    String
+  account      Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  visitDate    DateTime
+  provinceCode String
+  visitType    VisitType
+  season       Season
+  payload      Json
+  generator    String    @default("template")
+  createdAt    DateTime  @default(now())
+}
+
+/// Phase 2: cache Google/Places provider responses (public data only — never CRM).
+model PlacesApiCache {
+  id               String   @id @default(cuid())
+  cacheKey         String   @unique
+  provider         String
+  endpoint         String
+  providerRecordId String?
+  payload          Json
+  fetchedAt        DateTime @default(now())
+  createdAt        DateTime @default(now())
+}
+
+/// Phase 3: cache public website page fetches for enrichment.
+model WebsitePageCache {
+  id           String   @id @default(cuid())
+  url          String   @unique
+  domain       String
+  statusCode   Int
+  contentHash  String?
+  bodyText     String   @db.Text
+  sourceTitle  String?
+  fetchedAt    DateTime @default(now())
+  expiresAt    DateTime
+  parseResult  Json?
+  createdAt    DateTime @default(now())
+}
+
+/// Phase 4: approved / rejected public ↔ CRM identity mappings (CRM truth separate from Places).
+model CrmAccountMapping {
+  id                       String   @id @default(cuid())
+  crmExternalId            String
+  /// Empty string when placeId unknown — enables unique pair with crmExternalId
+  placeId                  String   @default("")
+  normalizedBusinessName   String?
+  normalizedAddress        String?
+  matchMethod              String
+  matchConfidence          Float
+  verified                 Boolean  @default(false)
+  rejected                 Boolean  @default(false)
+  decidedByUserId          String?
+  decidedByUser            User?    @relation(fields: [decidedByUserId], references: [id], onDelete: SetNull)
+  decisionComment          String?
+  decidedAt                DateTime?
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  @@index([placeId])
+  @@index([crmExternalId])
+  @@unique([crmExternalId, placeId])
+}
+
+/// Phase 4: persisted visit outcomes (no patient information).
+model VisitRecord {
+  id                 String    @id @default(cuid())
+  accountId          String?
+  account            Account?  @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  placeId            String?
+  crmExternalId      String?
+  repIdPlaceholder   String?
+  createdByUserId    String?
+  createdByUser      User?     @relation("VisitsCreated", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  visitDate          DateTime
+  visitType          String
+  outcome            String?
+  peopleMet          String?
+  productsDiscussed  String?
+  nextAction         String?
+  followUpDate       DateTime?
+  notes              String?
+  createdAt          DateTime  @default(now())
+
+  @@index([placeId])
+  @@index([crmExternalId])
+  @@index([visitDate])
+  @@index([createdByUserId])
+}
+
+/// Phase 5: cache LLM synthesis responses (narrative only — never qualification truth).
+model LlmResponseCache {
+  id           String   @id @default(cuid())
+  cacheKey     String   @unique
+  provider     String
+  model        String
+  taskType     String
+  promptHash   String
+  requestJson  Json
+  responseJson Json
+  fetchedAt    DateTime @default(now())
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  @@index([taskType])
+  @@index([expiresAt])
+}
+
+/// Stage C: persisted clinic capability research (extraction only — not product recommendations).
+model ClinicResearchProfile {
+  id               String    @id @default(cuid())
+  clinicId         String    @unique
+  researchStatus   String
+  provider         String
+  model            String?
+  promptVersion    String
+  sourceVersion    String
+  sourcePageHashes String[]  @default([])
+  profileJson      Json
+  researchedAt     DateTime  @default(now())
+  expiresAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([researchStatus])
+  @@index([researchedAt])
+}
+
+/// Stage D: persisted product gap analysis (candidate gaps only — no ranking).
+model ProductGapAnalysis {
+  id               String    @id @default(cuid())
+  clinicId         String    @unique
+  cacheKey         String
+  profileVersion   String
+  catalogVersion   String
+  gapRulesVersion  String
+  crmContextHash   String?
+  analysisJson     Json
+  analyzedAt       DateTime  @default(now())
+  expiresAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([cacheKey])
+  @@index([analyzedAt])
+}
+
+/// Stage E: persisted product opportunity scoring (ranked opportunities + primary).
+model ProductOpportunityAnalysis {
+  id                  String    @id @default(cuid())
+  clinicId            String    @unique
+  cacheKey            String
+  gapAnalysisVersion  String
+  catalogVersion      String
+  scoringRulesVersion String
+  crmContextHash      String?
+  analysisJson        Json
+  analyzedAt          DateTime  @default(now())
+  expiresAt           DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([cacheKey])
+  @@index([analyzedAt])
+}
+
+/// Phase 6 — internal application users (local credentials; OIDC-ready identifiers).
+enum AppRole {
+  REP
+  MANAGER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+}
+
+model User {
+  id                 String              @id @default(cuid())
+  email              String              @unique
+  displayName        String
+  status             UserStatus          @default(ACTIVE)
+  role               AppRole
+  /// Province codes this user may operate in (empty = none; ADMIN may use ["*"])
+  provinces          String[]            @default([])
+  /// Optional territory/region labels
+  territories        String[]            @default([])
+  /// Local-dev credential hash only — never log; unused under enterprise IdP
+  passwordHash       String?
+  externalSubjectId  String?             @unique
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  lastLoginAt        DateTime?
+  visitRuns          VisitListRun[]      @relation("VisitRunsCreated")
+  visitRecords       VisitRecord[]       @relation("VisitsCreated")
+  mappingDecisions   CrmAccountMapping[]
+  assignmentsGiven   AccountAssignment[] @relation("AssignmentsCreated")
+  assignmentsHeld    AccountAssignment[] @relation("AssignmentsHeld")
+  auditEvents        AuditEvent[]
+
+  @@index([role])
+  @@index([status])
+}
+
+model AccountAssignment {
+  id             String    @id @default(cuid())
+  accountId      String
+  account        Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User      @relation("AssignmentsHeld", fields: [userId], references: [id], onDelete: Cascade)
+  assignmentType String    @default("owner")
+  territory      String?
+  activeFrom     DateTime  @default(now())
+  activeTo       DateTime?
+  createdById    String?
+  createdBy      User?     @relation("AssignmentsCreated", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt      DateTime  @default(now())
+
+  @@index([accountId])
+  @@index([userId])
+  @@unique([accountId, userId, assignmentType])
+}
+
+/// Append-only audit trail — no update/delete through normal app paths.
+model AuditEvent {
+  id                String   @id @default(cuid())
+  timestamp         DateTime @default(now())
+  actorUserId       String?
+  actorUser         User?    @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+  actorRoleSnapshot String?
+  action            String
+  resourceType      String
+  resourceId        String?
+  accountId         String?
+  beforeState       Json?
+  afterState        Json?
+  metadata          Json?
+  sessionId         String?
+
+  @@index([timestamp])
+  @@index([actorUserId])
+  @@index([action])
+  @@index([resourceType])
+  @@index([accountId])
+}
+
+/// Phase 7 — raw staging for imported / fetched CRM source rows (read-only integration).
+model CrmSourceRecord {
+  id                String   @id @default(cuid())
+  source            String
+  sourceRecordId    String
+  fetchedAt         DateTime @default(now())
+  rawHash           String
+  /// Minimized payload — avoid secrets; ops import only
+  payloadJson       Json
+  normalizedStatus  String   @default("pending")
+  parseErrors       String[] @default([])
+  canonicalAccountId String?
+  createdAt         DateTime @default(now())
+
+  @@unique([source, sourceRecordId])
+  @@index([source])
+  @@index([normalizedStatus])
+}
+
+/// Phase 7 — canonical internal CRM mirror (populated by import; never from web).
+model CanonicalCrmAccount {
+  id                        String    @id @default(cuid())
+  crmExternalId             String    @unique
+  businessName              String
+  streetAddress             String?
+  city                      String?
+  provinceCode              String?
+  postalCode                String?
+  phone                     String?
+  email                     String?
+  placeId                   String?
+  websiteDomain             String?
+  assignedRep               String?
+  internalStatus            String?
+  hasAcademyAccount         Boolean?
+  aptosCertificationLevel   String?
+  aptosPathway              String    @default("NONE")
+  staffEligibleFor4Level    String?
+  formerMesoesteticCustomer Boolean   @default(false)
+  mesoesteticRetentionFlag  Boolean   @default(false)
+  lastOrderDate             DateTime?
+  /// null = DNC unknown/unverified from source merge; true/false = authoritative
+  doNotContact              Boolean?
+  dncVerified               Boolean   @default(false)
+  lastVisitDate             DateTime?
+  nextRevisitDueDate        DateTime?
+  visitNotes                String?
+  historicalProductInterest String?
+  credentialsJson           Json?
+  sourceProvenance          Json?
+  importedAt                DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+
+  @@index([placeId])
+  @@index([provinceCode])
+  @@index([postalCode])
+  @@index([doNotContact])
+}

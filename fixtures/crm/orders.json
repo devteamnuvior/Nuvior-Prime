@@ -1,0 +1,14 @@
+[
+  {
+    "crmExternalId": "CRM-IMP-001",
+    "lastOrderDate": "2026-06-01",
+    "historicalProductInterest": "Dermaceutic",
+    "productFamilies": ["Dermaceutic", "Aptos"]
+  },
+  {
+    "crmExternalId": "CRM-IMP-002",
+    "lastOrderDate": "2024-01-15",
+    "historicalProductInterest": "legacy skincare",
+    "productFamilies": ["Mesoestetic peel kits", "Dermaceutic"]
+  }
+]

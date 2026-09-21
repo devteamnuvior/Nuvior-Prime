@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: nuvior-prime-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: nuvior
+      POSTGRES_PASSWORD: nuvior
+      POSTGRES_DB: nuvior_prime
+    ports:
+      - "5432:5432"
+    volumes:
+      - nuvior_prime_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nuvior -d nuvior_prime"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  nuvior_prime_pg:

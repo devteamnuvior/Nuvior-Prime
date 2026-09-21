@@ -1,0 +1,16 @@
+[
+  {
+    "crmExternalId": "CRM-IMP-001",
+    "hasAcademyAccount": true,
+    "aptosCertificationLevel": "Level 2",
+    "aptosPathway": "THREE_LEVEL",
+    "staffEligibleFor4Level": null
+  },
+  {
+    "crmExternalId": "CRM-IMP-002",
+    "hasAcademyAccount": false,
+    "aptosCertificationLevel": null,
+    "aptosPathway": "FOUR_LEVEL",
+    "staffEligibleFor4Level": "RN roster pending verify"
+  }
+]

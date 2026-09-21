@@ -1,0 +1,10 @@
+[
+  {
+    "crmExternalId": "CRM-IMP-001",
+    "doNotContact": false
+  },
+  {
+    "crmExternalId": "CRM-IMP-DNC",
+    "doNotContact": true
+  }
+]

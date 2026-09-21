@@ -1,0 +1,37 @@
+[
+  {
+    "crmExternalId": "CRM-IMP-001",
+    "businessName": "Import Fixture Yorkville Derm",
+    "streetAddress": "120 Bloor St W",
+    "city": "Toronto",
+    "provinceCode": "ON",
+    "postalCode": "M5S 1N4",
+    "phone": "4165550101",
+    "email": "info@importyork.example",
+    "placeId": "mock-on-001",
+    "websiteDomain": "importyork.example",
+    "assignedRep": "on.rep@nuvior.local",
+    "internalStatus": "active_customer"
+  },
+  {
+    "crmExternalId": "CRM-IMP-002",
+    "businessName": "Import Fixture No DNC Row Clinic",
+    "streetAddress": "10 King St E",
+    "city": "Toronto",
+    "provinceCode": "ON",
+    "postalCode": "M5C 1C4",
+    "phone": "4165550199",
+    "assignedRep": "on.rep@nuvior.local",
+    "internalStatus": "prospect"
+  },
+  {
+    "crmExternalId": "CRM-IMP-DNC",
+    "businessName": "Import Fixture DNC Spa",
+    "streetAddress": "1 Queen St W",
+    "city": "Toronto",
+    "provinceCode": "ON",
+    "postalCode": "M5H 2M9",
+    "phone": "4165550111",
+    "internalStatus": "blocked"
+  }
+]

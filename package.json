@@ -1,0 +1,63 @@
+{
+  "name": "nuvior-prime",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:push": "prisma db push",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:setup": "prisma db push && tsx prisma/seed.ts",
+    "validate:toronto": "tsx scripts/validate-toronto.ts",
+    "validate:auth": "tsx scripts/validate-auth.ts",
+    "validate:crm": "tsx scripts/validate-crm.ts",
+    "validate:routing": "tsx scripts/validate-routing.ts",
+    "validate:product-catalog": "tsx scripts/validate-product-catalog.ts",
+    "validate:clinic-research": "tsx scripts/validate-clinic-research.ts",
+    "validate:product-gaps": "tsx scripts/validate-product-gaps.ts",
+    "validate:product-opportunities": "tsx scripts/validate-product-opportunities.ts",
+    "crm:import": "tsx scripts/crm-import.ts",
+    "crm:backfill": "tsx scripts/crm-backfill.ts",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.14.0",
+    "@vis.gl/react-google-maps": "^1.9.0",
+    "bcryptjs": "^3.0.3",
+    "leaflet": "^1.9.4",
+    "next": "^15.5.0",
+    "next-auth": "^5.0.0-beta.32",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-leaflet": "^5.0.0",
+    "zod": "^3.25.76"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.1",
+    "@tailwindcss/postcss": "^4.1.12",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/leaflet": "^1.9.22",
+    "@types/node": "^22.17.2",
+    "@types/react": "^19.1.10",
+    "@types/react-dom": "^19.1.7",
+    "eslint": "^9.33.0",
+    "eslint-config-next": "^15.5.0",
+    "prisma": "^6.14.0",
+    "tailwindcss": "^4.1.12",
+    "tsx": "^4.20.4",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
+}
