@@ -3,7 +3,6 @@
 import { signIn } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import ButtonBase from "@mui/material/ButtonBase";
@@ -19,6 +18,7 @@ import ExpandMoreOutlined from "@mui/icons-material/ExpandMoreOutlined";
 import VisibilityOutlined from "@mui/icons-material/VisibilityOutlined";
 import VisibilityOffOutlined from "@mui/icons-material/VisibilityOffOutlined";
 import { FONT_SERIF } from "@/theme/tokens";
+import { toast } from "@/components/feedback/toast";
 
 const DEV_USERS = [
   { email: "on.rep@nuvior.local", label: "Ontario Rep", password: "DevPass123!" },
@@ -38,7 +38,6 @@ export function LoginForm() {
   const [remember, setRemember] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [showDev, setShowDev] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
   // Restore a remembered email (client only, after hydration).
@@ -54,11 +53,10 @@ export function LoginForm() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setPending(true);
-    setError(null);
     const res = await signIn("credentials", { email, password, redirect: false, callbackUrl });
     setPending(false);
     if (res?.error) {
-      setError("Sign-in failed — check email/password or user status.");
+      toast.error("Sign-in failed — check email/password or user status.");
       return;
     }
     try {
@@ -118,16 +116,9 @@ export function LoginForm() {
         />
 
         <FormControlLabel
-          control={<Checkbox checked={remember} onChange={(e) => setRemember(e.target.checked)} />}
+          control={<Checkbox size="medium" color="primary" checked={remember} onChange={(e) => setRemember(e.target.checked)} />}
           label="Remember me"
-          slotProps={{ typography: { variant: "body2" } }}
         />
-
-        {error && (
-          <Alert severity="error" role="alert">
-            {error}
-          </Alert>
-        )}
 
         <Button
           type="submit"
@@ -165,7 +156,6 @@ export function LoginForm() {
                     onClick={() => {
                       setEmail(u.email);
                       setPassword(u.password);
-                      setError(null);
                     }}
                     aria-pressed={active}
                     sx={{
