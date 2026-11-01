@@ -40,8 +40,7 @@ export function repMarkerClass(m: LiveMarker, selected: boolean): string {
 
 /** Marker DOM for the Leaflet divIcon (Google renders the same structure through React). */
 export function repMarkerHtml(m: LiveMarker, selected: boolean): string {
-  const heading = m.status === "travelling" && m.headingDeg != null ? `<span class="nv-rep__heading" style="transform:rotate(${Math.round(m.headingDeg)}deg)" aria-hidden></span>` : "";
-  return `<div class="${repMarkerClass(m, selected)}" style="--rep-hue:${m.hue}" title="${escapeHtml(m.name)}"><span class="nv-rep__pulse" aria-hidden></span>${heading}<span class="nv-rep__avatar">${escapeHtml(m.initials)}</span><span class="nv-rep__label">${escapeHtml(m.name)}</span></div>`;
+  return `<div class="${repMarkerClass(m, selected)}" style="--rep-hue:${m.hue}" title="${escapeHtml(m.name)}"><span class="nv-rep__pulse" aria-hidden></span><span class="nv-rep__avatar">${escapeHtml(m.initials)}</span><span class="nv-rep__label">${escapeHtml(m.name)}</span></div>`;
 }
 
 function escapeHtml(s: string): string {

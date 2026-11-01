@@ -216,6 +216,11 @@ async function main() {
       role: AppRole.REP,
       provinces: ["AB"],
     },
+    // Four more Toronto reps so the admin live map has five people to watch (all ON clinics are in Toronto).
+    { email: "to.rep.b@nuvior.local", displayName: "Toronto Rep B (Dev)", role: AppRole.REP, provinces: ["ON"] },
+    { email: "to.rep.c@nuvior.local", displayName: "Toronto Rep C (Dev)", role: AppRole.REP, provinces: ["ON"] },
+    { email: "to.rep.d@nuvior.local", displayName: "Toronto Rep D (Dev)", role: AppRole.REP, provinces: ["ON"] },
+    { email: "to.rep.e@nuvior.local", displayName: "Toronto Rep E (Dev)", role: AppRole.REP, provinces: ["ON"] },
     {
       email: "on.manager@nuvior.local",
       displayName: "Ontario Manager (Dev)",
@@ -262,20 +267,25 @@ async function main() {
   }
   const targetCount = await prisma.salesTarget.count();
 
-  // Live map — a starting position per dev rep so the admin map is not empty.
-  // Ontario Rep is checked in at a Toronto clinic; Alberta Rep is on the road near Calgary.
-  // `npm run live:simulate` moves them around afterwards.
-  const onClinic = await prisma.account.findFirst({ where: { provinceCode: "ON" }, orderBy: { businessName: "asc" } });
+  // Live map sample — the five Toronto reps: two checked in at clinics, three on the road
+  // across the city. Alberta Rep gets no position and so stays off the live map (the sample is
+  // Toronto only). `npm run live:simulate` moves the positioned reps around afterwards.
+  const onClinics = await prisma.account.findMany({ where: { provinceCode: "ON" }, orderBy: { businessName: "asc" }, take: 2 });
+  const atClinic = (email: string, clinic: (typeof onClinics)[number] | undefined, fallback: { lat: number; lng: number }) => ({
+    email,
+    lat: clinic?.latitude ?? fallback.lat,
+    lng: clinic?.longitude ?? fallback.lng,
+    accountId: clinic?.id ?? null,
+    speedMps: 0,
+    headingDeg: null as number | null,
+  });
+  const onRoad = (email: string, lat: number, lng: number, headingDeg: number) => ({ email, lat, lng, accountId: null, speedMps: 11.5, headingDeg: headingDeg as number | null });
   const seedPositions = [
-    {
-      email: "on.rep@nuvior.local",
-      lat: onClinic?.latitude ?? 43.6532,
-      lng: onClinic?.longitude ?? -79.3832,
-      accountId: onClinic?.id ?? null,
-      speedMps: 0,
-      headingDeg: null as number | null,
-    },
-    { email: "ab.rep@nuvior.local", lat: 51.0447, lng: -114.0719, accountId: null, speedMps: 11.5, headingDeg: 70 as number | null },
+    atClinic("on.rep@nuvior.local", onClinics[0], { lat: 43.6532, lng: -79.3832 }),
+    atClinic("to.rep.b@nuvior.local", onClinics[1], { lat: 43.6472, lng: -79.4091 }),
+    onRoad("to.rep.c@nuvior.local", 43.6708, -79.3868, 180), // Yonge & Bloor, heading south
+    onRoad("to.rep.d@nuvior.local", 43.6383, -79.4197, 70), // Liberty Village, heading east
+    onRoad("to.rep.e@nuvior.local", 43.6626, -79.3306, 250), // Leslieville, heading west
   ];
   for (const p of seedPositions) {
     const rep = reps.find((r) => r.email === p.email);

@@ -87,8 +87,10 @@ export function viewableProvinces(viewer: AuthUser): string[] {
 }
 
 /**
- * Every active rep the viewer may see, with their latest position (null when they
- * have never shared one). `provinceCode` "*" means all of the viewer's provinces.
+ * Every active rep the viewer may see who has shared a position at least once, with their
+ * latest fix. A rep who has never reported one has nothing to show on a live map and is left
+ * out (a rep whose last fix went stale still appears, as "offline"). `provinceCode` "*" means
+ * all of the viewer's provinces.
  */
 export async function listLiveReps(viewer: AuthUser, provinceCode: string): Promise<LiveRepDto[]> {
   const allowed = viewableProvinces(viewer).filter((c) => c !== "*");
@@ -110,9 +112,10 @@ export async function listLiveReps(viewer: AuthUser, provinceCode: string): Prom
     },
     orderBy: { displayName: "asc" },
   });
+  const reported = users.filter((u) => u.position != null);
 
   const now = Date.now();
-  return users.map((u) => {
+  return reported.map((u) => {
     const position = u.position ? toPositionDto(u.position) : null;
     return {
       id: u.id,

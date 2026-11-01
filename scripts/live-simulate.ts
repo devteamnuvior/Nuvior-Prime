@@ -56,7 +56,8 @@ function pickTarget(w: Walker): Clinic | null {
 }
 
 async function main() {
-  const reps = await prisma.user.findMany({ where: { role: "REP", status: "ACTIVE" }, include: { position: true } });
+  // Only reps who already have a position (the seeded Toronto sample); a rep who never shared one stays off the map.
+  const reps = await prisma.user.findMany({ where: { role: "REP", status: "ACTIVE", position: { isNot: null } }, include: { position: true } });
   const walkers: Walker[] = [];
   for (const rep of reps) {
     const provinces = rep.provinces.includes("*") ? Object.keys(PROVINCE_CENTERS) : rep.provinces;

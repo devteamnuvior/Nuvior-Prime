@@ -95,7 +95,6 @@ function LoadedMap({ markers, selectedId, onSelect, fitNonce, focus, fallbackCen
             >
               <div className={repMarkerClass(m, selected)} style={{ "--rep-hue": m.hue } as React.CSSProperties} role="button" aria-label={`${m.name}: ${m.clinicName ?? m.status}`} title={m.name}>
                 <span className="nv-rep__pulse" aria-hidden />
-                {m.status === "travelling" && m.headingDeg != null && <span className="nv-rep__heading" style={{ transform: `rotate(${Math.round(m.headingDeg)}deg)` }} aria-hidden />}
                 <span className="nv-rep__avatar">{m.initials}</span>
                 <span className="nv-rep__label">{m.name}</span>
               </div>

@@ -55,7 +55,7 @@ export function LiveMap({
 }) {
   const mapsCfg = getBrowserMapsConfig();
   const [provinceCode, setProvinceCode] = useState(initialProvince);
-  const { reps, fetchedAt, connection, now } = useLiveReps(initialReps, provinceCode);
+  const { reps, connection, now } = useLiveReps(initialReps, provinceCode);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [focus, setFocus] = useState<FocusRequest>(null);
   const [fitNonce, setFitNonce] = useState(0);
@@ -109,7 +109,6 @@ export function LiveMap({
   );
 
   const fallbackCenter = PROVINCE_CENTERS[provinceCode] ?? CANADA_CENTER;
-  const secondsAgo = Math.max(0, Math.round((now - fetchedAt) / 1000));
 
   const focusRep = (id: string) => {
     setSelectedId(id);
@@ -134,7 +133,7 @@ export function LiveMap({
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 3, minWidth: 0, flexWrap: "wrap" }}>
-          <Tooltip title={connection === "live" ? `Refreshing every few seconds · updated ${secondsAgo}s ago` : connection === "paused" ? "Paused while this tab is hidden" : "Lost contact with the server — retrying"}>
+          <Tooltip title={connection === "live" ? "Refreshing every few seconds" : connection === "paused" ? "Paused while this tab is hidden" : "Lost contact with the server — retrying"}>
             <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1.5, flexShrink: 0 }}>
               <Box
                 aria-hidden
@@ -149,9 +148,6 @@ export function LiveMap({
               />
               <Typography variant="body2" sx={{ fontWeight: 600 }}>
                 {connection === "live" ? "Live" : connection === "paused" ? "Paused" : "Reconnecting"}
-              </Typography>
-              <Typography variant="caption" sx={{ color: "text.secondary", fontVariantNumeric: "tabular-nums", display: { xs: "none", sm: "block" } }}>
-                {secondsAgo < 2 ? "just now" : `${secondsAgo}s ago`}
               </Typography>
             </Box>
           </Tooltip>
