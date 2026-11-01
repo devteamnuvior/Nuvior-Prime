@@ -3,14 +3,7 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { LoginForm } from "@/components/LoginForm";
 import { BrandMark, BrandWordmark } from "@/components/layout/BrandMark";
-
-/**
- * Hero photo: CN Tower above the clouds, Toronto — by mwangi gatheca on Unsplash
- * (Unsplash License, free to use). Served from the Unsplash CDN, so no file is
- * stored in the repo and next/image remote config is not needed.
- * https://unsplash.com/photos/cn-tower-skyline-in-toronto-qlKaN7eqay8
- */
-const HERO_PHOTO = "https://images.unsplash.com/photo-1517935706615-2717063c2225?auto=format&fit=crop&w=1800&q=80";
+import { LoginHeroSlider } from "@/components/login/LoginHeroSlider";
 
 export default function LoginPage() {
   return (
@@ -85,15 +78,7 @@ export default function LoginPage() {
           bgcolor: "background.inverse",
         }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element -- remote CDN image, intentionally unoptimized */}
-        <img
-          src={HERO_PHOTO}
-          alt=""
-          decoding="async"
-          fetchPriority="high"
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "50% 40%", display: "block" }}
-        />
-        <Box sx={{ position: "absolute", inset: 0, pointerEvents: "none", background: "linear-gradient(to right, rgba(13, 26, 36, 0.28) 0%, rgba(13, 26, 36, 0) 35%)" }} />
+        <LoginHeroSlider />
       </Box>
     </Box>
   );
