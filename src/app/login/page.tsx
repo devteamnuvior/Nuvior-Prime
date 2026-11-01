@@ -78,7 +78,7 @@ export default function LoginPage() {
         aria-hidden="true"
         sx={{
           order: { xs: 1, lg: 2 },
-          position: { lg: "sticky" },
+          position: { xs: "relative", lg: "sticky" },
           top: 0,
           height: { lg: "100dvh" },
           overflow: "hidden",
