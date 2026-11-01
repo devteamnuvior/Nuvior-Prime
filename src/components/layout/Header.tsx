@@ -57,7 +57,8 @@ export function Header({
 
   return (
     <AppBar sx={{ zIndex: (t) => t.zIndex.drawer - 1 }}>
-      <Toolbar disableGutters sx={{ minHeight: LAYOUT.headerHeight, height: LAYOUT.headerHeight, px: { xs: 4, md: `${LAYOUT.railInset}px` }, gap: 3 }}>
+      {/* The Toolbar mixin raises min-height to 64px from the sm breakpoint; restating it per breakpoint keeps the bar at headerHeight so its bottom border meets the rail's. */}
+      <Toolbar disableGutters sx={{ minHeight: { xs: LAYOUT.headerHeight, sm: LAYOUT.headerHeight }, height: LAYOUT.headerHeight, px: { xs: 4, md: `${LAYOUT.railInset}px` }, gap: 3 }}>
         <IconButton size="small" onClick={() => setMobileOpen(true)} aria-label="Open navigation" sx={{ display: { md: "none" } }}>
           <MenuOutlined fontSize="small" />
         </IconButton>

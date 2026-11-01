@@ -18,7 +18,9 @@ export function Sidebar({ groups }: { groups: NavGroup[] }) {
   const brand = (
     <Box
       sx={{
+        // Content-box so the 1px border sits below headerHeight, on the same line as the header's own bottom border.
         height: LAYOUT.headerHeight,
+        boxSizing: "content-box",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -66,7 +68,7 @@ export function Sidebar({ groups }: { groups: NavGroup[] }) {
         ModalProps={{ keepMounted: true }}
         sx={{ display: { xs: "block", md: "none" }, "& .MuiDrawer-paper": { width: 288, boxSizing: "border-box", bgcolor: "sidebar.bg" } }}
       >
-        <Box sx={{ height: LAYOUT.headerHeight, display: "flex", alignItems: "center", gap: 1.5, px: 3, borderBottom: 1, borderColor: "sidebar.border" }}>
+        <Box sx={{ height: LAYOUT.headerHeight, boxSizing: "content-box", display: "flex", alignItems: "center", gap: 1.5, px: 3, borderBottom: 1, borderColor: "sidebar.border" }}>
           <BrandMark />
           <BrandWordmark />
         </Box>
