@@ -2,8 +2,8 @@ import { redirect } from "next/navigation";
 import { requireSessionUser } from "@/lib/session";
 import { AuthError, requirePermission } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
+import { hasPermission } from "@/domain/auth/permissions";
 import { PageContainer } from "@/components/layout/PageContainer";
-import { PageHeader } from "@/components/layout/PageHeader";
 import { VisitsView, type LoggedVisitRow, type PlannedRouteRow } from "@/components/visits/VisitsView";
 import { TargetProgressStrip } from "@/components/visits/TargetProgressStrip";
 import { getTargetProgress } from "@/lib/performance";
@@ -62,9 +62,13 @@ export default async function MyVisitsPage() {
 
   return (
     <PageContainer>
-      <PageHeader title="Visit History" description="Routes you planned and visits you logged, most recent first." />
-      <TargetProgressStrip progress={progress} day={today} />
-      <VisitsView runs={runRows} visits={visitRows} />
+      <VisitsView
+        runs={runRows}
+        visits={visitRows}
+        renderedAt={Date.now()}
+        canPlan={hasPermission(user.role, "route.plan")}
+        targets={<TargetProgressStrip progress={progress} day={today} />}
+      />
     </PageContainer>
   );
 }

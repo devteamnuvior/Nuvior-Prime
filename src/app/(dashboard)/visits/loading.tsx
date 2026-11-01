@@ -1,5 +1,5 @@
-import { PageSkeleton } from "@/components/layout/PageSkeleton";
+import { VisitsSkeleton } from "@/components/visits/VisitsSkeleton";
 
 export default function Loading() {
-  return <PageSkeleton kpis={4} columns={7} />;
+  return <VisitsSkeleton />;
 }
