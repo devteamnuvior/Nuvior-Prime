@@ -92,6 +92,7 @@ export function LoginForm() {
           required
           fullWidth
           size="medium"
+          sx={{ "& .MuiInputBase-input": { paddingBlock: "12px" } }}
         />
         <TextField
           label="Password"
@@ -103,6 +104,7 @@ export function LoginForm() {
           required
           fullWidth
           size="medium"
+          sx={{ "& .MuiInputBase-input": { paddingBlock: "12px" } }}
           slotProps={{
             input: {
               endAdornment: (
@@ -118,7 +120,8 @@ export function LoginForm() {
 
         <FormControlLabel
           control={<Checkbox size="medium" color="primary" checked={remember} onChange={(e) => setRemember(e.target.checked)} />}
-          label="Remember me"
+          label="Remember Me"
+          sx={{ mt: -2 }}
         />
 
         <Button
@@ -129,7 +132,7 @@ export function LoginForm() {
           loadingPosition="center"
           loadingIndicator={<CircularProgress size={20} sx={{ color: "primary.contrastText" }} />}
           fullWidth
-          endIcon={<ArrowForwardOutlined />}
+          endIcon={<ArrowForwardOutlined sx={{ fontSize: 16 }} />}
           sx={{ height: 50, borderRadius: 3, letterSpacing: "0.1em", textTransform: "uppercase", fontSize: "0.8125rem", fontWeight: 600 }}
         >
           Sign in
