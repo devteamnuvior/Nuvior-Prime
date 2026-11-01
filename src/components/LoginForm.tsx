@@ -20,6 +20,13 @@ import { toast } from "@/components/feedback/toast";
 
 const REMEMBER_KEY = "nuvior.login.email";
 
+// Inputs are 44px tall (12px padding) instead of MUI's 56px default, so the resting
+// label must sit at 12px rather than MUI's 16px to stay vertically centered.
+const FIELD_SX = {
+  "& .MuiInputBase-input": { paddingBlock: "12px" },
+  "& .MuiInputLabel-root:not(.MuiInputLabel-shrink)": { transform: "translate(14px, 12px) scale(1)" },
+} as const;
+
 export function LoginForm() {
   const params = useSearchParams();
   const callbackUrl = params.get("callbackUrl") || "/";
@@ -79,7 +86,7 @@ export function LoginForm() {
           placeholder="you@nuvior.ca"
           fullWidth
           size="medium"
-          sx={{ "& .MuiInputBase-input": { paddingBlock: "12px" } }}
+          sx={FIELD_SX}
         />
         <TextField
           label="Password"
@@ -90,7 +97,7 @@ export function LoginForm() {
           placeholder="Your password"
           fullWidth
           size="medium"
-          sx={{ "& .MuiInputBase-input": { paddingBlock: "12px" } }}
+          sx={FIELD_SX}
           slotProps={{
             input: {
               endAdornment: (

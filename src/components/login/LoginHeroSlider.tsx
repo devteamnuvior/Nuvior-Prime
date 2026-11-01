@@ -17,16 +17,16 @@ const SLIDES = [
     position: "50% 40%",
   },
   {
-    // False Creek waterfront and Vancouver skyline at golden hour — Adrian Yu
-    // https://unsplash.com/photos/an-aerial-view-of-a-city-and-a-harbor-Wc45W-dQFlA
-    src: "https://images.unsplash.com/photo-1647655806923-e8202f4f2b8c?auto=format&fit=crop&w=1800&q=80",
-    position: "50% 50%",
-  },
-  {
     // Montreal skyline from the belvedere — Grant Van Cleemput
     // https://unsplash.com/photos/a-city-with-many-tall-buildings-CL9Pl-5fXBU
     src: "https://images.unsplash.com/photo-1659482513037-950fea76794c?auto=format&fit=crop&w=1800&q=80",
     position: "50% 45%",
+  },
+  {
+    // False Creek waterfront and Vancouver skyline at golden hour — Adrian Yu
+    // https://unsplash.com/photos/an-aerial-view-of-a-city-and-a-harbor-Wc45W-dQFlA
+    src: "https://images.unsplash.com/photo-1647655806923-e8202f4f2b8c?auto=format&fit=crop&w=1800&q=80",
+    position: "50% 50%",
   },
 ] as const;
 
