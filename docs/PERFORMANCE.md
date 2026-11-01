@@ -1,7 +1,28 @@
-# Rep performance — phases 1 and 2
+# Rep performance — phases 1 to 3
 
-**Status:** Phase 1 complete (structured outcomes, targets, daily summaries) · Phase 2 complete (admin per-rep page)  
-**Next:** Phase 3 rep dashboard · Phase 4 XP / leaderboard · Phase 5 Odoo orders
+**Status:** Phase 1 complete (structured outcomes, targets, daily summaries) · Phase 2 complete (admin per-rep page) · Phase 3 complete (rep "My day" panel)  
+**Next:** Phase 4 XP / leaderboard · Phase 5 Odoo orders (deferred until Odoo access exists)
+
+## Phase 3 — rep "My day" panel
+
+Shown at the top of the planner panel on Today's Route (`/`) for anyone with
+`performance.view.own`, until a route is built or the plan is being edited.
+Collapsible; the collapsed state is remembered per browser.
+
+| Block | Source | Notes |
+| --- | --- | --- |
+| Message | `buildDayMessage` | Deterministic "if you reach it" copy: remaining visits, streak at risk, quality target, month pace, follow-ups due. Weekend and no-target fallbacks. Tone: encouraging, never absolute. |
+| Daily target bars | `getTargetProgress` | One bar per DAY target. |
+| Last 14 days | `RepDailySummary` | Visits per day, today highlighted, weekends outlined. |
+| Month so far | `RepDailySummary` | Visits vs last month to the same day, average fit vs team (reps in the same provinces, aggregate only), WEEK/MONTH targets with pace. |
+| Follow-ups | `VisitRecord` | Overdue or due-today count, link to Visit history. |
+
+Streak = consecutive working days (Mon–Fri) on which the DAY/VISITS target was
+met, ending today (once met) or yesterday; weekends neither count nor break it.
+`computeStreak` and `buildDayMessage` are tested in
+`src/domain/performance/motivation.test.ts`. The loader is
+`src/lib/repDashboard.ts`; saving a visit refreshes the panel
+(`revalidatePath("/")` + `router.refresh()`) without touching the planned route.
 
 ## Phase 2 — admin per-rep page
 

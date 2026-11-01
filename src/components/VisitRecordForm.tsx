@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import MenuItem from "@mui/material/MenuItem";
@@ -27,6 +28,7 @@ export function VisitRecordForm({
   crmExternalId: string | null;
   businessName: string;
 }) {
+  const router = useRouter();
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
@@ -76,6 +78,8 @@ export function VisitRecordForm({
             setMsg(r.message);
             toast.result(r);
             if (r.ok) {
+              // Refresh server data (My day panel, targets) while keeping the planned route in client state.
+              router.refresh();
               setNotes("");
               setOutcomeCode("");
               setOutcomeNote("");

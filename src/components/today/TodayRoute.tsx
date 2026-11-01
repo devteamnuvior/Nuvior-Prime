@@ -75,6 +75,8 @@ import {
 } from "./manualPlan";
 import { PreVisitBriefView } from "@/components/PreVisitBriefView";
 import { PlanningWorkspace } from "./PlanningWorkspace";
+import { MyDayPanel } from "./MyDayPanel";
+import type { RepDashboardDto } from "@/lib/repDashboard";
 import { Itinerary } from "./Itinerary";
 import { ClinicDrawer } from "./ClinicDrawer";
 import { SummaryStrip } from "./SummaryStrip";
@@ -113,9 +115,12 @@ export type ServerProviderInfo = {
 export function TodayRoute({
   initialPlanOpen = false,
   serverProviders,
+  dashboard = null,
 }: {
   initialPlanOpen?: boolean;
   serverProviders: ServerProviderInfo;
+  /** Performance phase 3 — the signed-in rep's own day; null hides the panel. */
+  dashboard?: RepDashboardDto | null;
 }) {
   const mapsCfg = getBrowserMapsConfig();
   const [state, formAction, pending] = useActionState(generateVisitListAction, initial);
@@ -888,6 +893,7 @@ export function TodayRoute({
           }}
         >
           <Box sx={{ display: showPlanning ? "flex" : "none", minHeight: 0, flex: 1, flexDirection: "column" }}>
+            {dashboard && !data && !editPlanOpen && <MyDayPanel data={dashboard} />}
             <PlanningWorkspace
               phase={phase}
               formAction={formAction}

@@ -267,6 +267,7 @@ export async function recordVisitAction(input: {
 
     await recomputeRepDailySummary(user.id, visitDate);
     revalidatePath("/visits");
+    revalidatePath("/");
 
     return { ok: true, message: `Visit saved ${result.id}` };
   } catch (e) {
