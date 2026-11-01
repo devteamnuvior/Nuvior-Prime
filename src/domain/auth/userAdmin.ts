@@ -19,4 +19,8 @@ export type AdminUserRow = {
   territories: string[];
   createdAt: string;
   lastLoginAt: string | null;
+  /** Lifetime XP from the points ledger (list view only). */
+  xpTotal?: number;
+  /** Logged visits in the last 30 days, oldest to newest in six 5-day buckets (list view only). */
+  activity?: number[];
 };

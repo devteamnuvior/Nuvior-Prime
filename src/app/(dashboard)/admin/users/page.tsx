@@ -17,7 +17,22 @@ export default async function AdminUsersPage() {
     redirect("/");
   }
 
-  const users = await prisma.user.findMany({ orderBy: { displayName: "asc" } });
+  const now = Date.now();
+  const DAY = 24 * 60 * 60 * 1000;
+  const [users, xp, recentVisits] = await Promise.all([
+    prisma.user.findMany({ orderBy: { displayName: "asc" } }),
+    prisma.pointEvent.groupBy({ by: ["userId"], _sum: { points: true } }),
+    prisma.visitRecord.findMany({ where: { visitDate: { gte: new Date(now - 30 * DAY) }, createdByUserId: { not: null } }, select: { createdByUserId: true, visitDate: true } }),
+  ]);
+  const xpByUser = new Map(xp.map((x) => [x.userId, x._sum.points ?? 0]));
+  // Six 5-day buckets, oldest first, so the list can draw a tiny activity chart per person.
+  const activityByUser = new Map<string, number[]>();
+  for (const v of recentVisits) {
+    const bucket = 5 - Math.min(5, Math.floor((now - v.visitDate.getTime()) / (5 * DAY)));
+    const arr = activityByUser.get(v.createdByUserId!) ?? [0, 0, 0, 0, 0, 0];
+    arr[bucket] += 1;
+    activityByUser.set(v.createdByUserId!, arr);
+  }
 
   const rows: AdminUserRow[] = users.map((u) => ({
     id: u.id,
@@ -29,6 +44,8 @@ export default async function AdminUsersPage() {
     territories: u.territories,
     createdAt: u.createdAt.toISOString(),
     lastLoginAt: u.lastLoginAt?.toISOString() ?? null,
+    xpTotal: xpByUser.get(u.id) ?? 0,
+    activity: activityByUser.get(u.id) ?? [0, 0, 0, 0, 0, 0],
   }));
 
   return (

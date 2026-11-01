@@ -18,15 +18,12 @@ import type { RepProfileDto } from "@/lib/repProfile";
 import type { RangeKey } from "@/domain/performance/repMetrics";
 import { TARGET_METRIC_LABELS, TARGET_PERIOD_LABELS } from "@/domain/performance/targets";
 import { KpiCard, KpiGrid } from "@/components/feedback/KpiCard";
-import { CodeChip, StatusChip } from "@/components/feedback/StatusChip";
-import { PageHeader } from "@/components/layout/PageHeader";
-import { TerritoryBadges } from "../ProvinceBadge";
-import { UserAvatar } from "../UserAvatar";
-import { ROLE_META, formatDate, formatRelative } from "../userPresentation";
+import { StatusChip } from "@/components/feedback/StatusChip";
 import { BADGES, badgeDefinition } from "@/domain/performance/xp";
 import { BadgeIcon } from "@/components/performance/BadgeIcon";
 import { LevelBar } from "@/components/performance/LevelBar";
 import { ActivityCalendar } from "./ActivityCalendar";
+import { ProfileIdentityCard } from "./ProfileIdentityCard";
 import { FunnelBars, ProductMixChart, VisitsTrendChart } from "./RepCharts";
 import { AuditList, RecentRoutesTable, RecentVisitsTable } from "./RepTables";
 import { TargetsEditor } from "./TargetsEditor";
@@ -85,7 +82,6 @@ export function RepProfileView({
   const router = useRouter();
   const pathname = usePathname();
   const { user, kpis, range } = profile;
-  const status = user.status === "ACTIVE" ? { tone: "success" as const, label: "Active" } : { tone: "neutral" as const, label: "Disabled" };
 
   const setRange = (_: unknown, next: RangeKey | null) => {
     if (next) router.push(`${pathname}?range=${next}`);
@@ -97,23 +93,11 @@ export function RepProfileView({
         All team members
       </Button>
 
-      <PageHeader
-        eyebrow={ROLE_META[user.role].label}
-        title={
-          <Box sx={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <UserAvatar name={user.displayName} email={user.email} size="lg" status={user.status} />
-            <Box sx={{ minWidth: 0 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
-                <span>{user.displayName}</span>
-                {user.id === viewerId && <CodeChip label="You" />}
-                <StatusChip tone={status.tone} label={status.label} />
-              </Box>
-              <Typography variant="body2" sx={{ color: "text.secondary", fontFamily: "var(--mono)", fontWeight: 400 }}>
-                {user.email}
-              </Typography>
-            </Box>
-          </Box>
-        }
+      <ProfileIdentityCard
+        user={user}
+        range={range}
+        isViewer={user.id === viewerId}
+        renderedAt={renderedAt}
         actions={
           <ToggleButtonGroup exclusive size="small" value={range.key} onChange={setRange} aria-label="Date range">
             {(Object.keys(RANGE_LABELS) as RangeKey[]).map((k) => (
@@ -124,35 +108,6 @@ export function RepProfileView({
           </ToggleButtonGroup>
         }
       />
-
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 6, mb: 6, alignItems: "center" }}>
-        <Box sx={{ display: "grid", gap: 0.5 }}>
-          <Typography variant="caption" sx={{ color: "text.secondary" }}>
-            Territory
-          </Typography>
-          <TerritoryBadges codes={user.provinces} />
-        </Box>
-        <Box sx={{ display: "grid", gap: 0.5 }}>
-          <Typography variant="caption" sx={{ color: "text.secondary" }}>
-            Last active
-          </Typography>
-          <Typography variant="body2">{formatRelative(user.lastLoginAt, renderedAt)}</Typography>
-        </Box>
-        <Box sx={{ display: "grid", gap: 0.5 }}>
-          <Typography variant="caption" sx={{ color: "text.secondary" }}>
-            Member since
-          </Typography>
-          <Typography variant="body2">{formatDate(user.createdAt)}</Typography>
-        </Box>
-        <Box sx={{ display: "grid", gap: 0.5 }}>
-          <Typography variant="caption" sx={{ color: "text.secondary" }}>
-            Range
-          </Typography>
-          <Typography variant="body2">
-            {range.start} → {range.end}
-          </Typography>
-        </Box>
-      </Box>
 
       <Box sx={{ display: "grid", gap: 6 }}>
         <KpiGrid>

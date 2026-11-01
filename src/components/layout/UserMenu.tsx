@@ -1,8 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { keyframes } from "@emotion/react";
-import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
 import ButtonBase from "@mui/material/ButtonBase";
 import Menu from "@mui/material/Menu";
@@ -13,98 +11,10 @@ import LogoutOutlined from "@mui/icons-material/LogoutOutlined";
 import PlaceOutlined from "@mui/icons-material/PlaceOutlined";
 import ShieldOutlined from "@mui/icons-material/ShieldOutlined";
 import { EASE } from "@/theme/tokens";
+import { DetailRow, IconTile, RingedAvatar, identityRise as rise } from "@/components/feedback/Identity";
 import type { ShellUser } from "./shell-context";
 
-/* Presence dot: a soft ring expands and fades every few seconds. */
-const pulse = keyframes`
-  0% { box-shadow: 0 0 0 0 rgba(var(--nv-palette-success-mainChannel) / 0.5); }
-  70% { box-shadow: 0 0 0 6px rgba(var(--nv-palette-success-mainChannel) / 0); }
-  100% { box-shadow: 0 0 0 0 rgba(var(--nv-palette-success-mainChannel) / 0); }
-`;
-
-/* Menu sections rise into place one after another each time the menu opens. */
-const rise = keyframes`
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
-`;
-
 const REDUCED = "@media (prefers-reduced-motion: reduce)";
-
-/** Avatar inside a 2px gradient ring with a pulsing presence dot. Shared by the trigger and the menu's identity band. */
-function RingedAvatar({ initials, size, dot }: { initials: string; size: number; dot: number }) {
-  return (
-    <Box sx={{ position: "relative", display: "flex", flexShrink: 0 }}>
-      <Box
-        aria-hidden
-        sx={{
-          p: "2px",
-          borderRadius: "50%",
-          background: "linear-gradient(135deg, var(--nv-palette-primary-light), var(--nv-palette-primary-dark))",
-          display: "flex",
-        }}
-      >
-        <Avatar sx={{ width: size, height: size, fontSize: size * 0.34, fontWeight: 600, border: "2px solid", borderColor: "background.paper", boxSizing: "content-box" }}>
-          {initials}
-        </Avatar>
-      </Box>
-      <Box
-        aria-hidden
-        sx={{
-          position: "absolute",
-          right: 0,
-          bottom: 0,
-          width: dot,
-          height: dot,
-          borderRadius: "50%",
-          bgcolor: "success.main",
-          border: "2px solid",
-          borderColor: "background.paper",
-          animation: `${pulse} 2.8s ease-out infinite`,
-          [REDUCED]: { animation: "none" },
-        }}
-      />
-    </Box>
-  );
-}
-
-/** Icon in a soft rounded tile, so the three rows of the menu share one icon column. */
-function IconTile({ children, tone = "neutral" }: { children: React.ReactNode; tone?: "neutral" | "danger" }) {
-  return (
-    <Box
-      aria-hidden
-      sx={{
-        width: 30,
-        height: 30,
-        borderRadius: 2,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexShrink: 0,
-        bgcolor: tone === "danger" ? "error.tint" : "background.sunken",
-        color: tone === "danger" ? "error.main" : "text.secondary",
-        "& svg": { fontSize: 16 },
-      }}
-    >
-      {children}
-    </Box>
-  );
-}
-
-function DetailRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 3, px: 2, py: 1.5 }}>
-      <IconTile>{icon}</IconTile>
-      <Box sx={{ minWidth: 0 }}>
-        <Typography variant="eyebrow" sx={{ display: "block", color: "text.faint", fontSize: "0.625rem" }}>
-          {label}
-        </Typography>
-        <Typography variant="body2" noWrap sx={{ fontWeight: 500, color: "text.primary" }}>
-          {value}
-        </Typography>
-      </Box>
-    </Box>
-  );
-}
 
 export function UserMenu({ user, signOutAction }: { user: ShellUser; signOutAction: () => Promise<void> }) {
   const [anchor, setAnchor] = React.useState<null | HTMLElement>(null);
