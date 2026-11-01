@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Fraunces, IBM_Plex_Mono, Inter } from "next/font/google";
+import { Fraunces, Inter } from "next/font/google";
 import NextTopLoader from "nextjs-toploader";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
@@ -10,17 +10,12 @@ const sans = Inter({
   variable: "--font-sans-loaded",
 });
 
+/* Only the login page title is set in the serif; every other piece of UI is Inter. */
 const serif = Fraunces({
   subsets: ["latin"],
   weight: ["500", "600"],
   style: ["normal", "italic"],
   variable: "--font-serif-loaded",
-});
-
-const mono = IBM_Plex_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  variable: "--font-mono-loaded",
 });
 
 export const metadata: Metadata = {
@@ -30,7 +25,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${sans.variable} ${serif.variable} ${mono.variable}`}>
+    <html lang="en" className={`${sans.variable} ${serif.variable}`}>
       <body>
         <NextTopLoader color="var(--nv-palette-primary-main)" height={2} shadow={false} showSpinner={false} speed={200} crawlSpeed={150} zIndex={1400} />
         <Providers>{children}</Providers>

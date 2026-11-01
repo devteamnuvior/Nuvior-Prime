@@ -70,8 +70,6 @@ export type DataTableProps<R extends GridValidRowModel> = {
   onSelectionChange?: (ids: GridRowId[], rows: R[]) => void;
   /** Rendered in the toolbar while rows are selected (receives the selected rows). */
   bulkActions?: (rows: R[]) => React.ReactNode;
-  pageSizeOptions?: number[];
-  initialPageSize?: number;
   initialSort?: GridSortModel;
   /** Max height of the scroll area (header stays sticky). */
   maxHeight?: number | string;
@@ -216,9 +214,15 @@ function ErrorOverlay({ error, onRetry }: { error: string; onRetry?: () => void 
 }
 
 /**
- * Standard data table (MUI X DataGrid): sorting, quick search + column filters, pagination with
- * page-size picker, optional row selection and bulk actions, sticky header, and
- * loading / empty / error states. Pass `type: "actions"` columns for per-row menus.
+ * The MIT DataGrid caps a page at 100 rows. Tables show every row in one scrolling page with no
+ * footer; only a table that outgrows the cap gets the page arrows back (and never a page-size picker).
+ */
+const MAX_ROWS_PER_PAGE = 100;
+
+/**
+ * Standard data table (MUI X DataGrid): sorting, quick search + column filters, optional row
+ * selection and bulk actions, sticky header, and loading / empty / error states. Rows are not
+ * paginated (see MAX_ROWS_PER_PAGE). Pass `type: "actions"` columns for per-row menus.
  */
 export function DataTable<R extends GridValidRowModel>({
   rows,
@@ -236,8 +240,6 @@ export function DataTable<R extends GridValidRowModel>({
   selectable = false,
   onSelectionChange,
   bulkActions,
-  pageSizeOptions = [10, 25, 50, 100],
-  initialPageSize = 25,
   initialSort,
   maxHeight = 640,
   density = "standard",
@@ -307,9 +309,10 @@ export function DataTable<R extends GridValidRowModel>({
           disableRowSelectionOnClick
           rowSelectionModel={selectable ? selection : undefined}
           onRowSelectionModelChange={selectable ? handleSelection : undefined}
-          pageSizeOptions={pageSizeOptions}
+          pageSizeOptions={[MAX_ROWS_PER_PAGE]}
+          hideFooter={rows.length <= MAX_ROWS_PER_PAGE}
           initialState={{
-            pagination: { paginationModel: { pageSize: initialPageSize, page: 0 } },
+            pagination: { paginationModel: { pageSize: MAX_ROWS_PER_PAGE, page: 0 } },
             sorting: initialSort ? { sortModel: initialSort } : undefined,
             ...extraInitialState,
           }}

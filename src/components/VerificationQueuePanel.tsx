@@ -77,8 +77,6 @@ export function VerificationQueuePanel({ items }: { items: VerificationItem[] })
         searchPlaceholder="Filter account or field…"
         density="compact"
         columnTools={false}
-        initialPageSize={10}
-        pageSizeOptions={[10, 25, 50]}
         maxHeight={400}
         filters={
           <>

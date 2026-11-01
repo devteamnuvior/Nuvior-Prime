@@ -85,7 +85,9 @@ export const EASE = "cubic-bezier(0.2, 0.8, 0.3, 1)";
 
 /* ---------- Typography ---------- */
 export const FONT_SANS = 'var(--font-sans-loaded), "Inter", ui-sans-serif, system-ui, sans-serif';
-export const FONT_MONO = 'var(--font-mono-loaded), "IBM Plex Mono", ui-monospace, Menlo, monospace';
+/** All UI type is Inter, including the places that used to be monospace (ids, codes, timestamps). */
+export const FONT_MONO = FONT_SANS;
+/** Reserved for the login page title; nothing else uses the serif. */
 export const FONT_SERIF = 'var(--font-serif-loaded), "Fraunces", Georgia, serif';
 
 /* ---------- Layout ---------- */

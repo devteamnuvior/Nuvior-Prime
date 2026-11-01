@@ -80,8 +80,6 @@ export function RecentVisitsTable({ rows, today }: { rows: RepRecentVisit[]; tod
       searchable={false}
       columnTools={false}
       initialSort={[{ field: "day", sort: "desc" }]}
-      initialPageSize={10}
-      pageSizeOptions={[10, 25]}
       emptyState={{ illustration: "inbox", title: "No visits logged", description: "Visits this rep records from the clinic drawer appear here." }}
     />
   );
@@ -107,8 +105,6 @@ export function RecentRoutesTable({ rows }: { rows: RepRecentRoute[] }) {
       searchable={false}
       columnTools={false}
       initialSort={[{ field: "createdAt", sort: "desc" }]}
-      initialPageSize={10}
-      pageSizeOptions={[10, 20]}
       emptyState={{ illustration: "map", title: "No routes built", description: "Routes this rep builds on Today's Route appear here." }}
     />
   );

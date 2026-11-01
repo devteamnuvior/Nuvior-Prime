@@ -48,7 +48,6 @@ export function ConflictsTable({ rows }: { rows: ConflictRow[] }) {
       label="Ownership conflicts"
       searchPlaceholder="Search conflicts"
       columnTools={false}
-      initialPageSize={10}
       maxHeight={480}
       emptyState={{ illustration: "shield", title: "No ownership conflicts", description: "CRM rep assignments agree with app assignments." }}
     />

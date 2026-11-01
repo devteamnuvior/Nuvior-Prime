@@ -218,7 +218,6 @@ export function UsersTable({
           <Chip label="Clear filters" size="small" onClick={onClearFilters} variant="outlined" />
         ) : undefined,
       }}
-      initialPageSize={100}
       gridProps={{
         hideFooter: true,
         getRowClassName: ({ row }) => (busyUserId === row.id ? "nv-row-busy" : ""),

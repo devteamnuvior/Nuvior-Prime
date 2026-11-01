@@ -6,7 +6,7 @@
   MUI components reading tokens from `theme` / `sx`. This file only holds what cannot live in
   Emotion styles:
     1. font-stack variables that bridge next/font onto the theme (FONT_SANS / FONT_MONO in tokens.ts
-       read --font-*-loaded) and the mono stack reused by sx (`fontFamily: "var(--mono)"`);
+       read --font-*-loaded); `--mono` resolves to the same Inter stack;
     2. route-map marker styles — Google Advanced Markers and Leaflet divIcons are raw DOM nodes
        rendered by the map SDKs, outside React's styling;
     3. Leaflet overrides, the shared keyframes used by the map workspace, and thin scrollbars.
@@ -17,7 +17,8 @@
   --display: var(--font-sans-loaded), "Inter", ui-sans-serif, system-ui, sans-serif;
   --body: var(--display);
   --brand-serif: var(--font-serif-loaded), "Fraunces", Georgia, serif;
-  --mono: var(--font-mono-loaded), "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* Everything is Inter; --mono is kept as a name so existing sx keep working. --brand-serif is for the login title only. */
+  --mono: var(--display);
 
   /* Motion — keep in sync with src/lib/motion.ts */
   --nv-motion-fast: 180ms;
@@ -26,6 +27,18 @@
   --nv-motion-map: 380ms;
   --nv-motion-pulse: 2400ms;
   --nv-motion-start: 3400ms;
+}
+
+/* Form controls, keys and code fall back to the browser's own font unless told otherwise; everything is Inter. */
+button,
+input,
+select,
+textarea,
+kbd,
+code,
+pre,
+samp {
+  font-family: inherit;
 }
 
 /* ---------- Route map markers (Google Advanced Markers + Leaflet divIcons) ---------- */
