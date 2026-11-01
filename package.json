@@ -28,7 +28,8 @@
     "crm:import": "tsx scripts/crm-import.ts",
     "crm:backfill": "tsx scripts/crm-backfill.ts",
     "postinstall": "prisma generate",
-    "xp:backfill": "tsx scripts/xp-backfill.ts"
+    "xp:backfill": "tsx scripts/xp-backfill.ts",
+    "live:simulate": "tsx scripts/live-simulate.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.3.0",

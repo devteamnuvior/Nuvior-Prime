@@ -11,6 +11,7 @@ import Typography from "@mui/material/Typography";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import ChevronRightRounded from "@mui/icons-material/ChevronRightRounded";
 import MenuOutlined from "@mui/icons-material/MenuOutlined";
+import { hasPermission, type AppRoleName } from "@/domain/auth/permissions";
 import { LAYOUT } from "@/theme/tokens";
 import { BrandMark } from "./BrandMark";
 import { CommandSearch } from "./CommandSearch";
@@ -50,7 +51,9 @@ export function Header({
   const pathname = usePathname();
   const { setMobileOpen, user } = useShell();
   const crumbs = breadcrumbsFor(pathname);
-  const all = pathname === "/" ? crumbs : [{ href: "/", label: "Home" }, ...crumbs];
+  // Admins have no Today's Route; their home is the live map.
+  const homeHref = user && !hasPermission(user.role as AppRoleName, "route.plan") ? "/live" : "/";
+  const all = pathname === homeHref ? crumbs : [{ href: homeHref, label: "Home" }, ...crumbs];
 
   return (
     <AppBar sx={{ zIndex: (t) => t.zIndex.drawer - 1 }}>

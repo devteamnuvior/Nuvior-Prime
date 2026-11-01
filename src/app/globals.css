@@ -163,6 +163,149 @@ samp {
 .nv-pin--arrive {
   animation: nv-pin-arrive var(--nv-motion-confirm) cubic-bezier(0.2, 0.7, 0.25, 1);
 }
+/* ---------- Live map rep markers (Google Advanced Markers + Leaflet divIcons) ---------- */
+.nv-rep {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  background: hsl(var(--rep-hue, 168) 30% 90%);
+  color: hsl(var(--rep-hue, 168) 45% 28%);
+  font-family: var(--body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border: 2.5px solid var(--nv-palette-background-paper);
+  box-shadow:
+    0 1px 3px rgb(20 32 28 / 0.35),
+    0 6px 14px rgb(20 32 28 / 0.16);
+  cursor: pointer;
+  transition:
+    transform var(--nv-motion-fast) ease,
+    box-shadow var(--nv-motion-fast) ease,
+    opacity var(--nv-motion-fast) ease;
+}
+.nv-rep__avatar {
+  position: relative;
+  z-index: 1;
+}
+/* Status dot — same semantics as the panel: green at clinic, teal moving, amber idle, grey offline */
+.nv-rep::after {
+  content: "";
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: 12px;
+  height: 12px;
+  border-radius: 9999px;
+  background: var(--nv-palette-text-disabled);
+  border: 2px solid var(--nv-palette-background-paper);
+  z-index: 2;
+}
+.nv-rep--at_clinic::after {
+  background: var(--nv-palette-success-main);
+}
+.nv-rep--travelling::after {
+  background: var(--nv-palette-primary-main);
+}
+.nv-rep--idle::after {
+  background: var(--nv-palette-warning-main);
+}
+.nv-rep--at_clinic {
+  box-shadow:
+    0 0 0 3px rgba(var(--nv-palette-success-mainChannel) / 0.22),
+    0 1px 3px rgb(20 32 28 / 0.35),
+    0 6px 14px rgb(20 32 28 / 0.16);
+}
+.nv-rep--offline {
+  opacity: 0.55;
+  filter: grayscale(0.7);
+}
+.nv-rep:hover {
+  transform: scale(1.08);
+}
+.nv-rep--selected,
+.nv-rep--selected:hover {
+  transform: scale(1.18);
+  border-color: var(--nv-palette-primary-main);
+  z-index: 1000;
+}
+/* Pulse ring: plays while the fix is fresh (nv-rep--recent) */
+.nv-rep__pulse {
+  position: absolute;
+  inset: -4px;
+  border-radius: 9999px;
+  border: 2px solid var(--nv-palette-primary-main);
+  opacity: 0;
+  pointer-events: none;
+}
+.nv-rep--at_clinic .nv-rep__pulse {
+  border-color: var(--nv-palette-success-main);
+}
+.nv-rep--recent .nv-rep__pulse {
+  animation: nv-rep-pulse 1800ms ease-out infinite;
+}
+/* Heading tick for a moving rep: a small wedge on the ring, rotated to the bearing */
+.nv-rep__heading {
+  position: absolute;
+  inset: -9px;
+  border-radius: 9999px;
+  pointer-events: none;
+  transition: transform 600ms ease;
+}
+.nv-rep__heading::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  width: 0;
+  height: 0;
+  transform: translateX(-50%);
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 8px solid var(--nv-palette-primary-main);
+}
+/* Name label under the avatar */
+.nv-rep__label {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 7px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background: var(--nv-palette-background-paper);
+  color: var(--nv-palette-text-primary);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgb(22 28 27 / 0.12);
+  pointer-events: none;
+}
+.nv-rep--offline .nv-rep__label {
+  color: var(--nv-palette-text-secondary);
+}
+@keyframes nv-rep-pulse {
+  0% {
+    opacity: 0.7;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.9);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nv-rep--recent .nv-rep__pulse {
+    animation: none;
+    opacity: 0.5;
+  }
+}
+
 /* Draft polygon vertex */
 .nv-vertex {
   width: 12px;

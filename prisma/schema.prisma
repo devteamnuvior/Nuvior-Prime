@@ -142,6 +142,7 @@ model Account {
   preVisitBriefs    PreVisitBrief[]
   visitRecords      VisitRecord[]
   assignments       AccountAssignment[]
+  repPositions      RepPosition[]
   createdAt         DateTime                @default(now())
   updatedAt         DateTime                @updatedAt
 }
@@ -571,6 +572,28 @@ model Challenge {
 }
 
 /// Phase 5: cache LLM synthesis responses (narrative only — never qualification truth).
+/// Live map — the latest known position of one field user. One row per user,
+/// overwritten on every report; no history is kept here (nothing patient-related).
+/// `accountId` is the clinic the rep is currently at (resolved by proximity).
+model RepPosition {
+  userId     String   @id
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lat        Float
+  lng        Float
+  accuracyM  Float?
+  headingDeg Float?
+  speedMps   Float?
+  accountId  String?
+  account    Account? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  /// "device" (rep's phone), "seed" or "sim" (local development only)
+  source     String   @default("device")
+  recordedAt DateTime
+  updatedAt  DateTime @updatedAt
+
+  @@index([recordedAt])
+  @@index([accountId])
+}
+
 model LlmResponseCache {
   id           String   @id @default(cuid())
   cacheKey     String   @unique
@@ -686,6 +709,7 @@ model User {
   pointEvents        PointEvent[]        @relation("PointEvents")
   badges             UserBadge[]         @relation("Badges")
   challengesCreated  Challenge[]         @relation("ChallengesCreated")
+  position           RepPosition?
 
   @@index([role])
   @@index([status])

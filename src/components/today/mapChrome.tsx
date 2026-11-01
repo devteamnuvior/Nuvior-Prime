@@ -26,12 +26,17 @@ export function MapControls({
   onFit,
   onCenter,
   externalUrl,
+  fitLabel = "Fit route",
+  centerLabel = "Center on start",
 }: {
   onZoomIn: () => void;
   onZoomOut: () => void;
   onFit: () => void;
   onCenter: () => void;
   externalUrl: string | null;
+  /** Tooltip copy — the live map fits "everyone" and centres on the selected rep. */
+  fitLabel?: string;
+  centerLabel?: string;
 }) {
   return (
     <Paper
@@ -45,10 +50,10 @@ export function MapControls({
         <RemoveOutlined sx={{ fontSize: 18 }} />
       </MapButton>
       <Divider />
-      <MapButton label="Fit route" onClick={onFit}>
+      <MapButton label={fitLabel} onClick={onFit}>
         <CropFreeOutlined sx={{ fontSize: 16 }} />
       </MapButton>
-      <MapButton label="Center on start" onClick={onCenter}>
+      <MapButton label={centerLabel} onClick={onCenter}>
         <GpsFixedOutlined sx={{ fontSize: 16 }} />
       </MapButton>
       {externalUrl && (

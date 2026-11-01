@@ -26,7 +26,7 @@ import {
 } from "@/app/actions";
 import type { ClinicWebProfileDto } from "@/domain/clinicProfile/runClinicProfile";
 import { CANADIAN_PROVINCES } from "@/domain/scopeOfPractice";
-import { accessibleProvinces } from "@/domain/auth/permissions";
+import { accessibleProvinces, hasPermission } from "@/domain/auth/permissions";
 import type { GeoPoint } from "@/domain/geo";
 import { decodePolyline } from "@/domain/routing/polyline";
 import { getBrowserMapsConfig, resolveExperienceMode } from "@/lib/mapsConfig";
@@ -76,6 +76,7 @@ import {
 import { PreVisitBriefView } from "@/components/PreVisitBriefView";
 import { PlanningWorkspace } from "./PlanningWorkspace";
 import { MyDayPanel } from "./MyDayPanel";
+import { LiveLocationToggle } from "./LiveLocationToggle";
 import type { RepDashboardDto } from "@/lib/repDashboard";
 import { Itinerary } from "./Itinerary";
 import { ClinicDrawer } from "./ClinicDrawer";
@@ -701,6 +702,7 @@ export function TodayRoute({
           </Typography>
         </Box>
         <Box sx={{ display: "flex", flexShrink: 0, alignItems: "center", gap: 2 }}>
+          {role && hasPermission(role, "position.report") && <LiveLocationToggle />}
           {data && !editPlanOpen && (
             <Button
               variant="outlined"

@@ -41,6 +41,7 @@ function pathwayEnum(p: string): CertificationPathway {
 async function main() {
   // Clear reference + mock account data for idempotent seed
   await prisma.preVisitBrief.deleteMany();
+  await prisma.repPosition.deleteMany();
   await prisma.repDailySummary.deleteMany();
   await prisma.salesTarget.deleteMany();
   await prisma.visitRecord.deleteMany();
@@ -261,7 +262,31 @@ async function main() {
   }
   const targetCount = await prisma.salesTarget.count();
 
-  console.log("Seed complete:", { ...counts, targets: targetCount });
+  // Live map — a starting position per dev rep so the admin map is not empty.
+  // Ontario Rep is checked in at a Toronto clinic; Alberta Rep is on the road near Calgary.
+  // `npm run live:simulate` moves them around afterwards.
+  const onClinic = await prisma.account.findFirst({ where: { provinceCode: "ON" }, orderBy: { businessName: "asc" } });
+  const seedPositions = [
+    {
+      email: "on.rep@nuvior.local",
+      lat: onClinic?.latitude ?? 43.6532,
+      lng: onClinic?.longitude ?? -79.3832,
+      accountId: onClinic?.id ?? null,
+      speedMps: 0,
+      headingDeg: null as number | null,
+    },
+    { email: "ab.rep@nuvior.local", lat: 51.0447, lng: -114.0719, accountId: null, speedMps: 11.5, headingDeg: 70 as number | null },
+  ];
+  for (const p of seedPositions) {
+    const rep = reps.find((r) => r.email === p.email);
+    if (!rep) continue;
+    await prisma.repPosition.create({
+      data: { userId: rep.id, lat: p.lat, lng: p.lng, accountId: p.accountId, speedMps: p.speedMps, headingDeg: p.headingDeg, accuracyM: 12, source: "seed", recordedAt: new Date() },
+    });
+  }
+  const positionCount = await prisma.repPosition.count();
+
+  console.log("Seed complete:", { ...counts, targets: targetCount, positions: positionCount });
   console.log(
     "Organization type labels (spec):",
     Object.values(ORGANIZATION_TYPE_LABELS).join(" / "),

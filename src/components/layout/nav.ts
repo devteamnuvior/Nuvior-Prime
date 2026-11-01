@@ -12,7 +12,8 @@ export type NavIconKey =
   | "users"
   | "database"
   | "audit"
-  | "trophy";
+  | "trophy"
+  | "live";
 
 export type NavItem = {
   href: string;
@@ -27,7 +28,8 @@ export type NavItem = {
 export type NavGroup = { label?: string; items: NavItem[] };
 
 export const PRIMARY_NAV: NavItem[] = [
-  { href: "/", label: "Today's Route", icon: "route", match: "exact" },
+  { href: "/", label: "Today's Route", icon: "route", match: "exact", permission: "route.plan" },
+  { href: "/live", label: "Live Map", icon: "live", permission: "position.view.team" },
   { href: "/accounts", label: "Prospecting", icon: "search" },
   { href: "/visits", label: "Visit History", icon: "history", permission: "visit.view.own" },
   { href: "/leaderboard", label: "Leaderboard", icon: "trophy", permission: "performance.view.own" },
@@ -53,6 +55,7 @@ export const SECONDARY_NAV: NavItem[] = [
 /** Human labels for breadcrumb segments. */
 export const ROUTE_LABELS: Record<string, string> = {
   "/": "Today's Route",
+  "/live": "Live Map",
   "/accounts": "Prospecting",
   "/visits": "Visit History",
   "/leaderboard": "Leaderboard",

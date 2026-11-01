@@ -20,7 +20,13 @@ export type Permission =
   | "admin.settings"
   | "performance.view.own"
   | "performance.view.team"
-  | "target.manage";
+  | "target.manage"
+  /** Plan and run one's own day on Today's Route. */
+  | "route.plan"
+  /** Report one's own live position from the field. */
+  | "position.report"
+  /** Watch every rep's live position on the live map. */
+  | "position.view.team";
 
 export type AppRoleName = "REP" | "MANAGER" | "ADMIN";
 
@@ -34,6 +40,8 @@ const ROLE_PERMISSIONS: Record<AppRoleName, readonly Permission[]> = {
     "visit.view.own",
     "verification.review",
     "performance.view.own",
+    "route.plan",
+    "position.report",
   ],
   MANAGER: [
     "prospect.run",
@@ -50,6 +58,9 @@ const ROLE_PERMISSIONS: Record<AppRoleName, readonly Permission[]> = {
     "performance.view.own",
     "performance.view.team",
     "target.manage",
+    "route.plan",
+    "position.report",
+    "position.view.team",
   ],
   ADMIN: [
     "prospect.run",
@@ -69,6 +80,7 @@ const ROLE_PERMISSIONS: Record<AppRoleName, readonly Permission[]> = {
     "performance.view.own",
     "performance.view.team",
     "target.manage",
+    "position.view.team",
   ],
 };
 

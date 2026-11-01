@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { TodayRoute } from "@/components/today/TodayRoute";
 import { getOptionalSessionUser } from "@/lib/session";
 import { hasPermission } from "@/domain/auth/permissions";
@@ -5,11 +6,16 @@ import { loadRepDashboard, type RepDashboardDto } from "@/lib/repDashboard";
 
 export default async function HomePage({ searchParams }: { searchParams: Promise<{ plan?: string }> }) {
   const params = await searchParams;
+  const user = await getOptionalSessionUser();
+  // Today's Route belongs to the field. Admins land on the live map instead and
+  // cannot open the planner by URL.
+  if (user && !hasPermission(user.role, "route.plan")) {
+    redirect(hasPermission(user.role, "position.view.team") ? "/live" : "/leaderboard");
+  }
   // Performance phase 3 — the rep's own day at a glance. Never blocks the map:
   // a failed load just hides the panel.
   let dashboard: RepDashboardDto | null = null;
   try {
-    const user = await getOptionalSessionUser();
     if (user && hasPermission(user.role, "performance.view.own")) dashboard = await loadRepDashboard(user);
   } catch (e) {
     console.warn("[today] dashboard unavailable:", e instanceof Error ? e.message : e);

@@ -4,36 +4,61 @@
     {
       "name": "nuvior-prime-dev",
       "runtimeExecutable": "sh",
-      "runtimeArgs": ["-c", "AUTH_URL=http://localhost:3100 npx next dev -p 3100"],
+      "runtimeArgs": [
+        "-c",
+        "AUTH_URL=http://localhost:3100 npx next dev -p 3100"
+      ],
       "port": 3100,
       "autoPort": false
     },
     {
       "name": "nuvior-prime-dev-3101",
       "runtimeExecutable": "sh",
-      "runtimeArgs": ["-c", "NEXT_DIST_DIR=.next-3101 AUTH_URL=http://localhost:3101 npx next dev -p 3101"],
+      "runtimeArgs": [
+        "-c",
+        "NEXT_DIST_DIR=.next-3101 AUTH_URL=http://localhost:3101 npx next dev -p 3101"
+      ],
       "port": 3101,
       "autoPort": false
     },
     {
       "name": "nuvior-prime-dev-3102",
       "runtimeExecutable": "sh",
-      "runtimeArgs": ["-c", "NEXT_DIST_DIR=.next-3102 AUTH_URL=http://localhost:3102 npx next dev -p 3102"],
+      "runtimeArgs": [
+        "-c",
+        "NEXT_DIST_DIR=.next-3102 AUTH_URL=http://localhost:3102 npx next dev -p 3102"
+      ],
       "port": 3102,
       "autoPort": false
     },
     {
       "name": "nuvior-prime-dev-3103",
       "runtimeExecutable": "sh",
-      "runtimeArgs": ["-c", "NEXT_DIST_DIR=.next-3103 AUTH_URL=http://localhost:3103 npx next dev -p 3103"],
+      "runtimeArgs": [
+        "-c",
+        "NEXT_DIST_DIR=.next-3103 AUTH_URL=http://localhost:3103 npx next dev -p 3103"
+      ],
       "port": 3103,
       "autoPort": false
     },
     {
       "name": "nuvior-prime-dev-3104",
       "runtimeExecutable": "sh",
-      "runtimeArgs": ["-c", "NEXT_DIST_DIR=.next-3104 AUTH_URL=http://localhost:3104 npx next dev -p 3104"],
+      "runtimeArgs": [
+        "-c",
+        "NEXT_DIST_DIR=.next-3104 AUTH_URL=http://localhost:3104 npx next dev -p 3104"
+      ],
       "port": 3104,
+      "autoPort": false
+    },
+    {
+      "name": "nuvior-prime-dev-3105",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "NEXT_DIST_DIR=.next-3105 AUTH_URL=http://localhost:3105 npx next dev -p 3105"
+      ],
+      "port": 3105,
       "autoPort": false
     }
   ]
