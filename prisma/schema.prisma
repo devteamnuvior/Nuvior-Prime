@@ -635,3 +635,19 @@ model CanonicalCrmAccount {
   @@index([postalCode])
   @@index([doNotContact])
 }
+
+/// Public contact/identity profile of a clinic, researched by the clinic
+/// profile provider (Claude web search). One row per clinic; refreshed on demand.
+model ClinicWebProfile {
+  id            String   @id @default(cuid())
+  clinicId      String   @unique
+  provider      String
+  model         String?
+  promptVersion String
+  profileJson   Json
+  researchedAt  DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([researchedAt])
+}

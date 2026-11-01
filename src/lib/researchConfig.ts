@@ -24,7 +24,7 @@ export function getResearchConfig(): ResearchConfig {
     cacheTtlSeconds: Number(process.env.AI_RESEARCH_CACHE_TTL_SECONDS ?? "86400") || 86400,
     staleAfterSeconds: Number(process.env.AI_RESEARCH_STALE_AFTER_SECONDS ?? "604800") || 604800,
     timeoutMs: Number(process.env.AI_RESEARCH_TIMEOUT_MS ?? "45000") || 45000,
-    model: process.env.CLAUDE_MODEL ?? "claude-sonnet-4-20250514",
+    model: process.env.CLAUDE_MODEL?.trim() || "claude-opus-5-5",
     hasAnthropicKey: Boolean(process.env.ANTHROPIC_API_KEY?.trim()),
   };
 }

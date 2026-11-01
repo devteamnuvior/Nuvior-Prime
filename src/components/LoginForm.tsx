@@ -1,7 +1,7 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 const DEV_USERS = [
@@ -11,13 +11,29 @@ const DEV_USERS = [
   { email: "admin@nuvior.local", label: "National Admin", password: "DevPass123!" },
 ];
 
+const SHOW_DEV_ACCOUNTS = process.env.NODE_ENV !== "production";
+const REMEMBER_KEY = "nuvior.login.email";
+
 export function LoginForm() {
   const params = useSearchParams();
   const callbackUrl = params.get("callbackUrl") || "/";
-  const [email, setEmail] = useState(DEV_USERS[0]!.email);
-  const [password, setPassword] = useState(DEV_USERS[0]!.password);
+  const [email, setEmail] = useState(SHOW_DEV_ACCOUNTS ? DEV_USERS[0]!.email : "");
+  const [password, setPassword] = useState(SHOW_DEV_ACCOUNTS ? DEV_USERS[0]!.password : "");
+  const [remember, setRemember] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+
+  // Restore a remembered email (client only, after hydration).
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(REMEMBER_KEY);
+      if (saved) setEmail(saved);
+    } catch {
+      /* storage unavailable */
+    }
+  }, []);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -34,84 +50,184 @@ export function LoginForm() {
       setError("Sign-in failed — check email/password or user status.");
       return;
     }
+    try {
+      if (remember) window.localStorage.setItem(REMEMBER_KEY, email);
+      else window.localStorage.removeItem(REMEMBER_KEY);
+    } catch {
+      /* storage unavailable */
+    }
     window.location.href = callbackUrl;
   }
 
   return (
-    <div className="mx-auto w-full max-w-sm">
-      <div className="mb-8 flex items-center gap-3">
-        <span
-          className="flex h-10 w-10 items-center justify-center rounded-lg bg-inkwell text-xl text-paper"
-          style={{ fontFamily: "var(--brand-serif)", fontStyle: "italic" }}
-        >
-          N
-        </span>
-        <div>
-          <div className="text-sm font-semibold tracking-[0.18em] text-ink uppercase">
-            Nuvior <span className="text-accent">Prime</span>
-          </div>
-          <div className="text-xs text-muted">Territory planning for field sales</div>
-        </div>
-      </div>
+    <div>
+      <h1 className="nv-login__title nv-rise" style={{ "--i": 0 } as React.CSSProperties}>
+        Welcome <em>back.</em>
+      </h1>
+      <p className="nv-login__lede nv-rise" style={{ "--i": 1 } as React.CSSProperties}>
+        Sign in with your NUVIOR credentials to open today&rsquo;s route and clinic intelligence.
+      </p>
 
-      <div className="rounded-xl border border-rule bg-panel p-7 shadow-card">
-        <h1 className="text-lg font-semibold tracking-tight text-ink">Sign in</h1>
-        <p className="mt-1 text-[13px] text-muted">Use your NUVIOR credentials to continue.</p>
-
-        <form className="mt-5 space-y-4" onSubmit={onSubmit}>
-          <label className="block">
-            <span className="mb-1.5 block text-xs font-medium text-ink">Email</span>
+      <form onSubmit={onSubmit} noValidate>
+        <div className="nv-fieldset nv-rise" style={{ "--i": 2 } as React.CSSProperties}>
+          <label className="nv-field">
+            <span className="nv-field__label">Email</span>
             <input
-              className="h-11 w-full rounded-lg border border-rule bg-paper px-3 text-sm text-ink"
+              className="nv-field__input"
+              type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="username"
+              placeholder="you@nuvior.ca"
+              required
             />
           </label>
-          <label className="block">
-            <span className="mb-1.5 block text-xs font-medium text-ink">Password</span>
+          <label className="nv-field">
+            <span className="nv-field__label">Password</span>
             <input
-              type="password"
-              className="h-11 w-full rounded-lg border border-rule bg-paper px-3 text-sm text-ink"
+              className="nv-field__input"
+              type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
+              placeholder="Your password"
+              required
+              style={{ paddingRight: 40 }}
             />
-          </label>
-          {error && (
-            <p className="rounded-lg bg-danger-tint px-3.5 py-2.5 text-[13px] text-danger">{error}</p>
-          )}
-          <button
-            type="submit"
-            disabled={pending}
-            className="h-11 w-full rounded-lg bg-accent text-[13px] font-semibold tracking-[0.08em] text-white uppercase transition-colors hover:bg-accent-hover disabled:opacity-60"
-          >
-            {pending ? "Signing in…" : "Sign in"}
-          </button>
-        </form>
-      </div>
-
-      <details className="mt-4">
-        <summary className="cursor-pointer text-xs font-medium text-muted hover:text-ink">
-          Development accounts
-        </summary>
-        <div className="mt-2 space-y-1.5">
-          {DEV_USERS.map((u) => (
             <button
-              key={u.email}
               type="button"
-              className="block w-full rounded-lg border border-rule bg-panel px-3.5 py-2.5 text-left text-[13px] hover:bg-canvas"
-              onClick={() => {
-                setEmail(u.email);
-                setPassword(u.password);
-              }}
+              className="nv-field__eye"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-pressed={showPassword}
+              onClick={() => setShowPassword((v) => !v)}
             >
-              <span className="font-medium text-ink">{u.label}</span>
-              <span className="ml-2 text-xs text-muted">{u.email}</span>
+              {showPassword ? <EyeOffIcon /> : <EyeIcon />}
             </button>
-          ))}
+          </label>
         </div>
-      </details>
+
+        <div className="nv-login__row nv-rise" style={{ "--i": 3 } as React.CSSProperties}>
+          <label className="nv-check">
+            <input
+              type="checkbox"
+              checked={remember}
+              onChange={(e) => setRemember(e.target.checked)}
+            />
+            <span className="nv-check__box" aria-hidden="true">
+              <svg viewBox="0 0 12 12">
+                <path d="M2 6.2 L4.8 9 L10 3.4" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+            Remember me
+          </label>
+          <button type="button" className="nv-link" onClick={() => setShowHelp((v) => !v)}>
+            Forgot password?
+          </button>
+        </div>
+
+        {showHelp && (
+          <p className="nv-login__hint" role="status">
+            Passwords are managed by your NUVIOR administrator. Ask your regional manager to
+            reset it, then sign in with the new password.
+          </p>
+        )}
+
+        {error && (
+          <p className="nv-login__error" role="alert">
+            {error}
+          </p>
+        )}
+
+        <button
+          type="submit"
+          disabled={pending}
+          className="nv-btn nv-rise"
+          style={{ "--i": 4 } as React.CSSProperties}
+        >
+          <span className="nv-btn__inner">
+            {pending ? (
+              <>
+                <span className="nv-spinner" aria-hidden="true" />
+                Signing in…
+              </>
+            ) : (
+              <>
+                Sign in
+                <svg className="nv-btn__arrow" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path
+                    d="M3 8h10M9 4l4 4-4 4"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </>
+            )}
+          </span>
+        </button>
+      </form>
+
+      {SHOW_DEV_ACCOUNTS && (
+        <details className="nv-dev nv-rise" style={{ "--i": 5 } as React.CSSProperties}>
+          <summary>
+            <svg className="nv-dev__chev" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+              <path
+                d="M2.5 4.5 L6 8 L9.5 4.5"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Development accounts
+          </summary>
+          <div className="nv-dev__grid">
+            {DEV_USERS.map((u, i) => (
+              <button
+                key={u.email}
+                type="button"
+                className={`nv-dev__user${email === u.email ? " nv-dev__user--active" : ""}`}
+                style={{ animationDelay: `${i * 50}ms` }}
+                onClick={() => {
+                  setEmail(u.email);
+                  setPassword(u.password);
+                  setError(null);
+                }}
+              >
+                <span className="nv-dev__name">{u.label}</span>
+                <span className="nv-dev__email">{u.email}</span>
+              </button>
+            ))}
+          </div>
+        </details>
+      )}
     </div>
+  );
+}
+
+function EyeIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M2.5 12s3.5-6.5 9.5-6.5S21.5 12 21.5 12s-3.5 6.5-9.5 6.5S2.5 12 2.5 12Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+      />
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.6" />
+    </svg>
+  );
+}
+
+function EyeOffIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M3 3l18 18M10.6 6.3A9.7 9.7 0 0 1 12 6.2c6 0 9.5 5.8 9.5 5.8a16 16 0 0 1-3.2 3.7M6.5 8.4A15.6 15.6 0 0 0 2.5 12s3.5 5.8 9.5 5.8c1.4 0 2.6-.3 3.7-.8M9.9 9.9a3 3 0 0 0 4.2 4.2"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }

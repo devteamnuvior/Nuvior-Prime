@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { revalidatePath } from "next/cache";
 import { runProspectSearch, type ProspectSearchSuccess } from "@/lib/prospecting";
 import { parseWorkingArea } from "@/domain/geo/workingArea";
 import { CANADIAN_PROVINCES } from "@/domain/scopeOfPractice";
@@ -18,7 +19,7 @@ import {
 } from "@/lib/authz";
 import { writeAuditEvent } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
-import type { AppRoleName } from "@/domain/auth/permissions";
+import type { UserActionResult } from "@/domain/auth/userAdmin";
 import { hash } from "bcryptjs";
 import type { ClinicIntelligenceDto } from "@/domain/intelligence/clinicIntelligenceDto";
 import {
@@ -27,6 +28,13 @@ import {
 } from "@/lib/clinicIntelligenceService";
 import type { EnrichmentResult } from "@/domain/enrichment/types";
 import type { CrmOverlaySnapshot } from "@/lib/prospecting";
+import {
+  getCachedClinicWebProfile,
+  runClinicWebProfileResearch,
+  type ClinicWebProfileDto,
+} from "@/domain/clinicProfile/runClinicProfile";
+import { getClinicProfileProvider } from "@/providers/clinicProfile";
+import { getClinicProfileConfig } from "@/lib/clinicProfileConfig";
 
 const provinceCodes = CANADIAN_PROVINCES.map((p) => p.code) as [string, ...string[]];
 
@@ -354,19 +362,106 @@ export async function assignAccountAction(input: {
   }
 }
 
-export async function adminUpdateUserAction(input: {
-  userId: string;
-  role?: AppRoleName;
-  status?: "ACTIVE" | "DISABLED";
-  provinces?: string[];
-  displayName?: string;
-}): Promise<{ ok: boolean; message: string }> {
+// ---------------------------------------------------------------------------
+// Admin · user management
+// ---------------------------------------------------------------------------
+
+const appRoleSchema = z.enum(["REP", "MANAGER", "ADMIN"]);
+const userStatusSchema = z.enum(["ACTIVE", "DISABLED"]);
+
+const provincesSchema = z
+  .array(z.string().trim().toUpperCase())
+  .transform((codes) => Array.from(new Set(codes.filter(Boolean))))
+  .refine(
+    (codes) => codes.every((c) => c === "*" || provinceCodes.includes(c)),
+    { message: "Contains an unknown province code" },
+  )
+  .refine((codes) => !(codes.includes("*") && codes.length > 1), {
+    message: 'Use either "*" or a list of provinces, not both',
+  });
+
+const createUserSchema = z.object({
+  email: z.string().trim().toLowerCase().email("Enter a valid email address"),
+  displayName: z
+    .string()
+    .trim()
+    .min(2, "Name must be at least 2 characters")
+    .max(80, "Name is too long"),
+  role: appRoleSchema,
+  provinces: provincesSchema.refine((codes) => codes.length > 0, {
+    message: "Pick at least one province",
+  }),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .max(128, "Password is too long"),
+});
+
+const updateUserSchema = z.object({
+  userId: z.string().min(1),
+  role: appRoleSchema.optional(),
+  status: userStatusSchema.optional(),
+  provinces: provincesSchema.optional(),
+  displayName: z.string().trim().min(2).max(80).optional(),
+});
+
+function zodFieldErrors(error: z.ZodError): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const issue of error.issues) {
+    const key = String(issue.path[0] ?? "form");
+    if (!out[key]) out[key] = issue.message;
+  }
+  return out;
+}
+
+function isUniqueViolation(e: unknown): boolean {
+  return (
+    typeof e === "object" &&
+    e !== null &&
+    "code" in e &&
+    (e as { code?: string }).code === "P2002"
+  );
+}
+
+/** Refuse changes that would leave the system without any active administrator. */
+async function assertAnotherActiveAdmin(excludingUserId: string): Promise<void> {
+  const remaining = await prisma.user.count({
+    where: { role: "ADMIN", status: "ACTIVE", id: { not: excludingUserId } },
+  });
+  if (remaining === 0) {
+    throw new Error("At least one active administrator must remain");
+  }
+}
+
+export async function adminUpdateUserAction(
+  rawInput: z.input<typeof updateUserSchema>,
+): Promise<UserActionResult> {
   try {
     const actor = await requireSessionUser();
     requirePermission(actor, "user.manage");
 
+    const parsed = updateUserSchema.safeParse(rawInput);
+    if (!parsed.success) {
+      return { ok: false, message: "Check the highlighted fields", fieldErrors: zodFieldErrors(parsed.error) };
+    }
+    const input = parsed.data;
+
     const before = await prisma.user.findUnique({ where: { id: input.userId } });
     if (!before) return { ok: false, message: "User not found" };
+
+    const changesRoleOrStatus =
+      (input.role !== undefined && input.role !== before.role) ||
+      (input.status !== undefined && input.status !== before.status);
+
+    if (before.id === actor.id && changesRoleOrStatus) {
+      return { ok: false, message: "You cannot change your own role or status" };
+    }
+
+    const losesAdmin =
+      before.role === "ADMIN" &&
+      before.status === "ACTIVE" &&
+      ((input.role !== undefined && input.role !== "ADMIN") || input.status === "DISABLED");
+    if (losesAdmin) await assertAnotherActiveAdmin(before.id);
 
     const updated = await prisma.user.update({
       where: { id: input.userId },
@@ -387,36 +482,41 @@ export async function adminUpdateUserAction(input: {
         role: before.role,
         status: before.status,
         provinces: before.provinces,
+        displayName: before.displayName,
       },
       afterState: {
         role: updated.role,
         status: updated.status,
         provinces: updated.provinces,
+        displayName: updated.displayName,
       },
     });
 
-    return { ok: true, message: `Updated ${updated.email}` };
+    revalidatePath("/admin/users");
+    return { ok: true, message: `Updated ${updated.displayName}` };
   } catch (e) {
     if (e instanceof AuthError) return { ok: false, message: `${e.code}: ${e.message}` };
     return { ok: false, message: e instanceof Error ? e.message : "Failed" };
   }
 }
 
-export async function adminCreateUserAction(input: {
-  email: string;
-  displayName: string;
-  role: AppRoleName;
-  provinces: string[];
-  password: string;
-}): Promise<{ ok: boolean; message: string }> {
+export async function adminCreateUserAction(
+  rawInput: z.input<typeof createUserSchema>,
+): Promise<UserActionResult> {
   try {
     const actor = await requireSessionUser();
     requirePermission(actor, "user.manage");
 
+    const parsed = createUserSchema.safeParse(rawInput);
+    if (!parsed.success) {
+      return { ok: false, message: "Check the highlighted fields", fieldErrors: zodFieldErrors(parsed.error) };
+    }
+    const input = parsed.data;
+
     const passwordHash = await hash(input.password, 10);
     const created = await prisma.user.create({
       data: {
-        email: input.email.toLowerCase(),
+        email: input.email,
         displayName: input.displayName,
         role: input.role,
         provinces: input.provinces,
@@ -433,9 +533,17 @@ export async function adminCreateUserAction(input: {
       afterState: { email: created.email, role: created.role, provinces: created.provinces },
     });
 
-    return { ok: true, message: `Created ${created.email}` };
+    revalidatePath("/admin/users");
+    return { ok: true, message: `${created.displayName} was added` };
   } catch (e) {
     if (e instanceof AuthError) return { ok: false, message: `${e.code}: ${e.message}` };
+    if (isUniqueViolation(e)) {
+      return {
+        ok: false,
+        message: "Check the highlighted fields",
+        fieldErrors: { email: "A user with this email already exists" },
+      };
+    }
     return { ok: false, message: e instanceof Error ? e.message : "Failed" };
   }
 }
@@ -579,6 +687,94 @@ export async function runClinicResearchAction(input: {
       return { ok: false, error: result.error ?? "Research failed", dto: result.dto };
     }
     return { ok: true, dto: result.dto };
+  } catch (e) {
+    if (e instanceof AuthError) return { ok: false, error: `${e.code}: ${e.message}` };
+    return { ok: false, error: e instanceof Error ? e.message : "Unexpected error" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Clinic contact research (Claude web search) — public contact/identity facts
+// ---------------------------------------------------------------------------
+
+const clinicProfileInputSchema = z.object({
+  clinicId: z.string().min(1),
+  businessName: z.string().min(1),
+  provinceCode: z.enum(provinceCodes),
+  streetAddress: z.string().optional().nullable(),
+  city: z.string().optional().nullable(),
+  postalCode: z.string().optional().nullable(),
+  categoryLabel: z.string().optional().nullable(),
+  knownWebsite: z.string().optional().nullable(),
+  knownPhone: z.string().optional().nullable(),
+});
+
+export type ClinicProfileActionInput = z.infer<typeof clinicProfileInputSchema>;
+
+/** Cached profile only — never spends an API call. */
+export async function getClinicWebProfileAction(input: {
+  clinicId: string;
+  provinceCode: string;
+}): Promise<{ ok: true; dto: ClinicWebProfileDto } | { ok: false; error: string }> {
+  try {
+    const user = await requireSessionUser();
+    requirePermission(user, "brief.generate");
+    requireProvinceAccess(user, input.provinceCode);
+    await requireAccountAccess(user, { placeId: input.clinicId, provinceCode: input.provinceCode });
+    const dto = await getCachedClinicWebProfile(input.clinicId, getClinicProfileConfig().cacheTtlSeconds);
+    return { ok: true, dto };
+  } catch (e) {
+    if (e instanceof AuthError) return { ok: false, error: `${e.code}: ${e.message}` };
+    return { ok: false, error: e instanceof Error ? e.message : "Unexpected error" };
+  }
+}
+
+/** Runs Claude web research for one clinic and persists the result. */
+export async function runClinicWebProfileAction(
+  input: ClinicProfileActionInput,
+): Promise<{ ok: true; dto: ClinicWebProfileDto } | { ok: false; error: string; dto?: ClinicWebProfileDto }> {
+  try {
+    const user = await requireSessionUser();
+    requirePermission(user, "brief.generate");
+    requireProvinceAccess(user, input.provinceCode);
+    await requireAccountAccess(user, { placeId: input.clinicId, provinceCode: input.provinceCode });
+
+    const parsed = clinicProfileInputSchema.safeParse(input);
+    if (!parsed.success) {
+      return { ok: false, error: parsed.error.issues.map((i) => i.message).join("; ") };
+    }
+
+    const provider = getClinicProfileProvider();
+    const dto = await runClinicWebProfileResearch(provider, {
+      clinicId: parsed.data.clinicId,
+      businessName: parsed.data.businessName,
+      provinceCode: parsed.data.provinceCode,
+      streetAddress: parsed.data.streetAddress ?? null,
+      city: parsed.data.city ?? null,
+      postalCode: parsed.data.postalCode ?? null,
+      categoryLabel: parsed.data.categoryLabel ?? null,
+      knownWebsite: parsed.data.knownWebsite ?? null,
+      knownPhone: parsed.data.knownPhone ?? null,
+    });
+
+    await writeAuditEvent({
+      actor: user,
+      action: "brief.generate",
+      resourceType: "ClinicWebProfile",
+      resourceId: parsed.data.clinicId,
+      metadata: {
+        state: dto.state,
+        provider: dto.provider,
+        model: dto.model,
+        searchesUsed: dto.searchesUsed,
+        ok: dto.state === "READY",
+      },
+    });
+
+    if (dto.state !== "READY") {
+      return { ok: false, error: dto.failureMessage ?? "Clinic research failed", dto };
+    }
+    return { ok: true, dto };
   } catch (e) {
     if (e instanceof AuthError) return { ok: false, error: `${e.code}: ${e.message}` };
     return { ok: false, error: e instanceof Error ? e.message : "Unexpected error" };

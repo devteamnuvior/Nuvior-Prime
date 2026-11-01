@@ -3,7 +3,15 @@
 import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { APIProvider } from "@vis.gl/react-google-maps";
 import { useSession } from "next-auth/react";
-import { generateVisitListAction, getClinicIntelligenceAction, runClinicResearchAction, type ActionState } from "@/app/actions";
+import {
+  generateVisitListAction,
+  getClinicIntelligenceAction,
+  getClinicWebProfileAction,
+  runClinicResearchAction,
+  runClinicWebProfileAction,
+  type ActionState,
+} from "@/app/actions";
+import type { ClinicWebProfileDto } from "@/domain/clinicProfile/runClinicProfile";
 import { CANADIAN_PROVINCES } from "@/domain/scopeOfPractice";
 import { accessibleProvinces } from "@/domain/auth/permissions";
 import type { GeoPoint } from "@/domain/geo";
@@ -132,6 +140,10 @@ export function TodayRoute({
     Record<string, ClinicIntelligenceDto>
   >({});
   const [researchingId, setResearchingId] = useState<string | null>(null);
+  const [webProfileByAccountId, setWebProfileByAccountId] = useState<
+    Record<string, ClinicWebProfileDto>
+  >({});
+  const [profilingId, setProfilingId] = useState<string | null>(null);
   const sessionHydrated = useRef(false);
 
   const { data: session } = useSession();
@@ -425,6 +437,64 @@ export function TodayRoute({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId, data]);
 
+  // Claude web research: public contact/identity facts. Cached read on select;
+  // the provider only runs when the rep asks for it (it costs an API call).
+  async function loadWebProfile(accountId: string, run = false) {
+    if (!data) return;
+    const stop = data.routeByAccountId[accountId];
+    if (!stop) return;
+    const provinceCode = stop.provinceCode ?? province;
+    if (!run) {
+      const cached = await getClinicWebProfileAction({ clinicId: accountId, provinceCode });
+      if (cached.ok) {
+        setWebProfileByAccountId((prev) => ({ ...prev, [accountId]: cached.dto }));
+      }
+      return;
+    }
+    const enrichment = data.enrichmentByAccountId[accountId];
+    setProfilingId(accountId);
+    try {
+      const result = await runClinicWebProfileAction({
+        clinicId: accountId,
+        businessName: stop.businessName,
+        provinceCode,
+        streetAddress: stop.streetAddress,
+        city: stop.city,
+        postalCode: stop.postalCode,
+        categoryLabel: stop.categoryLabel,
+        knownWebsite: enrichment?.website ?? null,
+        knownPhone: null,
+      });
+      const dto = result.ok ? result.dto : result.dto;
+      if (dto) {
+        setWebProfileByAccountId((prev) => ({ ...prev, [accountId]: dto }));
+      } else if (!result.ok) {
+        setWebProfileByAccountId((prev) => ({
+          ...prev,
+          [accountId]: {
+            clinicId: accountId,
+            state: "FAILED",
+            profile: prev[accountId]?.profile ?? null,
+            provider: null,
+            model: null,
+            researchedAt: null,
+            failureMessage: result.error,
+            searchesUsed: null,
+          },
+        }));
+      }
+    } finally {
+      setProfilingId(null);
+    }
+  }
+
+  useEffect(() => {
+    if (!selectedId || !data) return;
+    if (webProfileByAccountId[selectedId]) return;
+    void loadWebProfile(selectedId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId, data]);
+
   const fallbackCenter = PROVINCE_CENTERS[province] ?? PROVINCE_CENTERS.ON!;
   const mode = resolveExperienceMode({
     placesProvider: serverProviders.placesProvider,
@@ -705,6 +775,9 @@ export function TodayRoute({
               isResearching={researchingId === selectedStop.accountId}
               onResearch={() => void loadIntelligence(selectedStop.accountId, true)}
               onRefreshResearch={() => void loadIntelligence(selectedStop.accountId, true)}
+              webProfile={selectedId ? webProfileByAccountId[selectedId] : null}
+              isProfiling={profilingId === selectedStop.accountId}
+              onProfile={() => void loadWebProfile(selectedStop.accountId, true)}
               onClose={() => setSelectedId(null)}
               onViewBrief={() => setBriefId(selectedStop.accountId)}
             />

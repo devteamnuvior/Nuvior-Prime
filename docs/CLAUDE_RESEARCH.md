@@ -82,7 +82,7 @@ Cache hit when page hashes + prompt version unchanged. Recompute when evidence c
 ```bash
 AI_RESEARCH_PROVIDER=mock
 ANTHROPIC_API_KEY=          # server-side only
-CLAUDE_MODEL=claude-sonnet-4-20250514
+CLAUDE_MODEL=claude-opus-5-5          # default; shared with clinic contact research
 AI_RESEARCH_TIMEOUT_MS=45000
 AI_RESEARCH_CACHE_TTL_SECONDS=86400
 ```

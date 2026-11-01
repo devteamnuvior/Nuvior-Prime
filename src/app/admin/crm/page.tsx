@@ -1,4 +1,5 @@
 import { AppShell } from "@/components/AppShell";
+import { AdminTabs } from "@/components/admin/AdminTabs";
 import { requireSessionUser } from "@/lib/session";
 import { requirePermission, AuthError } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
@@ -36,6 +37,7 @@ export default async function AdminCrmPage() {
 
   return (
     <AppShell title="CRM Diagnostics">
+      <AdminTabs />
       <p className="mb-6 max-w-2xl text-sm text-muted">
         Manager/admin view of CRM source health. Raw payloads are not shown. Reps do not see this
         page.

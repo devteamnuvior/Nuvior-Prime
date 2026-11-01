@@ -1,4 +1,5 @@
 import { AppShell } from "@/components/AppShell";
+import { AdminTabs } from "@/components/admin/AdminTabs";
 import { requireSessionUser } from "@/lib/session";
 import { AuthError, requirePermission } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
@@ -30,6 +31,7 @@ export default async function AdminAuditPage({
 
   return (
     <AppShell title="Audit Log">
+      <AdminTabs />
       <p className="mb-4 text-sm text-muted">
         Append-only. No edit/delete in UI. Secrets are never stored here.
       </p>

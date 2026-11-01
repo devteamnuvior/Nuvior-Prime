@@ -81,6 +81,6 @@ npm run validate:auth && npm run validate:crm && npm run validate:routing && npm
 - [`docs/MAP_FIRST_PLANNING.md`](docs/MAP_FIRST_PLANNING.md)
 - [`docs/CRM_INTEGRATION.md`](docs/CRM_INTEGRATION.md) · [`docs/AUTHENTICATION.md`](docs/AUTHENTICATION.md)
 - [`docs/ODOO_PRODUCT_CATALOG.md`](docs/ODOO_PRODUCT_CATALOG.md) · [`docs/PRODUCT_GAP_AUDIT.md`](docs/PRODUCT_GAP_AUDIT.md)
-- [`docs/CLAUDE_RESEARCH.md`](docs/CLAUDE_RESEARCH.md) · [`docs/CLINIC_CAPABILITY_PROFILE.md`](docs/CLINIC_CAPABILITY_PROFILE.md) · [`docs/PRODUCT_GAP_ENGINE.md`](docs/PRODUCT_GAP_ENGINE.md) · [`docs/PRODUCT_OPPORTUNITY_SCORING.md`](docs/PRODUCT_OPPORTUNITY_SCORING.md)
+- [`docs/CLINIC_CONTACT_RESEARCH.md`](docs/CLINIC_CONTACT_RESEARCH.md) · [`docs/CLAUDE_RESEARCH.md`](docs/CLAUDE_RESEARCH.md) · [`docs/CLINIC_CAPABILITY_PROFILE.md`](docs/CLINIC_CAPABILITY_PROFILE.md) · [`docs/PRODUCT_GAP_ENGINE.md`](docs/PRODUCT_GAP_ENGINE.md) · [`docs/PRODUCT_OPPORTUNITY_SCORING.md`](docs/PRODUCT_OPPORTUNITY_SCORING.md)
 
 Mesoestetic is never a lead product. DNC cannot be overridden by any role. Routing never overrides qualification.

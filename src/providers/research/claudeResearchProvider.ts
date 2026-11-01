@@ -1,24 +1,26 @@
+import Anthropic from "@anthropic-ai/sdk";
 import type { ClinicResearchContext } from "@/domain/research/clinicResearchContext";
 import { buildResearchSystemPrompt, buildResearchUserPrompt } from "@/domain/research/prompts";
 import { validateResearchExtraction } from "@/domain/research/schemas";
+import { DEFAULT_CLAUDE_MODEL } from "@/lib/clinicProfileConfig";
 import type { ResearchProvider, ResearchExtractionResult } from "./types";
 
 /**
- * Claude Messages API — server-side only.
- * Uses public Anthropic API contract; fails when ANTHROPIC_API_KEY is missing.
+ * Claude Messages API via the official SDK — server-side only.
+ * Fails (never falls back) when ANTHROPIC_API_KEY is missing.
  */
 export class ClaudeResearchProvider implements ResearchProvider {
   readonly name = "claude";
   private apiKey: string;
   private model: string;
   private timeoutMs: number;
-  private baseUrl: string;
+  private baseUrl: string | undefined;
 
   constructor(opts?: { apiKey?: string; model?: string; timeoutMs?: number; baseUrl?: string }) {
     this.apiKey = opts?.apiKey ?? process.env.ANTHROPIC_API_KEY ?? "";
-    this.model = opts?.model ?? process.env.CLAUDE_MODEL ?? "claude-sonnet-4-20250514";
+    this.model = opts?.model ?? process.env.CLAUDE_MODEL?.trim() ?? DEFAULT_CLAUDE_MODEL;
     this.timeoutMs = opts?.timeoutMs ?? Number(process.env.AI_RESEARCH_TIMEOUT_MS ?? 45000);
-    this.baseUrl = opts?.baseUrl ?? process.env.ANTHROPIC_BASE_URL ?? "https://api.anthropic.com/v1";
+    this.baseUrl = opts?.baseUrl ?? process.env.ANTHROPIC_BASE_URL ?? undefined;
   }
 
   isEnabled(): boolean {
@@ -41,47 +43,37 @@ export class ClaudeResearchProvider implements ResearchProvider {
     }
 
     const started = Date.now();
-    const system = buildResearchSystemPrompt();
-    const user = buildResearchUserPrompt(context);
-
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+    const client = new Anthropic({
+      apiKey: this.apiKey,
+      timeout: this.timeoutMs,
+      maxRetries: 2,
+      ...(this.baseUrl ? { baseURL: this.baseUrl } : {}),
+    });
 
     try {
-      const res = await fetch(`${this.baseUrl}/messages`, {
-        method: "POST",
-        headers: {
-          "x-api-key": this.apiKey,
-          "anthropic-version": "2023-06-01",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: this.model,
-          max_tokens: 4096,
-          temperature: 0,
-          system,
-          messages: [{ role: "user", content: user }],
-        }),
-        signal: controller.signal,
+      const response = await client.beta.messages.create({
+        model: this.model,
+        max_tokens: 16000,
+        betas: ["server-side-fallback-2026-07-01"],
+        fallbacks: "default",
+        system: buildResearchSystemPrompt(),
+        output_config: { effort: "medium" },
+        messages: [{ role: "user", content: buildResearchUserPrompt(context) }],
       });
 
-      if (!res.ok) {
-        const body = await res.text();
+      if (response.stop_reason === "refusal") {
         return {
           ok: false,
           provider: this.name,
-          error: `Anthropic HTTP ${res.status}: ${body.slice(0, 200)}`,
+          error: `Claude declined this extraction (${response.stop_details?.category ?? "unspecified"})`,
           cacheHit: false,
         };
       }
 
-      const data = (await res.json()) as {
-        content?: { type: string; text?: string }[];
-      };
-      const rawText =
-        data.content?.find((c) => c.type === "text")?.text ??
-        data.content?.[0]?.text ??
-        "";
+      const rawText = response.content
+        .filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === "text")
+        .map((b) => b.text)
+        .join("");
 
       let parsed: unknown;
       try {
@@ -118,15 +110,13 @@ export class ClaudeResearchProvider implements ResearchProvider {
         latencyMs: Date.now() - started,
       };
     } catch (e) {
-      const msg =
-        e instanceof Error && e.name === "AbortError"
-          ? `Research timed out after ${this.timeoutMs}ms`
-          : e instanceof Error
-            ? e.message
-            : "Claude request failed";
+      let msg: string;
+      if (e instanceof Anthropic.AuthenticationError) msg = "Anthropic API key was rejected";
+      else if (e instanceof Anthropic.RateLimitError) msg = "Anthropic rate limit reached — try again shortly";
+      else if (e instanceof Anthropic.APIError) msg = `Anthropic API error ${e.status ?? ""}: ${e.message}`;
+      else if (e instanceof Anthropic.APIConnectionTimeoutError) msg = `Research timed out after ${this.timeoutMs}ms`;
+      else msg = e instanceof Error ? e.message : "Claude request failed";
       return { ok: false, provider: this.name, error: msg, cacheHit: false };
-    } finally {
-      clearTimeout(timer);
     }
   }
 }

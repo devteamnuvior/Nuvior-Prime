@@ -9,7 +9,9 @@ import { VisitRecordForm } from "@/components/VisitRecordForm";
 import { clock12 } from "@/lib/format";
 import { Badge } from "./Itinerary";
 import { ClinicIntelligenceSection } from "@/components/intelligence/ClinicIntelligenceSection";
+import { ClinicWebProfileSection } from "@/components/intelligence/ClinicWebProfileSection";
 import type { ClinicIntelligenceDto } from "@/domain/intelligence/clinicIntelligenceDto";
+import type { ClinicWebProfileDto } from "@/domain/clinicProfile/runClinicProfile";
 
 const SWIPE_CLOSE_PX = 90;
 
@@ -23,6 +25,9 @@ export function ClinicDrawer({
   isResearching = false,
   onResearch,
   onRefreshResearch,
+  webProfile,
+  isProfiling = false,
+  onProfile,
   onClose,
   onViewBrief,
 }: {
@@ -37,6 +42,10 @@ export function ClinicDrawer({
   isResearching?: boolean;
   onResearch?: () => void;
   onRefreshResearch?: () => void;
+  /** Claude web research: public contact/identity facts for this clinic. */
+  webProfile?: ClinicWebProfileDto | null;
+  isProfiling?: boolean;
+  onProfile?: () => void;
   onClose: () => void;
   onViewBrief: () => void;
 }) {
@@ -212,6 +221,12 @@ export function ClinicDrawer({
           isResearching={isResearching}
           onResearch={onResearch ?? (() => {})}
           onRefresh={onRefreshResearch}
+        />
+
+        <ClinicWebProfileSection
+          dto={webProfile ?? null}
+          isRunning={isProfiling}
+          onRun={onProfile ?? (() => {})}
         />
 
         <div className="mt-4 flex gap-2">
