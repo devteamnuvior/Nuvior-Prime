@@ -7,6 +7,13 @@ declare module "@mui/material/styles" {
     /** Inverse surface: monogram, selected marker, tooltips. */
     inverse: string;
   }
+  interface PaletteColor {
+    /** Low-contrast wash for badges, selected states and notes. */
+    tint: string;
+  }
+  interface SimplePaletteColorOptions {
+    tint?: string;
+  }
   interface TypeText {
     /** Tertiary text, placeholders, eyebrows. */
     faint: string;

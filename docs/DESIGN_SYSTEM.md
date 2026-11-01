@@ -18,12 +18,22 @@ colour. The route and the day are the product; chrome stays quiet.
 - **Framework:** Material UI v9 (`@mui/material`) with Emotion, MUI X DataGrid (community),
   `@mui/icons-material` (Outlined set), `notistack` for toasts, `react-hook-form` + `zod` for
   forms, `nextjs-toploader` for the route progress bar.
+- **No Tailwind.** Tailwind and `@tailwindcss/postcss` are uninstalled and there is no
+  `postcss.config.mjs`. Every component — including the Today route workspace, the clinic drawer,
+  the pre-visit brief and the diagnostics panels — is MUI components styled with `sx`. No
+  `className` carries utility classes; the only class names left are the plain-CSS map-marker
+  classes (`.nv-pin*`, `.nv-vertex*`), the shared keyframe helpers (`.nv-fade-*`, `.nv-drawer-in`)
+  and `.nv-scroll`, all in `src/app/globals.css`.
 - **Single source of truth:** every colour, radius, shadow, duration and font comes from
   `src/theme/tokens.ts` through the MUI theme. Components read `theme` / `sx` tokens
-  (`primary.main`, `background.sunken`, `text.faint`, `divider`, `theme.shadows[1..3]`) and never
-  hardcode values. The theme emits CSS variables prefixed `--nv-` (e.g.
-  `--nv-palette-primary-main`); `src/app/globals.css` only aliases the v1 names onto them for the
-  Tailwind-based map workspace (`src/components/today/*`), which is unchanged in v2.
+  (`primary.main`, `primary.tint`, `background.sunken`, `text.faint`, `divider`,
+  `theme.shadows[1..3]`) and never hardcode values. Each palette colour carries a `tint` (the quiet
+  wash behind badges, selected cards and notes — the v1 accent/signal/danger tints). The theme emits
+  CSS variables prefixed `--nv-` (e.g. `--nv-palette-primary-main`, `--nv-palette-warning-tint`);
+  `src/app/globals.css` holds only the font-stack variables that bridge `next/font`, the map-marker
+  CSS the map SDKs render outside React, Leaflet overrides, keyframes and thin scrollbars. Map SDK
+  overlays (Google polylines/polygons, Leaflet paths) take literal colours, so they import the
+  primitive ramps from `tokens.ts` (`teal[600]`, `amber[600]`) rather than hardcoding hex.
 - **Light mode only.** There is no dark scheme and no theme switcher; never add
   `theme.applyStyles("dark")` or `.dark &` styles.
 - **No custom CSS.** Styling goes through MUI components, `sx` and the theme. The only
@@ -63,6 +73,11 @@ colour. The route and the day are the product; chrome stays quiet.
 | `EmptyState` | `components/feedback/EmptyState.tsx` | Token-coloured illustration, title, hint, action. |
 | `ConfirmDialog` | `components/feedback/ConfirmDialog.tsx` | Destructive confirmations. |
 | `SideDrawer` | `components/feedback/SideDrawer.tsx` | Right panel with header / scroll body / sticky footer. |
+| `Disclosure` | `components/feedback/Disclosure.tsx` | Chevron toggle + `Collapse`; `inline` text button or full-width `row` with trailing count. Content unmounts while closed. |
+| `DotList`, `PlainList` | `components/feedback/DotList.tsx` | Quiet bulleted list with a 4px primary dot; marker-less list. |
+| `Badge` | `components/today/Itinerary.tsx` | 20px, 4px-radius chip for fit / lead product / revisit / verify (tones: accent, signal, neutral, outline, danger). |
+| `Segmented` | `components/today/Segmented.tsx` | Equal-width `ToggleButtonGroup` (travel reach, minimum fit); selected cell primary-filled. |
+| `MapControls`, `MapCaption`, `MapBadge` | `components/today/mapChrome.tsx` | Zoom / fit / centre / external stack, schematic honesty pill, non-production renderer badge; `MAP_Z` stacking constants. |
 | `toast` | `components/feedback/toast.ts` | `toast.success/error/info/warning/result()` via notistack. |
 | `FormTextField`, `FormSelect`, `FormCheckbox`, `FormSwitch` | `components/form/fields.tsx` | react-hook-form bindings; errors render as helper text under the field. |
 
@@ -72,8 +87,13 @@ colour. The route and the day are the product; chrome stays quiet.
 
 ### 1.1 Color tokens
 
-Defined as CSS custom properties and mapped into Tailwind v4 via `@theme inline`
-(`bg-paper`, `text-ink`, `border-rule`, `bg-accent-tint`, …).
+Historical v1 names. In v2 each maps to a palette token in `src/theme/tokens.ts`
+(`--paper` → `background.default`, `--canvas` → `background.sunken`, `--panel` →
+`background.paper`, `--ink-surface` → `background.inverse`, `--ink/--muted/--faint` →
+`text.primary/secondary/faint`, `--rule` → `divider`, `--accent` → `primary.main`,
+`--accent-tint` → `primary.tint`, `--signal` → `warning.main`, `--signal-tint` → `warning.tint`,
+`--danger` → `error.main`, `--danger-tint` → `error.tint`). The CSS custom properties themselves no
+longer exist.
 
 | Token | Value | Usage |
 | --- | --- | --- |
@@ -111,7 +131,8 @@ tracking `0.16em`, `--faint`; metrics 13px with 600 value + 400 muted label.
 
 ### 1.3 Spacing, radius, elevation
 
-- Spacing: Tailwind 4px grid. Card padding 14–20px; panel gutters 16px (mobile) / 24px (desktop).
+- Spacing: 4px grid (`theme.spacing(1)`; `sx` numbers are 4px multiples). Card padding 14–20px;
+  panel gutters 16px (mobile) / 24px (desktop).
 - Radius: controls & badges 6–8px (`rounded-md/lg`), floating panels 12px (`rounded-xl`),
   mobile sheets 16px top (`rounded-t-2xl`). No oversized pill cards.
 - Elevation: `--shadow-card` (subtle, resting cards), `--shadow-float` (floating panels over the
@@ -119,36 +140,41 @@ tracking `0.16em`, `--faint`; metrics 13px with 600 value + 400 muted label.
 
 ### 1.4 Controls
 
-- Inputs/selects: height 40px (`h-10`), `rounded-lg border-rule bg-paper`, 13–14px text.
-- Primary button: `bg-accent` white text, 600 weight; hero CTA ("Build today's route") is 48px
+- Inputs/selects: MUI `TextField` size small (40px), 8px radius, `divider` border, paper fill.
+- Primary button: `Button variant="contained"`, 600 weight; hero CTA ("Build My Day") is 48px
   tall, uppercase, letterspaced.
-- Secondary button: `border-rule bg-panel`, hover `bg-canvas`.
-- Segmented control (min fit): 5 cells, 40px tall, selected cell `bg-accent text-white`.
+- Secondary button: `Button variant="outlined"` (`divider` border, paper fill, sunken hover).
+- Segmented control (travel reach, min fit): `Segmented` — equal cells, 40–44px tall, selected
+  cell `primary.main` with contrast text.
 - Touch targets ≥ 40px everywhere; ≥ 44px for field-critical actions (drawer CTAs are 44px).
 
 ### 1.5 Badges
 
-`Badge` (in `src/components/today/Itinerary.tsx`): 11px medium, 6px/2px padding, 4px radius.
+`Badge` (in `src/components/today/Itinerary.tsx`): MUI `Chip`, 20px tall, 11px medium, 4px radius.
 
 | Tone | Style | Meaning |
 | --- | --- | --- |
-| accent | accent-tint / accent | Fit score, VERIFIED |
-| neutral | canvas / ink | Lead product |
-| signal | signal-tint / signal | Revisit, opening warnings, VERIFY |
-| outline | rule border / muted | Unknown hours, low-emphasis flags |
-| danger | danger-tint / danger | DNC-class information |
+| accent | `primary.tint` / `primary.main` | Fit score |
+| neutral | `background.sunken` / `text.primary` | Lead product |
+| signal | `warning.tint` / `warning.main` | Revisit, opening warnings |
+| outline | `divider` border / `text.secondary` | Unknown hours, low-emphasis flags |
+| danger | `error.tint` / `error.main` | DNC-class information |
 
-Provenance chips (VERIFIED / INTERNAL / DERIVED / VERIFY) are 10px uppercase micro-labels —
-visually subtle, conclusion first; full evidence lives behind the drawer's "Details" disclosure.
+Provenance chips (VERIFIED / VERIFY) are `StatusChip` with `uppercase` and no dot — 10px
+uppercase micro-labels, visually subtle, conclusion first; full evidence lives behind the drawer's
+"Details" disclosure.
 
 ### 1.6 Route markers (`.nv-pin` in globals.css)
 
-- Stop: 28px circle, `--accent`, white 2px ring, white stop number — matches itinerary numbers.
-- Revisit stop: same, `--signal`.
-- Opening warning: 10px `--signal` badge at top-right (not an extra ring).
+Plain CSS reading the theme variables directly (`var(--nv-palette-primary-main)` …) because the
+map SDKs render these nodes outside React.
+
+- Stop: 28px circle, `primary.main`, paper 2px ring, stop number — matches itinerary numbers.
+- Revisit stop: same, `warning.main`.
+- Opening warning: 10px `warning.main` badge at top-right (not an extra ring).
 - Hover (list or map): scale 1.16×.
-- Selected: scales 1.32×, `--ink-surface`, one-shot expanding accent ring.
-- Start: 26px, `--ink-surface`, "S".
+- Selected: scales 1.32×, `background.inverse`, one-shot expanding primary ring.
+- Start: 26px, `background.inverse`, "S".
 - Entrance: calm fade when a route arrives; Stop 01 gets a one-shot arrival
   scale. Disabled under `prefers-reduced-motion`.
 - START: slow halo (`nv-pin__halo`), not a radar sweep.
@@ -222,7 +248,7 @@ Maps". Raw provenance, CRM table, evidence and the visit log live behind "Detail
 
 ### 3.5 Pre-visit brief
 
-Modal (max-w 672px, sheet on mobile) styled as a field briefing card. Header: eyebrow
+MUI `Dialog` (max-width 672px, bottom sheet below the `sm` breakpoint) styled as a field briefing card. Header: eyebrow
 "PRE-VISIT BRIEF", clinic name, visit type · arrival · category · province, then the lead-product
 hero (accent-tint band, product name 15px/600, Fit badge). Sections in reading order:
 Why we're here → What we know (AI summary, labelled non-authoritative) → Confirm on site
@@ -255,10 +281,13 @@ Do not say (danger ✕ list). Footer: season, UV note, generator metadata in 11p
 
 ## 5. Responsive behavior
 
-- ≥1024px: side-by-side map/itinerary as above.
-- 768–1023px: map 46dvh on top, itinerary below full-width; planner still floats over the map.
-- <768px: horizontal nav row; planner and clinic drawer become sheets; brief opens as a
-  bottom-aligned sheet. All tap targets ≥40px; drawer/brief CTAs 44px.
+Breakpoints are MUI's (`sm` 600, `md` 900, `lg` 1200).
+
+- ≥`md`: side-by-side map / planner-itinerary (38% panel, 34% from `lg`, min 300px).
+- `sm`–`md`: map 46dvh on top, planner / itinerary below full-width behind the sheet toggle; the
+  clinic drawer floats over the map.
+- <`sm`: temporary nav drawer; planner, clinic drawer and brief become bottom sheets. All tap
+  targets ≥40px; drawer/brief CTAs 44px.
 
 ## 6. Do / don't
 

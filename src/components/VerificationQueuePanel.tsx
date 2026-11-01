@@ -1,95 +1,107 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Box from "@mui/material/Box";
+import MenuItem from "@mui/material/MenuItem";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
+import { DataTable, type GridColDef } from "@/components/data-table/DataTable";
+import { StatusChip } from "@/components/feedback/StatusChip";
 import type { VerificationItem } from "@/domain/enrichment/types";
 
+const STATUSES = ["CONFLICT", "AMBIGUOUS", "UNKNOWN", "MANUAL_VERIFY", "DERIVED"] as const;
+const SOURCES = ["website", "places", "aggregation", "mock"] as const;
+
+type Row = VerificationItem & { id: string };
+
+const COLUMNS: GridColDef<Row>[] = [
+  { field: "accountName", headerName: "Account", flex: 1.2, minWidth: 140 },
+  {
+    field: "fieldPath",
+    headerName: "Field",
+    flex: 1,
+    minWidth: 120,
+    renderCell: ({ value }) => (
+      <Typography variant="body2" noWrap sx={{ fontFamily: "var(--mono)", fontSize: "0.75rem" }}>
+        {value as string}
+      </Typography>
+    ),
+  },
+  {
+    field: "status",
+    headerName: "Status",
+    width: 140,
+    renderCell: ({ value }) => <StatusChip tone="warning" uppercase dot={false} label={value as string} />,
+  },
+  {
+    field: "reason",
+    headerName: "Reason",
+    flex: 1.5,
+    minWidth: 160,
+    renderCell: ({ value }) => (
+      <Typography variant="body2" noWrap sx={{ color: "text.secondary" }} title={value as string}>
+        {value as string}
+      </Typography>
+    ),
+  },
+  { field: "value", headerName: "Value", flex: 1.5, minWidth: 160 },
+  { field: "sourceType", headerName: "Source", width: 110 },
+];
+
+/** Run-scoped verification items (manager diagnostics). Persisted items live on /verification. */
 export function VerificationQueuePanel({ items }: { items: VerificationItem[] }) {
-  const [account, setAccount] = useState("");
-  const [field, setField] = useState("");
   const [status, setStatus] = useState("");
   const [source, setSource] = useState("");
 
-  const filtered = useMemo(() => {
-    return items.filter((i) => {
-      if (account && !i.accountName.toLowerCase().includes(account.toLowerCase())) return false;
-      if (field && !i.fieldPath.toLowerCase().includes(field.toLowerCase())) return false;
-      if (status && i.status !== status) return false;
-      if (source && i.sourceType !== source) return false;
-      return true;
-    });
-  }, [items, account, field, status, source]);
+  const rows = useMemo<Row[]>(
+    () =>
+      items
+        .filter((i) => (status ? i.status === status : true))
+        .filter((i) => (source ? i.sourceType === source : true))
+        .slice(0, 100)
+        .map((i, idx) => ({ ...i, id: `${i.accountId}-${i.fieldPath}-${idx}` })),
+    [items, status, source],
+  );
 
   if (items.length === 0) return null;
 
   return (
-    <div className="border border-rule bg-panel p-5">
-      <h3
-        className="mb-3 text-[0.75rem] font-semibold tracking-[0.14em] text-muted uppercase"
-        style={{ fontFamily: "var(--display)" }}
-      >
-        Verification queue (dev) · {filtered.length}/{items.length}
-      </h3>
-      <div className="mb-3 grid gap-2 sm:grid-cols-4">
-        <input
-          placeholder="Filter account"
-          value={account}
-          onChange={(e) => setAccount(e.target.value)}
-          className="border border-rule bg-paper px-2 py-1 font-mono text-xs"
-        />
-        <input
-          placeholder="Filter field"
-          value={field}
-          onChange={(e) => setField(e.target.value)}
-          className="border border-rule bg-paper px-2 py-1 font-mono text-xs"
-        />
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-          className="border border-rule bg-paper px-2 py-1 font-mono text-xs"
-        >
-          <option value="">All statuses</option>
-          <option value="CONFLICT">CONFLICT</option>
-          <option value="AMBIGUOUS">AMBIGUOUS</option>
-          <option value="UNKNOWN">UNKNOWN</option>
-          <option value="MANUAL_VERIFY">MANUAL_VERIFY</option>
-          <option value="DERIVED">DERIVED</option>
-        </select>
-        <select
-          value={source}
-          onChange={(e) => setSource(e.target.value)}
-          className="border border-rule bg-paper px-2 py-1 font-mono text-xs"
-        >
-          <option value="">All sources</option>
-          <option value="website">website</option>
-          <option value="places">places</option>
-          <option value="aggregation">aggregation</option>
-          <option value="mock">mock</option>
-        </select>
-      </div>
-      <div className="max-h-72 overflow-auto">
-        <table className="w-full text-left text-xs">
-          <thead>
-            <tr className="border-b border-rule font-mono text-[0.65rem] text-muted uppercase">
-              <th className="py-1 pr-2">Account</th>
-              <th className="py-1 pr-2">Field</th>
-              <th className="py-1 pr-2">Status</th>
-              <th className="py-1 pr-2">Reason</th>
-              <th className="py-1">Value</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.slice(0, 100).map((i, idx) => (
-              <tr key={`${i.accountId}-${i.fieldPath}-${idx}`} className="border-b border-rule-soft align-top">
-                <td className="py-1.5 pr-2">{i.accountName}</td>
-                <td className="py-1.5 pr-2 font-mono">{i.fieldPath}</td>
-                <td className="py-1.5 pr-2 font-mono text-signal">{i.status}</td>
-                <td className="py-1.5 pr-2 text-muted">{i.reason}</td>
-                <td className="py-1.5">{i.value}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <Box>
+      <Typography variant="eyebrow" component="h3" sx={{ display: "block", mb: 3, color: "text.secondary" }}>
+        Verification queue (dev) · {rows.length}/{items.length}
+      </Typography>
+      <DataTable<Row>
+        rows={rows}
+        columns={COLUMNS}
+        label="Verification queue"
+        searchPlaceholder="Filter account or field…"
+        density="compact"
+        columnTools={false}
+        initialPageSize={10}
+        pageSizeOptions={[10, 25, 50]}
+        maxHeight={400}
+        filters={
+          <>
+            <TextField select value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Status" sx={{ minWidth: 140 }} slotProps={{ select: { displayEmpty: true } }}>
+              <MenuItem value="">All statuses</MenuItem>
+              {STATUSES.map((s) => (
+                <MenuItem key={s} value={s}>
+                  {s}
+                </MenuItem>
+              ))}
+            </TextField>
+            <TextField select value={source} onChange={(e) => setSource(e.target.value)} aria-label="Source" sx={{ minWidth: 130 }} slotProps={{ select: { displayEmpty: true } }}>
+              <MenuItem value="">All sources</MenuItem>
+              {SOURCES.map((s) => (
+                <MenuItem key={s} value={s}>
+                  {s}
+                </MenuItem>
+              ))}
+            </TextField>
+          </>
+        }
+        emptyState={{ title: "No items match", description: "Clear the status or source filter.", illustration: "shield" }}
+      />
+    </Box>
   );
 }

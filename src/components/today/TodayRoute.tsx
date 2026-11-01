@@ -3,6 +3,19 @@
 import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { APIProvider } from "@vis.gl/react-google-maps";
 import { useSession } from "next-auth/react";
+import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import ButtonBase from "@mui/material/ButtonBase";
+import CircularProgress from "@mui/material/CircularProgress";
+import Dialog from "@mui/material/Dialog";
+import Paper from "@mui/material/Paper";
+import Skeleton from "@mui/material/Skeleton";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
+import { ConfirmDialog } from "@/components/feedback/ConfirmDialog";
+import { StatusChip } from "@/components/feedback/StatusChip";
+import { LAYOUT } from "@/theme/tokens";
 import {
   generateVisitListAction,
   getClinicIntelligenceAction,
@@ -67,6 +80,7 @@ import { ClinicDrawer } from "./ClinicDrawer";
 import { SummaryStrip } from "./SummaryStrip";
 import { Diagnostics } from "./Diagnostics";
 import { MapCanvas } from "./MapCanvas";
+import { MAP_Z } from "./mapChrome";
 import type { MapInteraction, MapStop } from "./mapTypes";
 import { clock12 } from "@/lib/format";
 import type { ProspectSearchSuccess } from "@/lib/prospecting";
@@ -132,6 +146,7 @@ export function TodayRoute({
   const [revisitsDue, setRevisitsDue] = useState("none");
 
   const [editPlanOpen, setEditPlanOpen] = useState(false);
+  const [newPlanConfirmOpen, setNewPlanConfirmOpen] = useState(false);
   const [sheetExpanded, setSheetExpanded] = useState(true);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [manualPlan, setManualPlan] = useState<ManualPlanState>(EMPTY_MANUAL_PLAN);
@@ -612,11 +627,14 @@ export function TodayRoute({
 
   const newPlan = () => {
     if (data) {
-      const ok =
-        typeof window === "undefined" ||
-        window.confirm("Start a new plan? Today's route will be cleared from this screen.");
-      if (!ok) return;
+      setNewPlanConfirmOpen(true);
+      return;
     }
+    resetPlan();
+  };
+
+  const resetPlan = () => {
+    setNewPlanConfirmOpen(false);
     setCommitted(null);
     setCommittedFingerprint(null);
     setStart(null);
@@ -649,60 +667,70 @@ export function TodayRoute({
     : null;
 
   const content = (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex items-center justify-between gap-3 border-b border-rule bg-paper px-4 py-2.5 md:px-6">
-        <div className="flex min-w-0 items-center gap-2.5">
+    // Desktop: the workspace fills the viewport below the header so the planner / itinerary panel
+    // scrolls on its own; phones scroll the page (map on top, sheet below).
+    <Box sx={{ display: "flex", minHeight: 0, flex: 1, flexDirection: "column", maxHeight: { md: `calc(100dvh - ${LAYOUT.headerHeight}px)` } }}>
+      {/* Action bar */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 3,
+          borderBottom: 1,
+          borderColor: "divider",
+          bgcolor: "background.default",
+          px: { xs: 4, md: 6 },
+          py: 2.5,
+        }}
+      >
+        <Box sx={{ display: "flex", minWidth: 0, alignItems: "center", gap: 2.5 }}>
           {mode.showChips &&
             mode.chips.map((chip) => (
               <ModeChip key={chip.label} label={chip.label} tone={chip.tone} title={chip.detail} />
             ))}
-          <p className="hidden truncate text-[13px] text-muted sm:block">
+          <Typography variant="body2" noWrap sx={{ color: "text.secondary", display: { xs: "none", sm: "block" } }}>
             {data
               ? `Today · ${displayStops.length} stop${displayStops.length === 1 ? "" : "s"}`
               : "Where do you want to work today?"}
-          </p>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", flexShrink: 0, alignItems: "center", gap: 2 }}>
           {data && !editPlanOpen && (
-            <button
-              type="button"
+            <Button
+              variant="outlined"
               onClick={() => {
                 setEditPlanOpen(true);
                 setSheetExpanded(true);
               }}
-              className="flex h-9 items-center rounded-lg border border-rule bg-panel px-3.5 text-[13px] font-medium text-ink hover:bg-canvas"
             >
               Edit plan
-            </button>
+            </Button>
           )}
           {data && (phase === "stale" || editPlanOpen) && (
-            <button
-              type="button"
-              onClick={() => formRef.current?.requestSubmit()}
-              disabled={pending || !buildEnabled}
-              className="flex h-9 items-center rounded-lg border border-rule bg-panel px-3.5 text-[13px] font-medium text-ink hover:bg-canvas disabled:opacity-60"
-            >
+            <Button variant="outlined" onClick={() => formRef.current?.requestSubmit()} disabled={pending || !buildEnabled}>
               {pending ? "Rebuilding…" : "Rebuild route"}
-            </button>
+            </Button>
           )}
-        </div>
-      </div>
+        </Box>
+      </Box>
 
       {errorMessage && data && (
-        <div className="border-b border-danger/20 bg-danger-tint px-4 py-2 text-xs text-danger md:px-6">
+        <Alert severity="error" icon={false} sx={{ borderRadius: 0, borderBottom: 1, borderColor: "divider", px: { xs: 4, md: 6 }, py: 0.5 }}>
           Rebuild failed — today&rsquo;s route is unchanged. {errorMessage}
-        </div>
+        </Alert>
       )}
       {phase === "stale" && (
-        <div className="border-b border-signal/20 bg-signal-tint px-4 py-2 text-xs text-signal md:px-6">
+        <Alert severity="warning" icon={false} sx={{ borderRadius: 0, borderBottom: 1, borderColor: "divider", px: { xs: 4, md: 6 }, py: 0.5 }}>
           Start or area changed — travel times need rebuilding.
-        </div>
+        </Alert>
       )}
 
       {data && <SummaryStrip data={data} manuallyAdjusted={planAdjusted} displayStopCount={displayStops.length} />}
 
-      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-        <div className="relative h-[46dvh] min-h-[280px] flex-[1.85] lg:h-auto">
+      <Box sx={{ display: "flex", minHeight: 0, flex: 1, flexDirection: { xs: "column", md: "row" } }}>
+        {/* Map — the canvas; everything else floats over it */}
+        <Box sx={{ position: "relative", minHeight: 280, height: { xs: "46dvh", md: "auto" }, flex: { xs: "1 1 0%", md: "1.85 1 0%" } }}>
           <MapCanvas
             start={startGeo}
             stops={mapStops}
@@ -782,49 +810,84 @@ export function TodayRoute({
               onViewBrief={() => setBriefId(selectedStop.accountId)}
             />
           )}
-        </div>
+        </Box>
 
-        {/* Planner / itinerary — sheet on mobile, side panel on desktop */}
-        <div className="lg:hidden flex items-center gap-2 border-t border-rule bg-panel px-3 py-2">
-          <button
-            type="button"
+        {/* Planner / itinerary — sheet on phones, side panel from tablet landscape up */}
+        <Box
+          sx={{
+            display: { xs: "flex", md: "none" },
+            alignItems: "center",
+            gap: 2,
+            borderTop: 1,
+            borderColor: "divider",
+            bgcolor: "background.paper",
+            px: 3,
+            py: 2,
+          }}
+        >
+          <ButtonBase
             onClick={() => setSheetExpanded((v) => !v)}
-            className="min-w-0 flex-1 text-left"
+            aria-expanded={sheetExpanded}
+            aria-controls="nv-planner-sheet"
+            sx={{ minWidth: 0, flex: 1, display: "block", textAlign: "left", borderRadius: 1 }}
           >
             {data && !editPlanOpen && routeSheet ? (
               <>
-                <span className="block text-[0.66rem] font-semibold tracking-[0.16em] text-faint uppercase">
+                <Typography variant="eyebrow" sx={{ display: "block" }}>
                   {routeSheet.kicker}
-                </span>
-                <span className="block truncate text-sm font-semibold text-ink">{routeSheet.title}</span>
-                <span className="block text-xs text-muted">{routeSheet.subtitle}</span>
+                </Typography>
+                <Typography variant="body1" noWrap sx={{ fontWeight: 600 }}>
+                  {routeSheet.title}
+                </Typography>
+                <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>
+                  {routeSheet.subtitle}
+                </Typography>
               </>
             ) : (
               <>
-                <span className="block text-sm font-semibold text-ink">{planningSheet.title}</span>
-                <span className="block text-xs text-muted">{planningSheet.subtitle}</span>
+                <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                  {planningSheet.title}
+                </Typography>
+                <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>
+                  {planningSheet.subtitle}
+                </Typography>
               </>
             )}
-          </button>
+          </ButtonBase>
           {(!data || editPlanOpen) && buildEnabled && (
-            <button
-              type="button"
+            <Button
+              variant="contained"
+              size="small"
               onClick={() => formRef.current?.requestSubmit()}
               disabled={pending}
-              className="shrink-0 rounded-lg bg-accent px-3 py-2 text-[11px] font-semibold tracking-[0.06em] text-white uppercase disabled:opacity-60"
+              sx={{ flexShrink: 0, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", fontSize: "0.6875rem" }}
             >
               {pending ? "…" : ctaLabel === "Rebuild route" ? "Rebuild" : "Build My Day"}
-            </button>
+            </Button>
           )}
-          <span className="shrink-0 text-xs font-semibold text-accent">{sheetExpanded ? "Close" : "Open"}</span>
-        </div>
+          <Typography variant="caption" sx={{ flexShrink: 0, fontWeight: 600, color: "primary.main" }}>
+            {sheetExpanded ? "Close" : "Open"}
+          </Typography>
+        </Box>
 
-        <aside
-          className={`${
-            sheetExpanded ? "flex" : "hidden"
-          } nv-scroll max-h-[52dvh] w-full flex-col overflow-hidden border-t border-rule bg-paper lg:flex lg:max-h-none lg:w-[34%] lg:border-t-0 lg:border-l`}
+        <Box
+          component="aside"
+          id="nv-planner-sheet"
+          className="nv-scroll"
+          sx={{
+            display: { xs: sheetExpanded ? "flex" : "none", md: "flex" },
+            flexDirection: "column",
+            overflow: "hidden",
+            width: { xs: 1, md: "38%", lg: "34%" },
+            minWidth: { md: 300 },
+            maxHeight: { xs: "52dvh", md: "none" },
+            borderTop: { xs: 1, md: 0 },
+            borderLeft: { md: 1 },
+            borderColor: "divider",
+            bgcolor: "background.default",
+          }}
         >
-          <div className={showPlanning ? "flex min-h-0 flex-1 flex-col" : "hidden"}>
+          <Box sx={{ display: showPlanning ? "flex" : "none", minHeight: 0, flex: 1, flexDirection: "column" }}>
             <PlanningWorkspace
               phase={phase}
               formAction={formAction}
@@ -899,21 +962,31 @@ export function TodayRoute({
                 setProvinceError(null);
               }}
             />
-          </div>
+          </Box>
           {!showPlanning && data && data.routeSummary ? (
             <>
-              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-rule-soft bg-paper px-4 py-3">
-                <h2 className="text-[0.7rem] font-semibold tracking-[0.16em] text-faint uppercase">
+              <Box
+                sx={{
+                  position: "sticky",
+                  top: 0,
+                  zIndex: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  borderBottom: 1,
+                  borderColor: "divider",
+                  bgcolor: "background.default",
+                  px: 4,
+                  py: 3,
+                }}
+              >
+                <Typography variant="eyebrow" component="h2">
                   Itinerary
-                </h2>
-                <button
-                  type="button"
-                  onClick={() => setEditPlanOpen(true)}
-                  className="text-xs font-medium text-muted hover:text-ink"
-                >
+                </Typography>
+                <Button size="small" variant="text" onClick={() => setEditPlanOpen(true)} sx={{ color: "text.secondary", "&:hover": { color: "text.primary" } }}>
                   Edit plan
-                </button>
-              </div>
+                </Button>
+              </Box>
               <Itinerary
                 stops={displayStops}
                 dayStartClock={data.routeSummary.dayStartClock}
@@ -941,28 +1014,56 @@ export function TodayRoute({
           ) : !showPlanning && pending ? (
             <ItinerarySkeleton />
           ) : null}
-        </aside>
-      </div>
+        </Box>
+      </Box>
 
-      {displayBrief && (
-        <div
-          className="fixed inset-0 z-[1200] flex items-end justify-center bg-ink/40 p-0 md:items-center md:p-8"
-          onClick={() => setBriefId(null)}
-        >
-          <div
-            className="nv-scroll max-h-[94dvh] w-full max-w-2xl overflow-y-auto rounded-t-2xl bg-panel shadow-float md:rounded-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <PreVisitBriefView
-              brief={displayBrief}
-              fitScore={briefRoute?.fitScore}
-              arrivalClock={planAdjusted ? null : (briefRoute?.arrivalClock ?? null)}
-              onClose={() => setBriefId(null)}
-            />
-          </div>
-        </div>
-      )}
-    </div>
+      {/* Pre-visit brief: centred modal on desktop, bottom sheet on phones */}
+      <Dialog
+        open={displayBrief != null}
+        onClose={() => setBriefId(null)}
+        fullWidth
+        maxWidth={false}
+        scroll="paper"
+        aria-labelledby="nv-brief-title"
+        sx={{ "& .MuiDialog-container": { alignItems: { xs: "flex-end", sm: "center" } } }}
+        slotProps={{
+          paper: {
+            className: "nv-scroll",
+            sx: {
+              width: 1,
+              maxWidth: { xs: "100%", sm: 672 },
+              maxHeight: "94dvh",
+              m: { xs: 0, sm: 8 },
+              overflowY: "auto",
+              borderTopLeftRadius: 2,
+              borderTopRightRadius: 2,
+              borderBottomLeftRadius: { xs: 0, sm: 2 },
+              borderBottomRightRadius: { xs: 0, sm: 2 },
+              borderWidth: { xs: 0, sm: 1 },
+              borderTopWidth: 1,
+            },
+          },
+        }}
+      >
+        {displayBrief && (
+          <PreVisitBriefView
+            brief={displayBrief}
+            fitScore={briefRoute?.fitScore}
+            arrivalClock={planAdjusted ? null : (briefRoute?.arrivalClock ?? null)}
+            onClose={() => setBriefId(null)}
+          />
+        )}
+      </Dialog>
+
+      <ConfirmDialog
+        open={newPlanConfirmOpen}
+        onClose={() => setNewPlanConfirmOpen(false)}
+        title="Start a new plan?"
+        description="Today's route will be cleared from this screen."
+        confirmLabel="New plan"
+        onConfirm={resetPlan}
+      />
+    </Box>
   );
 
   return mapsCfg.enabled ? (
@@ -988,20 +1089,10 @@ function ModeChip({
   tone: "signal" | "neutral" | "accent";
   title: string;
 }) {
-  const cls =
-    tone === "accent"
-      ? "bg-accent-tint text-accent"
-      : tone === "signal"
-        ? "bg-signal-tint text-signal"
-        : "bg-canvas text-muted";
   return (
-    <span
-      title={title}
-      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.68rem] font-semibold whitespace-nowrap ${cls}`}
-    >
-      <span className={`h-1 w-1 rounded-full ${tone === "accent" ? "bg-accent" : tone === "signal" ? "bg-signal" : "bg-faint"}`} />
-      {label}
-    </span>
+    <Tooltip title={title}>
+      <StatusChip tone={tone === "accent" ? "primary" : tone === "signal" ? "warning" : "neutral"} label={label} sx={{ flexShrink: 0 }} />
+    </Tooltip>
   );
 }
 
@@ -1013,23 +1104,34 @@ function InteractionBanner({
   actions: { label: string; onClick: () => void; primary?: boolean }[];
 }) {
   return (
-    <div className="absolute top-3 left-1/2 z-[1060] flex -translate-x-1/2 items-center gap-2 rounded-xl border border-rule bg-panel px-3.5 py-2 shadow-float">
-      <span className="text-xs font-medium whitespace-nowrap text-ink">{text}</span>
+    <Paper
+      variant="outlined"
+      role="status"
+      sx={{
+        position: "absolute",
+        top: 3,
+        left: "50%",
+        transform: "translateX(-50%)",
+        zIndex: MAP_Z.banner,
+        display: "flex",
+        alignItems: "center",
+        gap: 2,
+        maxWidth: "calc(100% - 24px)",
+        px: 3.5,
+        py: 2,
+        borderRadius: 1.5,
+        boxShadow: 3,
+      }}
+    >
+      <Typography variant="caption" sx={{ fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        {text}
+      </Typography>
       {actions.map((a) => (
-        <button
-          key={a.label}
-          type="button"
-          onClick={a.onClick}
-          className={`h-8 shrink-0 rounded-md px-3 text-xs font-semibold ${
-            a.primary
-              ? "bg-accent text-white hover:bg-accent-hover"
-              : "border border-rule bg-paper text-ink hover:bg-canvas"
-          }`}
-        >
+        <Button key={a.label} size="small" variant={a.primary ? "contained" : "outlined"} onClick={a.onClick} sx={{ flexShrink: 0, fontWeight: 600 }}>
           {a.label}
-        </button>
+        </Button>
       ))}
-    </div>
+    </Paper>
   );
 }
 
@@ -1046,31 +1148,45 @@ function RouteBuildingOverlay() {
     return () => clearInterval(t);
   }, []);
   return (
-    <div className="nv-fade-in absolute inset-0 z-[1050] flex items-center justify-center bg-paper/60 backdrop-blur-[2px]">
-      <div className="nv-fade-up flex w-[290px] flex-col items-center rounded-xl border border-rule bg-panel px-6 py-5 shadow-float">
-        <span className="h-5 w-5 animate-spin rounded-full border-2 border-rule border-t-accent" />
-        <p className="mt-3 text-[13px] font-semibold text-ink">Building your day</p>
-        <p className="mt-1 h-4 text-xs text-muted" aria-live="polite">
+    <Box
+      className="nv-fade-in"
+      sx={{
+        position: "absolute",
+        inset: 0,
+        zIndex: MAP_Z.overlay,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        bgcolor: "rgba(var(--nv-palette-background-defaultChannel) / 0.6)",
+        backdropFilter: "blur(2px)",
+      }}
+    >
+      <Paper className="nv-fade-up" variant="outlined" sx={{ width: 290, display: "flex", flexDirection: "column", alignItems: "center", px: 6, py: 5, borderRadius: 1.5, boxShadow: 3 }}>
+        <CircularProgress size={20} thickness={4} />
+        <Typography variant="body2" sx={{ mt: 3, fontWeight: 600 }}>
+          Building your day
+        </Typography>
+        <Typography variant="caption" sx={{ mt: 1, minHeight: 16, color: "text.secondary" }} aria-live="polite">
           {BUILD_STAGES[stage]}
-        </p>
-      </div>
-    </div>
+        </Typography>
+      </Paper>
+    </Box>
   );
 }
 
 function ItinerarySkeleton() {
   return (
-    <div className="px-4 py-4" aria-hidden>
-      <div className="mb-4 h-3 w-20 animate-pulse rounded bg-rule/60" />
+    <Box sx={{ px: 4, py: 4 }} aria-hidden>
+      <Skeleton variant="rounded" width={80} height={12} sx={{ mb: 4 }} />
       {[0, 1, 2, 3, 4].map((i) => (
-        <div key={i} className="mb-3 flex gap-3" style={{ opacity: 1 - i * 0.15 }}>
-          <div className="mt-1 h-7 w-7 shrink-0 animate-pulse rounded-full bg-rule/60" />
-          <div className="min-w-0 flex-1 rounded-lg border border-rule-soft bg-panel px-3.5 py-3">
-            <div className="h-3.5 w-2/3 animate-pulse rounded bg-rule/60" />
-            <div className="mt-2 h-3 w-1/3 animate-pulse rounded bg-rule/40" />
-          </div>
-        </div>
+        <Box key={i} sx={{ mb: 3, display: "flex", gap: 3, opacity: 1 - i * 0.15 }}>
+          <Skeleton variant="circular" width={28} height={28} sx={{ mt: 1, flexShrink: 0 }} />
+          <Paper variant="outlined" sx={{ minWidth: 0, flex: 1, px: 3.5, py: 3 }}>
+            <Skeleton variant="rounded" width="66%" height={14} />
+            <Skeleton variant="rounded" width="33%" height={12} sx={{ mt: 2 }} />
+          </Paper>
+        </Box>
       ))}
-    </div>
+    </Box>
   );
 }

@@ -1,6 +1,15 @@
 "use client";
 
+import Alert from "@mui/material/Alert";
+import Paper from "@mui/material/Paper";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableRow from "@mui/material/TableRow";
+import Typography from "@mui/material/Typography";
 import type { CrmOverlaySnapshot } from "@/lib/prospecting";
+
+const MONO = { fontFamily: "var(--mono)", fontSize: "0.65rem", letterSpacing: "0.04em" } as const;
 
 export function CrmStatusPanel({
   accountName,
@@ -11,45 +20,46 @@ export function CrmStatusPanel({
 }) {
   if (!overlay) {
     return (
-      <div className="border border-rule bg-panel p-5 text-sm text-muted">
-        No CRM overlay for {accountName}.
-      </div>
+      <Paper variant="outlined" sx={{ p: 5 }}>
+        <Typography variant="body1" sx={{ color: "text.secondary" }}>
+          No CRM overlay for {accountName}.
+        </Typography>
+      </Paper>
     );
   }
 
   const row = (label: string, value: string | null | boolean | undefined, source: string) => (
-    <tr className="border-b border-rule-soft">
-      <td className="py-1.5 pr-3 font-mono text-[0.65rem] text-muted uppercase">{label}</td>
-      <td className="py-1.5 pr-3 text-sm">
+    <TableRow key={label} sx={{ "&:last-of-type td": { borderBottom: 0 } }}>
+      <TableCell component="th" scope="row" sx={{ ...MONO, px: 0, py: 1.5, pr: 3, textTransform: "uppercase", color: "text.secondary", fontWeight: 400, whiteSpace: "nowrap" }}>
+        {label}
+      </TableCell>
+      <TableCell sx={{ px: 0, py: 1.5, pr: 3 }}>
         {value === null || value === undefined ? "unavailable / unknown" : String(value)}
-      </td>
-      <td className="py-1.5 font-mono text-[0.65rem] text-accent">{source}</td>
-    </tr>
+      </TableCell>
+      <TableCell sx={{ ...MONO, px: 0, py: 1.5, color: "primary.main", whiteSpace: "nowrap" }}>{source}</TableCell>
+    </TableRow>
   );
 
   return (
-    <div className="border border-rule bg-panel p-5">
-      <h3
-        className="mb-3 text-[0.75rem] font-semibold tracking-[0.14em] text-muted uppercase"
-        style={{ fontFamily: "var(--display)" }}
-      >
+    <Paper variant="outlined" sx={{ p: 5 }}>
+      <Typography variant="eyebrow" component="h3" sx={{ display: "block", mb: 3, color: "text.secondary" }}>
         CRM / internal status (dev)
-      </h3>
+      </Typography>
       {overlay.crmUnverified && (
-        <p className="mb-3 border border-[#E5D3BC] bg-signal-tint p-2 text-xs text-signal">
+        <Alert severity="warning" icon={false} sx={{ mb: 3 }}>
           Internal status not verified — absence of CRM data is not proof safe to contact.
-        </p>
+        </Alert>
       )}
       {overlay.crmStale && (
-        <p className="mb-3 border border-rule bg-panel-soft p-2 text-xs text-muted">
+        <Alert severity="info" icon={false} sx={{ mb: 3 }}>
           CRM mirror may be stale — refresh import before relying on freshness.
-        </p>
+        </Alert>
       )}
-      <p className="mb-2 font-mono text-[0.68rem] text-muted">
+      <Typography variant="caption" sx={{ display: "block", mb: 2, fontFamily: "var(--mono)", color: "text.secondary" }}>
         source={overlay.crmSource ?? "?"} · {overlay.dncDebug}
-      </p>
-      <table className="w-full text-left">
-        <tbody>
+      </Typography>
+      <Table size="small" aria-label="CRM overlay fields" sx={{ "& td, & th": { fontSize: "0.8125rem" } }}>
+        <TableBody>
           {row("Match state", `${overlay.match.state} (${overlay.match.method})`, "derived match")}
           {row("Confidence", overlay.match.confidence.toFixed(2), "derived match")}
           {row("CRM ID", overlay.crmExternalId, "crm")}
@@ -64,8 +74,8 @@ export function CrmStatusPanel({
           {row("Revisit due", overlay.nextRevisitDueDate, "crm")}
           {row("DNC", overlay.doNotContact, "crm")}
           {row("DNC verified", overlay.dncVerified, "crm")}
-        </tbody>
-      </table>
-    </div>
+        </TableBody>
+      </Table>
+    </Paper>
   );
 }

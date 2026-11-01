@@ -1,19 +1,31 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import Paper from "@mui/material/Paper";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
+import CloseOutlined from "@mui/icons-material/CloseOutlined";
 import type { PlannedRouteStop } from "@/domain/routing/optimize";
 import type { ProspectSearchSuccess } from "@/lib/prospecting";
 import { CrmStatusPanel } from "@/components/CrmStatusPanel";
 import { EvidenceInspector } from "@/components/EvidenceInspector";
 import { VisitRecordForm } from "@/components/VisitRecordForm";
+import { Disclosure } from "@/components/feedback/Disclosure";
+import { DotList, PlainList } from "@/components/feedback/DotList";
+import { StatusChip } from "@/components/feedback/StatusChip";
 import { clock12 } from "@/lib/format";
 import { Badge } from "./Itinerary";
+import { MAP_Z } from "./mapChrome";
 import { ClinicIntelligenceSection } from "@/components/intelligence/ClinicIntelligenceSection";
 import { ClinicWebProfileSection } from "@/components/intelligence/ClinicWebProfileSection";
 import type { ClinicIntelligenceDto } from "@/domain/intelligence/clinicIntelligenceDto";
 import type { ClinicWebProfileDto } from "@/domain/clinicProfile/runClinicProfile";
 
 const SWIPE_CLOSE_PX = 90;
+const DRAWER_WIDTH = 370;
 
 export function ClinicDrawer({
   stop,
@@ -84,70 +96,92 @@ export function ClinicDrawer({
   };
 
   return (
-    <div
+    <Paper
       ref={sheetRef}
-      className="nv-drawer-in fixed inset-x-0 bottom-0 z-[1100] flex max-h-[72dvh] flex-col rounded-t-2xl border-t border-rule bg-panel shadow-sheet md:absolute md:bottom-4 md:left-4 md:max-h-[calc(100%-2rem)] md:w-[370px] md:rounded-xl md:border md:shadow-float"
+      className="nv-drawer-in"
+      variant="outlined"
+      role="dialog"
+      aria-labelledby="nv-clinic-drawer-title"
+      sx={{
+        // Phone: bottom sheet. Tablet and up: 370px card floating bottom-left over the map.
+        position: { xs: "fixed", sm: "absolute" },
+        left: { xs: 0, sm: 4 },
+        right: { xs: 0, sm: "auto" },
+        bottom: { xs: 0, sm: 4 },
+        width: { sm: DRAWER_WIDTH },
+        maxHeight: { xs: "72dvh", sm: "calc(100% - 32px)" },
+        zIndex: MAP_Z.drawer,
+        display: "flex",
+        flexDirection: "column",
+        borderWidth: { xs: 0, sm: 1 },
+        borderTopWidth: 1,
+        borderTopLeftRadius: 2,
+        borderTopRightRadius: 2,
+        borderBottomLeftRadius: { xs: 0, sm: 1.5 },
+        borderBottomRightRadius: { xs: 0, sm: 1.5 },
+        boxShadow: 3,
+      }}
     >
       {/* Mobile grab handle — swipe down to close */}
-      <div
-        className="flex touch-none justify-center pt-2 pb-1 md:hidden"
+      <Box
+        sx={{ display: { xs: "flex", sm: "none" }, touchAction: "none", justifyContent: "center", pt: 2, pb: 1 }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-        <span className="h-1 w-9 rounded-full bg-rule" />
-      </div>
+        <Box aria-hidden sx={{ height: 4, width: 36, borderRadius: 999, bgcolor: "divider" }} />
+      </Box>
 
-      <div className="flex items-start justify-between gap-3 px-5 pt-3 pb-0 md:pt-4">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <span
-              className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white ${
-                stop.isRevisit ? "bg-signal" : "bg-accent"
-              }`}
+      <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 3, px: 5, pt: { xs: 3, sm: 4 } }}>
+        <Box sx={{ minWidth: 0 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2, minWidth: 0 }}>
+            <Box
+              component="span"
+              aria-hidden
+              sx={{
+                display: "flex",
+                width: 24,
+                height: 24,
+                flexShrink: 0,
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: "50%",
+                typography: "caption",
+                fontWeight: 600,
+                bgcolor: stop.isRevisit ? "warning.main" : "primary.main",
+                color: stop.isRevisit ? "warning.contrastText" : "primary.contrastText",
+              }}
             >
               {displaySeq ?? stop.sequence}
-            </span>
-            <h2 className="truncate text-[15px] font-semibold text-ink">{stop.businessName}</h2>
-          </div>
-          <p className="mt-1 text-xs text-muted">
+            </Box>
+            <Typography id="nv-clinic-drawer-title" variant="h3" component="h2" noWrap>
+              {stop.businessName}
+            </Typography>
+          </Box>
+          <Typography variant="caption" sx={{ display: "block", mt: 1, color: "text.secondary" }}>
             {stop.categoryLabel} · Segment {stop.segmentNumber}.{stop.categoryNumber} ·{" "}
             {stop.organizationTypeLabel}
-          </p>
-          <p className="mt-0.5 text-xs text-faint">
+          </Typography>
+          <Typography variant="caption" sx={{ display: "block", mt: 0.5, color: "text.faint" }}>
             {stop.streetAddress}, {stop.city} {stop.postalCode}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close"
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted hover:bg-canvas hover:text-ink"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <path d="M6 6l12 12M18 6 6 18" />
-          </svg>
-        </button>
-      </div>
+          </Typography>
+        </Box>
+        <IconButton size="small" onClick={onClose} aria-label="Close" sx={{ flexShrink: 0, mr: -1, color: "text.secondary" }}>
+          <CloseOutlined fontSize="small" />
+        </IconButton>
+      </Box>
 
-      <div className="nv-scroll min-h-0 flex-1 overflow-y-auto px-5 pb-5">
-        <div className="mt-3 flex flex-wrap gap-1.5">
+      <Box className="nv-scroll" sx={{ minHeight: 0, flex: 1, overflowY: "auto", px: 5, pb: 5 }}>
+        <Box sx={{ mt: 3, display: "flex", flexWrap: "wrap", gap: 1.5 }}>
           <Badge tone="accent">Fit {stop.fitScore}</Badge>
           <Badge tone="neutral">{stop.leadProductLabel}</Badge>
           {stop.isRevisit && <Badge tone="signal">Revisit</Badge>}
           {stop.needsManualVerification && <Badge tone="outline">Verify on site</Badge>}
-        </div>
+        </Box>
 
         <Section title="Why this stop">
           {stop.routeReasons.length > 0 ? (
-            <ul className="space-y-1">
-              {stop.routeReasons.map((r) => (
-                <li key={r} className="flex gap-2">
-                  <span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-accent" />
-                  <span>{sentence(r)}</span>
-                </li>
-              ))}
-            </ul>
+            <DotList gap={1} items={stop.routeReasons.map((r) => sentence(r))} />
           ) : (
             <p>{stop.openingAngle}</p>
           )}
@@ -161,41 +195,45 @@ export function ClinicDrawer({
             </p>
           ) : (
             <p>
-              <span className="text-signal">Times recalculate on rebuild</span> ·{" "}
-              {stop.openingHoursLabel}
+              <Box component="span" sx={{ color: "warning.main" }}>
+                Times recalculate on rebuild
+              </Box>{" "}
+              · {stop.openingHoursLabel}
             </p>
           )}
           {stop.suggestedDropInWindow && (
-            <p className="mt-1 text-muted">{stop.suggestedDropInWindow}</p>
+            <Typography variant="body2" sx={{ mt: 1, color: "text.secondary" }}>
+              {stop.suggestedDropInWindow}
+            </Typography>
           )}
         </Section>
 
         {(verified.length > 0 || toVerify.length > 0) && (
           <Section title="Signals">
-            <ul className="space-y-1">
+            <PlainList>
               {verified.map((f) => (
-                <li key={f} className="flex items-baseline gap-2">
-                  <span className="shrink-0 rounded bg-accent-tint px-1 py-px text-[0.6rem] font-semibold tracking-wide text-accent uppercase">
-                    Verified
-                  </span>
-                  <span className="truncate">{humanizeField(f)}</span>
-                </li>
+                <Box component="li" key={f} sx={{ display: "flex", alignItems: "center", gap: 2, minWidth: 0 }}>
+                  <StatusChip tone="primary" dot={false} uppercase label="Verified" sx={{ flexShrink: 0 }} />
+                  <Box component="span" sx={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {humanizeField(f)}
+                  </Box>
+                </Box>
               ))}
               {toVerify.map((f) => (
-                <li key={f} className="flex items-baseline gap-2">
-                  <span className="shrink-0 rounded bg-signal-tint px-1 py-px text-[0.6rem] font-semibold tracking-wide text-signal uppercase">
-                    Verify
-                  </span>
-                  <span className="truncate">{humanizeField(f)}</span>
-                </li>
+                <Box component="li" key={f} sx={{ display: "flex", alignItems: "center", gap: 2, minWidth: 0 }}>
+                  <StatusChip tone="warning" dot={false} uppercase label="Verify" sx={{ flexShrink: 0 }} />
+                  <Box component="span" sx={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {humanizeField(f)}
+                  </Box>
+                </Box>
               ))}
-            </ul>
+            </PlainList>
           </Section>
         )}
 
         <Section title="NUVIOR relationship">
           {crm?.applied ? (
-            <ul className="space-y-1">
+            <PlainList>
               <li>Status: {crm.internalStatus ?? "—"}</li>
               {crm.aptosCertificationLevel && (
                 <li>
@@ -206,12 +244,20 @@ export function ClinicDrawer({
               {crm.lastOrderStatus && <li>Ordering: {crm.lastOrderStatus.toLowerCase()}</li>}
               {crm.lastVisitDate && <li>Last visit: {crm.lastVisitDate.slice(0, 10)}</li>}
               {crm.nextRevisitDueDate && <li>Revisit due: {crm.nextRevisitDueDate.slice(0, 10)}</li>}
-              {crm.crmStale && <li className="text-signal">Internal data may be stale</li>}
-            </ul>
+              {crm.crmStale && (
+                <Box component="li" sx={{ color: "warning.main" }}>
+                  Internal data may be stale
+                </Box>
+              )}
+            </PlainList>
           ) : crm?.crmUnverified ? (
-            <p className="text-signal">Internal record unverified — CRM source unavailable.</p>
+            <Typography variant="body2" sx={{ color: "warning.main" }}>
+              Internal record unverified — CRM source unavailable.
+            </Typography>
           ) : (
-            <p className="text-muted">No internal record matched. Treat as a new prospect.</p>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              No internal record matched. Treat as a new prospect.
+            </Typography>
           )}
         </Section>
 
@@ -229,48 +275,25 @@ export function ClinicDrawer({
           onRun={onProfile ?? (() => {})}
         />
 
-        <div className="mt-4 flex gap-2">
-          <button
-            type="button"
-            onClick={onViewBrief}
-            className="flex h-11 flex-1 items-center justify-center rounded-lg bg-accent text-[13px] font-semibold text-white hover:bg-accent-hover"
-          >
+        <Box sx={{ mt: 4, display: "flex", gap: 2 }}>
+          <Button variant="contained" size="large" onClick={onViewBrief} sx={{ flex: 1, fontWeight: 600 }}>
             View pre-visit brief
-          </button>
+          </Button>
           {stop.googleMapsUrl && (
-            <a
-              href={stop.googleMapsUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="flex h-11 items-center justify-center rounded-lg border border-rule bg-panel px-4 text-[13px] font-medium text-ink hover:bg-canvas"
-            >
+            <Button variant="outlined" size="large" component="a" href={stop.googleMapsUrl} target="_blank" rel="noreferrer" sx={{ flexShrink: 0 }}>
               Open in Google Maps
-            </a>
+            </Button>
           )}
-        </div>
+        </Box>
 
-        <button
-          type="button"
-          onClick={() => setDetailsOpen((v) => !v)}
-          className="mt-4 flex items-center gap-1.5 text-xs font-medium text-muted hover:text-ink"
+        <Disclosure
+          label="Details — evidence, CRM & visit log"
+          open={detailsOpen}
+          onToggle={setDetailsOpen}
+          sx={{ mt: 4 }}
+          contentSx={{ pt: 3 }}
         >
-          <svg
-            width="10"
-            height="10"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            className={`transition-transform ${detailsOpen ? "rotate-90" : ""}`}
-          >
-            <path d="m9 6 6 6-6 6" />
-          </svg>
-          Details — evidence, CRM &amp; visit log
-        </button>
-
-        {detailsOpen && (
-          <div className="mt-3 space-y-3">
+          <Stack spacing={3}>
             <CrmStatusPanel accountName={stop.businessName} overlay={crm} />
             <VisitRecordForm
               placeId={stop.accountId}
@@ -284,21 +307,21 @@ export function ClinicDrawer({
                 enrichment={data.enrichmentByAccountId[stop.accountId]}
               />
             )}
-          </div>
-        )}
-      </div>
-    </div>
+          </Stack>
+        </Disclosure>
+      </Box>
+    </Paper>
   );
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="mt-4">
-      <h3 className="mb-1.5 text-[0.66rem] font-semibold tracking-[0.16em] text-faint uppercase">
+    <Box component="section" sx={{ mt: 4 }}>
+      <Typography variant="eyebrow" component="h3" sx={{ display: "block", mb: 1.5 }}>
         {title}
-      </h3>
-      <div className="text-[13px] leading-relaxed text-ink">{children}</div>
-    </section>
+      </Typography>
+      <Box sx={{ typography: "body2", lineHeight: 1.6, color: "text.primary", "& > p": { m: 0 } }}>{children}</Box>
+    </Box>
   );
 }
 

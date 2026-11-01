@@ -1,17 +1,19 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Box from "@mui/material/Box";
 import { getBrowserMapsConfig } from "@/lib/mapsConfig";
 import type { RouteMapCommonProps } from "./mapTypes";
+import { MapBadge, MapLoading } from "./mapChrome";
 
 const GoogleRouteMap = dynamic(() => import("./GoogleRouteMap"), {
   ssr: false,
-  loading: () => <div className="h-full w-full animate-pulse bg-canvas" />,
+  loading: () => <MapLoading />,
 });
 
 const FallbackRouteMap = dynamic(() => import("./RouteMap"), {
   ssr: false,
-  loading: () => <div className="h-full w-full animate-pulse bg-canvas" />,
+  loading: () => <MapLoading />,
 });
 
 /**
@@ -27,21 +29,17 @@ export function MapCanvas(props: RouteMapCommonProps) {
 
   if (cfg.renderer === "google_demo") {
     return (
-      <div className="relative h-full w-full">
+      <Box sx={{ position: "relative", width: 1, height: 1 }}>
         <GoogleRouteMap {...props} mapId={cfg.mapId} />
-        <div className="absolute bottom-3 left-3 z-[1000] rounded-full bg-signal px-3 py-1 text-[0.66rem] font-semibold tracking-wide text-white uppercase shadow-card">
-          Google Demo — not production
-        </div>
-      </div>
+        <MapBadge>Google Demo — not production</MapBadge>
+      </Box>
     );
   }
 
   return (
-    <div className="relative h-full w-full">
+    <Box sx={{ position: "relative", width: 1, height: 1 }}>
       <FallbackRouteMap {...props} />
-      <div className="absolute bottom-3 left-3 z-[1000] rounded-full bg-signal px-3 py-1 text-[0.66rem] font-semibold tracking-wide text-white uppercase shadow-card">
-        Fallback map — not Google
-      </div>
-    </div>
+      <MapBadge>Fallback map — not Google</MapBadge>
+    </Box>
   );
 }

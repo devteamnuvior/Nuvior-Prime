@@ -1,11 +1,24 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
+import MuiIconButton from "@mui/material/IconButton";
+import Paper from "@mui/material/Paper";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
+import CloseOutlined from "@mui/icons-material/CloseOutlined";
+import KeyboardArrowDownOutlined from "@mui/icons-material/KeyboardArrowDownOutlined";
+import KeyboardArrowUpOutlined from "@mui/icons-material/KeyboardArrowUpOutlined";
 import { clock12, duration, km } from "@/lib/format";
 import { prefersReducedMotion } from "@/lib/motion";
 import type { DisplayStop } from "./manualPlan";
 import { IntelligenceItineraryBadge } from "@/components/intelligence/ClinicIntelligenceSection";
 import type { ClinicIntelligenceDto } from "@/domain/intelligence/clinicIntelligenceDto";
+
+const NODE = 28;
 
 export function Itinerary({
   stops,
@@ -51,94 +64,100 @@ export function Itinerary({
   return (
     <>
       {adjusted && (
-        <div className="nv-fade-in mx-4 mt-3 flex items-start justify-between gap-3 rounded-lg border border-signal/25 bg-signal-tint px-3.5 py-2.5">
-          <p className="text-xs leading-relaxed text-signal">
-            Manually adjusted plan{removedCount > 0 ? ` · ${removedCount} removed` : ""}. Arrival
-            times and drive legs will recalculate when you rebuild the route.
-          </p>
-          <button
-            type="button"
-            onClick={onResetPlan}
-            className="shrink-0 text-xs font-semibold text-signal underline-offset-2 hover:underline"
-          >
-            Restore optimized
-          </button>
-        </div>
+        <Alert
+          severity="warning"
+          icon={false}
+          className="nv-fade-in"
+          sx={{ mx: 4, mt: 3 }}
+          action={
+            <Button size="small" color="inherit" onClick={onResetPlan} sx={{ fontWeight: 600, whiteSpace: "nowrap" }}>
+              Restore optimized
+            </Button>
+          }
+        >
+          Manually adjusted plan{removedCount > 0 ? ` · ${removedCount} removed` : ""}. Arrival
+          times and drive legs will recalculate when you rebuild the route.
+        </Alert>
       )}
 
-      <ol className="px-4 py-3">
+      <Box component="ol" sx={{ m: 0, px: 4, py: 3, listStyle: "none" }}>
         {/* Start */}
-        <li className="flex gap-3">
-          <div className="flex w-8 flex-col items-center">
-            <span className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-inkwell text-[10px] font-semibold tracking-wider text-paper">
-              S
-            </span>
-            <span className="w-px flex-1 bg-rule" />
-          </div>
-          <div className="pt-1.5 pb-4">
-            <div className="text-[0.66rem] font-semibold tracking-[0.16em] text-faint uppercase">
+        <Box component="li" sx={{ display: "flex", gap: 3 }}>
+          <Rail>
+            <Node sx={{ mt: 1, bgcolor: "background.inverse", color: "background.default", letterSpacing: "0.08em", fontSize: "0.625rem" }}>S</Node>
+            <RailLine />
+          </Rail>
+          <Box sx={{ pt: 1.5, pb: 4, minWidth: 0 }}>
+            <Typography variant="eyebrow" sx={{ display: "block" }}>
               Start · {clock12(dayStartClock)}
-            </div>
-            <div className="mt-0.5 text-sm font-medium text-ink">{startLabel}</div>
-          </div>
-        </li>
+            </Typography>
+            <Typography variant="body1" sx={{ mt: 0.5, fontWeight: 500 }}>
+              {startLabel}
+            </Typography>
+          </Box>
+        </Box>
 
         {stops.map((s, i) => {
           const selected = s.accountId === selectedId;
+          const hovered = s.accountId === hoveredId;
           const warn = s.openingHoursState !== "open" && s.openingHoursState !== "unknown";
           const unknownHours = s.openingHoursState === "unknown";
           // In an adjusted plan the optimized leg only holds for legs whose
           // predecessor is unchanged; we keep it simple and honest: hide all.
           const legValid = !adjusted;
           return (
-            <li key={s.accountId} className="flex gap-3">
-              <div className="flex w-8 flex-col items-center">
-                <span className="w-px flex-1 bg-rule" />
-                <span
-                  className={`my-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white transition-colors ${
-                    selected ? "bg-inkwell" : s.isRevisit ? "bg-signal" : "bg-accent"
-                  }`}
+            <Box component="li" key={s.accountId} sx={{ display: "flex", gap: 3 }}>
+              <Rail>
+                <RailLine />
+                <Node
+                  sx={{
+                    my: 1,
+                    bgcolor: selected ? "background.inverse" : s.isRevisit ? "warning.main" : "primary.main",
+                    color: selected ? "background.default" : s.isRevisit ? "warning.contrastText" : "primary.contrastText",
+                    transition: (t) => t.transitions.create("background-color", { duration: t.transitions.duration.shortest }),
+                  }}
                 >
                   {String(s.displaySeq).padStart(2, "0")}
-                </span>
-                {i < stops.length - 1 ? (
-                  <span className="w-px flex-1 bg-rule" />
-                ) : (
-                  <span className="flex-1" />
-                )}
-              </div>
+                </Node>
+                {i < stops.length - 1 ? <RailLine /> : <Box sx={{ flex: 1 }} />}
+              </Rail>
 
-              <div className="min-w-0 flex-1 pb-1.5">
+              <Box sx={{ minWidth: 0, flex: 1, pb: 1.5 }}>
                 {/* Travel leg from previous */}
-                <div className="py-1.5 text-xs text-faint">
+                <Typography variant="caption" component="div" sx={{ py: 1.5, color: "text.faint" }}>
                   {legValid ? (
                     s.travelMinutesFromPrevious != null ? (
                       <>
                         {duration(s.travelMinutesFromPrevious)} · {km(s.travelDistanceKmFromPrevious)}
                         {s.durationIsGeodesicEstimate && (
-                          <span
-                            className="ml-1.5 text-signal"
+                          <Box
+                            component="span"
                             title="Straight-line estimate — not verified drive time"
+                            sx={{ ml: 1.5, color: "warning.main" }}
                           >
                             est.
-                          </span>
+                          </Box>
                         )}
                       </>
                     ) : (
                       "Travel time unavailable"
                     )
                   ) : (
-                    <span className="text-signal/80">Leg recalculates on rebuild</span>
+                    <Box component="span" sx={{ color: "warning.main" }}>
+                      Leg recalculates on rebuild
+                    </Box>
                   )}
-                </div>
+                </Typography>
 
-                <div
-                  ref={(el) => {
+                <Paper
+                  ref={(el: HTMLDivElement | null) => {
                     if (el) cardRefs.current.set(s.accountId, el);
                     else cardRefs.current.delete(s.accountId);
                   }}
+                  variant="outlined"
                   role="button"
                   tabIndex={0}
+                  aria-pressed={selected}
                   onClick={() => onSelect(selected ? null : s.accountId)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
@@ -148,89 +167,126 @@ export function Itinerary({
                   }}
                   onMouseEnter={() => onHover(s.accountId)}
                   onMouseLeave={() => onHover(null)}
-                  className={`nv-fade-up w-full cursor-pointer rounded-lg border px-3.5 py-3 text-left transition-all ${
-                    selected
-                      ? "border-accent bg-accent-tint/50"
-                      : s.accountId === hoveredId
-                        ? "border-faint bg-canvas shadow-card"
-                        : "border-rule bg-panel hover:border-faint hover:shadow-card"
-                  }`}
+                  className="nv-fade-up"
                   style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}
+                  sx={{
+                    width: 1,
+                    cursor: "pointer",
+                    px: 3.5,
+                    py: 3,
+                    textAlign: "left",
+                    borderColor: selected ? "primary.main" : hovered ? "text.disabled" : "divider",
+                    bgcolor: selected ? "action.selected" : hovered ? "background.sunken" : "background.paper",
+                    boxShadow: hovered && !selected ? 1 : 0,
+                    transition: (t) =>
+                      t.transitions.create(["border-color", "background-color", "box-shadow"], {
+                        duration: t.transitions.duration.shortest,
+                      }),
+                    "&:hover": { borderColor: selected ? "primary.main" : "text.disabled", boxShadow: selected ? 0 : 1 },
+                    "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: 1 },
+                  }}
                 >
-                  <div className="flex items-baseline justify-between gap-3">
-                    <span className="truncate text-sm font-semibold text-ink">{s.businessName}</span>
-                    <span className="shrink-0 text-xs font-medium text-muted">
+                  <Box sx={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 3 }}>
+                    <Typography variant="body1" noWrap sx={{ fontWeight: 600 }}>
+                      {s.businessName}
+                    </Typography>
+                    <Typography variant="caption" sx={{ flexShrink: 0, fontWeight: 500, color: "text.secondary", fontVariantNumeric: "tabular-nums" }}>
                       {adjusted ? "—" : `${clock12(s.arrivalClock)}–${clock12(s.departureClock)}`}
-                    </span>
-                  </div>
-                  <div className="mt-0.5 truncate text-xs text-muted">{s.categoryLabel}</div>
-                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    </Typography>
+                  </Box>
+                  <Typography variant="caption" noWrap sx={{ display: "block", mt: 0.5, color: "text.secondary" }}>
+                    {s.categoryLabel}
+                  </Typography>
+                  <Box sx={{ mt: 2, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1.5 }}>
                     <Badge tone="accent">Fit {s.fitScore}</Badge>
                     <IntelligenceItineraryBadge intelligence={intelligenceByAccountId?.[s.accountId]} />
                     {s.isRevisit && <Badge tone="signal">Revisit</Badge>}
                     {warn && <Badge tone="signal">{s.openingHoursLabel}</Badge>}
                     {unknownHours && <Badge tone="outline">Hours unknown</Badge>}
                     {s.needsManualVerification && <Badge tone="outline">Verify</Badge>}
-                  </div>
+                  </Box>
 
                   {selected && (
-                    <div className="nv-fade-in mt-3 flex items-center gap-2 border-t border-rule-soft pt-3">
-                      <button
-                        type="button"
+                    <Box className="nv-fade-in" sx={{ mt: 3, pt: 3, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 2, borderTop: 1, borderColor: "divider" }}>
+                      <Button
+                        variant="contained"
+                        size="small"
                         onClick={(e) => {
                           e.stopPropagation();
                           onViewBrief(s.accountId);
                         }}
-                        className="flex h-9 items-center rounded-md bg-accent px-3.5 text-xs font-semibold text-white hover:bg-accent-hover"
+                        sx={{ fontWeight: 600, whiteSpace: "nowrap" }}
                       >
                         View brief
-                      </button>
+                      </Button>
                       {s.googleMapsUrl && (
-                        <a
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          component="a"
                           href={s.googleMapsUrl}
                           target="_blank"
                           rel="noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="flex h-9 items-center rounded-md border border-rule bg-panel px-3.5 text-xs font-medium text-ink hover:bg-canvas"
+                          onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                          sx={{ whiteSpace: "nowrap" }}
                         >
                           Open Maps
-                        </a>
+                        </Button>
                       )}
 
-                      <span className="ml-auto flex items-center gap-1">
-                        <IconButton
-                          label="Move earlier"
-                          disabled={i === 0}
-                          onClick={() => onMove(s.accountId, -1)}
-                        >
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="m18 15-6-6-6 6" />
-                          </svg>
+                      <Box component="span" sx={{ ml: "auto", display: "flex", alignItems: "center", gap: 1 }}>
+                        <IconButton label="Move earlier" disabled={i === 0} onClick={() => onMove(s.accountId, -1)}>
+                          <KeyboardArrowUpOutlined sx={{ fontSize: 16 }} />
                         </IconButton>
-                        <IconButton
-                          label="Move later"
-                          disabled={i === stops.length - 1}
-                          onClick={() => onMove(s.accountId, 1)}
-                        >
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="m6 9 6 6 6-6" />
-                          </svg>
+                        <IconButton label="Move later" disabled={i === stops.length - 1} onClick={() => onMove(s.accountId, 1)}>
+                          <KeyboardArrowDownOutlined sx={{ fontSize: 16 }} />
                         </IconButton>
                         <IconButton label="Remove from today" onClick={() => onRemove(s.accountId)} danger>
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                            <path d="M6 6l12 12M18 6 6 18" />
-                          </svg>
+                          <CloseOutlined sx={{ fontSize: 15 }} />
                         </IconButton>
-                      </span>
-                    </div>
+                      </Box>
+                    </Box>
                   )}
-                </div>
-              </div>
-            </li>
+                </Paper>
+              </Box>
+            </Box>
           );
         })}
-      </ol>
+      </Box>
     </>
+  );
+}
+
+function Rail({ children }: { children: React.ReactNode }) {
+  return <Box sx={{ display: "flex", width: 32, flexDirection: "column", alignItems: "center", flexShrink: 0 }}>{children}</Box>;
+}
+
+function RailLine() {
+  return <Box aria-hidden sx={{ width: "1px", flex: 1, bgcolor: "divider" }} />;
+}
+
+function Node({ children, sx }: { children: React.ReactNode; sx?: Parameters<typeof Box>[0]["sx"] }) {
+  return (
+    <Box
+      component="span"
+      sx={[
+        {
+          display: "flex",
+          width: NODE,
+          height: NODE,
+          flexShrink: 0,
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: "50%",
+          typography: "caption",
+          fontWeight: 600,
+          fontVariantNumeric: "tabular-nums",
+        },
+        ...(Array.isArray(sx) ? sx : [sx]),
+      ]}
+    >
+      {children}
+    </Box>
   );
 }
 
@@ -247,45 +303,69 @@ function IconButton({
   danger?: boolean;
   children: React.ReactNode;
 }) {
-  return (
-    <button
-      type="button"
-      title={label}
+  const button = (
+    <MuiIconButton
+      size="small"
       aria-label={label}
       disabled={disabled}
       onClick={(e) => {
         e.stopPropagation();
         onClick();
       }}
-      className={`flex h-8 w-8 items-center justify-center rounded-md border border-rule bg-panel disabled:opacity-35 ${
-        danger ? "text-danger hover:bg-danger-tint" : "text-muted hover:bg-canvas hover:text-ink"
-      }`}
+      sx={{
+        width: 32,
+        height: 32,
+        border: 1,
+        borderColor: "divider",
+        borderRadius: 0.75,
+        bgcolor: "background.paper",
+        color: danger ? "error.main" : "text.secondary",
+        "&:hover": danger ? { bgcolor: "error.tint" } : { bgcolor: "background.sunken", color: "text.primary" },
+        "&.Mui-disabled": { opacity: 0.35, borderColor: "divider" },
+      }}
     >
       {children}
-    </button>
+    </MuiIconButton>
+  );
+  // Tooltip needs an enabled child to listen on; disabled buttons wrap in a span.
+  return disabled ? (
+    button
+  ) : (
+    <Tooltip title={label}>{button}</Tooltip>
   );
 }
 
+const BADGE_TONE = {
+  accent: { bgcolor: "primary.tint", color: "primary.main" },
+  signal: { bgcolor: "warning.tint", color: "warning.main" },
+  danger: { bgcolor: "error.tint", color: "error.main" },
+  neutral: { bgcolor: "background.sunken", color: "text.primary" },
+  outline: { bgcolor: "transparent", color: "text.secondary", border: 1, borderColor: "divider" },
+} as const;
+
+/**
+ * Compact 4px-radius badge for itinerary cards and the clinic drawer (fit, lead product,
+ * revisit, verify). Tones follow the design system: accent = quality, signal = attention,
+ * danger = stop, neutral = fact, outline = low-emphasis flag.
+ */
 export function Badge({
   tone,
   children,
 }: {
-  tone: "accent" | "signal" | "neutral" | "outline" | "danger";
+  tone: keyof typeof BADGE_TONE;
   children: React.ReactNode;
 }) {
-  const cls =
-    tone === "accent"
-      ? "bg-accent-tint text-accent"
-      : tone === "signal"
-        ? "bg-signal-tint text-signal"
-        : tone === "danger"
-          ? "bg-danger-tint text-danger"
-          : tone === "neutral"
-            ? "bg-canvas text-ink"
-            : "border border-rule text-muted";
   return (
-    <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[0.68rem] font-medium ${cls}`}>
-      {children}
-    </span>
+    <Chip
+      size="small"
+      label={children}
+      sx={{
+        height: 20,
+        borderRadius: 0.5,
+        fontWeight: 500,
+        "& .MuiChip-label": { px: 1.5 },
+        ...BADGE_TONE[tone],
+      }}
+    />
   );
 }

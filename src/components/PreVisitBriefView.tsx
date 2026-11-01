@@ -1,5 +1,13 @@
 "use client";
 
+import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
+import IconButton from "@mui/material/IconButton";
+import Paper from "@mui/material/Paper";
+import Typography from "@mui/material/Typography";
+import CloseOutlined from "@mui/icons-material/CloseOutlined";
+import { Disclosure } from "@/components/feedback/Disclosure";
+import { DotList, PlainList } from "@/components/feedback/DotList";
 import type { PreVisitBriefPayload } from "@/domain/brief";
 import { clock12 } from "@/lib/format";
 
@@ -29,185 +37,182 @@ export function PreVisitBriefView({
     brief.visitType === "re-visit" ? brief.openingLines.revisit : brief.openingLines.cold;
 
   return (
-    <div>
+    <Box>
       {/* Header */}
-      <header className="border-b border-rule px-6 pt-5 pb-4 md:px-8">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-[0.66rem] font-semibold tracking-[0.18em] text-accent uppercase">
+      <Box component="header" sx={{ borderBottom: 1, borderColor: "divider", px: { xs: 6, sm: 8 }, pt: 5, pb: 4 }}>
+        <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 4 }}>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="eyebrow" sx={{ color: "primary.main", letterSpacing: "0.18em" }}>
               Pre-visit brief
-            </p>
-            <h2 className="mt-1 text-lg font-semibold tracking-tight text-ink">
+            </Typography>
+            <Typography id="nv-brief-title" variant="h2" component="h2" sx={{ mt: 1 }}>
               {brief.accountName}
-            </h2>
-            <p className="mt-1 text-[13px] text-muted">
+            </Typography>
+            <Typography variant="body2" sx={{ mt: 1, color: "text.secondary" }}>
               {visitTypeLabel}
               {arrivalClock ? ` · Arrive ${clock12(arrivalClock)}` : ""} · {brief.categoryLabel} ·{" "}
               {brief.provinceCode}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close brief"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted hover:bg-canvas hover:text-ink"
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <path d="M6 6l12 12M18 6 6 18" />
-            </svg>
-          </button>
-        </div>
+            </Typography>
+          </Box>
+          <IconButton onClick={onClose} aria-label="Close brief" sx={{ flexShrink: 0, mr: -1, color: "text.secondary" }}>
+            <CloseOutlined fontSize="small" />
+          </IconButton>
+        </Box>
 
         {/* Lead product hero */}
-        <div className="mt-4 flex flex-wrap items-center gap-3 rounded-lg bg-accent-tint px-4 py-3">
-          <div className="min-w-0 flex-1">
-            <p className="text-[0.62rem] font-semibold tracking-[0.16em] text-accent uppercase">
+        <Box sx={{ mt: 4, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 3, borderRadius: 1, bgcolor: "primary.tint", px: 4, py: 3 }}>
+          <Box sx={{ minWidth: 0, flex: 1 }}>
+            <Typography variant="eyebrow" sx={{ color: "primary.main" }}>
               Lead product this visit
-            </p>
-            <p className="mt-0.5 text-[15px] font-semibold text-ink">{brief.leadProductForVisit}</p>
-          </div>
+            </Typography>
+            <Typography variant="body1" sx={{ mt: 0.5, fontWeight: 600 }}>
+              {brief.leadProductForVisit}
+            </Typography>
+          </Box>
           {fitScore != null && (
-            <span className="rounded-md bg-accent px-2.5 py-1.5 text-xs font-semibold text-white">
-              Fit {fitScore}
-            </span>
+            <Chip label={`Fit ${fitScore}`} sx={{ bgcolor: "primary.main", color: "primary.contrastText", fontWeight: 600, borderRadius: 0.75 }} />
           )}
-        </div>
-      </header>
+        </Box>
+      </Box>
 
-      <div className="space-y-6 px-6 py-6 md:px-8">
+      <Box sx={{ display: "grid", gap: 6, px: { xs: 6, sm: 8 }, py: 6 }}>
         {brief.clinicIntelligence && (
           <IntelligenceBriefSections intel={brief.clinicIntelligence} fitScore={fitScore} />
         )}
 
         {brief.generator === "llm_fallback" && brief.llmMeta?.fallbackReason && (
-          <Note tone="signal">AI synthesis unavailable — showing the deterministic template brief.</Note>
+          <Note>AI synthesis unavailable — showing the deterministic template brief.</Note>
         )}
 
         <Section title="Why we're here">
-          <p className="font-medium text-ink">{brief.leadProductWhy}</p>
-          <ul className="mt-2 space-y-1.5">
-            {brief.snapshotThreeLines.map((l) => (
-              <li key={l} className="flex gap-2">
-                <span className="mt-[8px] h-1 w-1 shrink-0 rounded-full bg-accent" />
-                <span>{l}</span>
-              </li>
-            ))}
-          </ul>
+          <Typography variant="body2" sx={{ fontWeight: 500, lineHeight: 1.6 }}>
+            {brief.leadProductWhy}
+          </Typography>
+          <DotList items={brief.snapshotThreeLines} sx={{ mt: 2 }} />
         </Section>
 
         {brief.accountSummary && (
           <Section title="What we know">
             <p>{brief.accountSummary}</p>
-            <p className="mt-1.5 text-[0.7rem] text-faint">
+            <Typography variant="caption" sx={{ display: "block", mt: 1.5, color: "text.faint" }}>
               AI-assisted summary — product, fit and contact rules remain deterministic.
-            </p>
+            </Typography>
           </Section>
         )}
 
         {brief.thinInputWarnings.length > 0 && (
-          <Note tone="signal">
-            <strong className="mb-1 block text-[0.66rem] tracking-[0.14em] uppercase">
+          <Note>
+            <Typography variant="eyebrow" component="strong" sx={{ display: "block", mb: 1, color: "inherit" }}>
               Confirm on site
-            </strong>
-            <ul className="list-disc space-y-0.5 pl-4">
+            </Typography>
+            <Box component="ul" sx={{ m: 0, pl: 4, display: "grid", gap: 0.5 }}>
               {brief.thinInputWarnings.map((w) => (
                 <li key={w}>{w}</li>
               ))}
-            </ul>
+            </Box>
           </Note>
         )}
 
         <Section title="Opening">
-          <p className="rounded-lg border border-rule bg-paper px-4 py-3 text-ink italic">
+          <Paper variant="outlined" component="blockquote" sx={{ m: 0, px: 4, py: 3, bgcolor: "background.default", fontStyle: "italic" }}>
             &ldquo;{primaryOpening}&rdquo;
-          </p>
-          <details className="mt-2">
-            <summary className="cursor-pointer text-xs font-medium text-muted hover:text-ink">
-              Other openings
-            </summary>
-            <ul className="mt-2 space-y-1.5 text-[13px]">
+          </Paper>
+          <Disclosure label="Other openings" sx={{ mt: 2 }} contentSx={{ pt: 2 }}>
+            <PlainList gap={1.5}>
               <li>
-                <span className="font-medium text-muted">Cold: </span>
+                <Box component="span" sx={{ fontWeight: 500, color: "text.secondary" }}>
+                  Cold:{" "}
+                </Box>
                 {brief.openingLines.cold}
               </li>
               <li>
-                <span className="font-medium text-muted">Knows NUVIOR: </span>
+                <Box component="span" sx={{ fontWeight: 500, color: "text.secondary" }}>
+                  Knows NUVIOR:{" "}
+                </Box>
                 {brief.openingLines.knowsNuvior}
               </li>
               <li>
-                <span className="font-medium text-muted">Revisit: </span>
+                <Box component="span" sx={{ fontWeight: 500, color: "text.secondary" }}>
+                  Revisit:{" "}
+                </Box>
                 {brief.openingLines.revisit}
               </li>
-            </ul>
-          </details>
+            </PlainList>
+          </Disclosure>
         </Section>
 
         <Section title="Questions to ask" hint="Order matters">
-          <ol className="space-y-2">
+          <Box component="ol" sx={{ m: 0, p: 0, listStyle: "none", display: "grid", gap: 2 }}>
             {brief.fiveQuestions.map((q, i) => (
-              <li key={q} className="flex gap-3">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-canvas text-[11px] font-semibold text-muted">
+              <Box component="li" key={q} sx={{ display: "flex", gap: 3 }}>
+                <Box
+                  component="span"
+                  aria-hidden
+                  sx={{ display: "flex", width: 20, height: 20, flexShrink: 0, alignItems: "center", justifyContent: "center", borderRadius: "50%", bgcolor: "background.sunken", typography: "caption", fontWeight: 600, color: "text.secondary" }}
+                >
                   {i + 1}
-                </span>
+                </Box>
                 <span>{q}</span>
-              </li>
+              </Box>
             ))}
-          </ol>
+          </Box>
         </Section>
 
         <Section title="Signals to look for">
-          <ul className="space-y-1.5">
-            {brief.signalsToReadOnSite.map((s) => (
-              <li key={s} className="flex gap-2">
-                <span className="mt-[8px] h-1 w-1 shrink-0 rounded-full bg-accent" />
-                <span>{s}</span>
-              </li>
-            ))}
-          </ul>
+          <DotList items={brief.signalsToReadOnSite} />
         </Section>
 
         <Section title="Likely objections">
-          <ul className="space-y-3">
+          <PlainList gap={3}>
             {brief.objectionsAndResponses.map((o) => (
               <li key={o.objection}>
-                <p className="text-muted italic">&ldquo;{o.objection}&rdquo;</p>
-                <p className="mt-0.5">{o.response}</p>
+                <Typography variant="body2" sx={{ color: "text.secondary", fontStyle: "italic" }}>
+                  &ldquo;{o.objection}&rdquo;
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 0.5, lineHeight: 1.6 }}>
+                  {o.response}
+                </Typography>
               </li>
             ))}
-          </ul>
+          </PlainList>
         </Section>
 
         <Section title="The ask">
-          <p className="font-medium text-ink">{brief.theAsk}</p>
-          <p className="mt-2 text-muted">
-            <span className="font-medium">Leave behind:</span> {brief.leaveBehind}
-          </p>
-          <p className="mt-2 text-muted">
-            <span className="font-medium">If the first product lands:</span>{" "}
+          <Typography variant="body2" sx={{ fontWeight: 500, lineHeight: 1.6 }}>
+            {brief.theAsk}
+          </Typography>
+          <Typography variant="body2" sx={{ mt: 2, color: "text.secondary", lineHeight: 1.6 }}>
+            <Box component="span" sx={{ fontWeight: 500 }}>
+              Leave behind:
+            </Box>{" "}
+            {brief.leaveBehind}
+          </Typography>
+          <Typography variant="body2" sx={{ mt: 2, color: "text.secondary", lineHeight: 1.6 }}>
+            <Box component="span" sx={{ fontWeight: 500 }}>
+              If the first product lands:
+            </Box>{" "}
             {brief.secondProductIfFirstLands}
-          </p>
+          </Typography>
         </Section>
 
         <Section title="Do not say">
-          <ul className="space-y-1.5">
+          <PlainList gap={1.5}>
             {brief.doNotSay.map((d) => (
-              <li key={d} className="flex gap-2 text-danger">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" className="mt-0.5 shrink-0">
-                  <path d="M6 6l12 12M18 6 6 18" />
-                </svg>
+              <Box component="li" key={d} sx={{ display: "flex", gap: 2, color: "error.main" }}>
+                <CloseOutlined aria-hidden sx={{ fontSize: 14, mt: "3px", flexShrink: 0 }} />
                 <span>{d}</span>
-              </li>
+              </Box>
             ))}
-          </ul>
+          </PlainList>
         </Section>
 
-        <p className="border-t border-rule-soft pt-3 text-[0.68rem] text-faint">
+        <Typography variant="caption" sx={{ borderTop: 1, borderColor: "divider", pt: 3, color: "text.faint" }}>
           {brief.season} · {brief.provinceUvNote || "No province UV note"} · Seasonal order:{" "}
           {brief.seasonalPitchOrder.join(" → ")} · Generated {brief.generatedAt.slice(0, 16).replace("T", " ")}
           {brief.llmMeta ? ` · ${brief.llmMeta.provider}` : " · template"}
-        </p>
-      </div>
-    </div>
+        </Typography>
+      </Box>
+    </Box>
   );
 }
 
@@ -221,25 +226,26 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section>
-      <h3 className="mb-2 flex items-baseline gap-2 text-[0.68rem] font-semibold tracking-[0.16em] text-faint uppercase">
+    <Box component="section">
+      <Typography variant="eyebrow" component="h3" sx={{ display: "flex", alignItems: "baseline", gap: 2, mb: 2 }}>
         {title}
-        {hint && <span className="font-normal normal-case tracking-normal">— {hint}</span>}
-      </h3>
-      <div className="text-[13.5px] leading-relaxed text-ink">{children}</div>
-    </section>
+        {hint && (
+          <Box component="span" sx={{ fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>
+            — {hint}
+          </Box>
+        )}
+      </Typography>
+      <Box sx={{ typography: "body2", lineHeight: 1.6, color: "text.primary", "& > p": { m: 0 } }}>{children}</Box>
+    </Box>
   );
 }
 
-function Note({ tone, children }: { tone: "signal"; children: React.ReactNode }) {
+/** Signal-toned wash for caveats the rep must act on (thin inputs, template fallback). */
+function Note({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      className={`rounded-lg px-4 py-3 text-[13px] leading-relaxed ${
-        tone === "signal" ? "bg-signal-tint text-signal" : ""
-      }`}
-    >
+    <Box role="note" sx={{ borderRadius: 1, px: 4, py: 3, bgcolor: "warning.tint", color: "warning.main", typography: "body2", lineHeight: 1.6 }}>
       {children}
-    </div>
+    </Box>
   );
 }
 
@@ -247,65 +253,55 @@ function IntelligenceBriefSections({
   intel,
   fitScore,
 }: {
-  intel: NonNullable<import("@/domain/brief").PreVisitBriefPayload["clinicIntelligence"]>;
+  intel: NonNullable<PreVisitBriefPayload["clinicIntelligence"]>;
   fitScore?: number;
 }) {
   if (!intel) return null;
   return (
-    <div className="space-y-4 rounded-xl border border-rule bg-canvas/40 p-4">
-      <p className="text-[0.62rem] font-semibold tracking-[0.16em] text-accent uppercase">
+    <Paper variant="outlined" sx={{ display: "grid", gap: 4, p: 4, borderRadius: 1.5, bgcolor: "background.sunken" }}>
+      <Typography variant="eyebrow" sx={{ color: "primary.main" }}>
         Clinic intelligence
-      </p>
+      </Typography>
 
       <BriefBlock title="Clinic snapshot">
-        <ul className="space-y-1">
-          {intel.clinicSnapshot.map((l) => (
-            <li key={l} className="flex gap-2">
-              <span className="mt-[8px] h-1 w-1 shrink-0 rounded-full bg-accent" />
-              <span>{l}</span>
-            </li>
-          ))}
-        </ul>
+        <DotList gap={1} items={intel.clinicSnapshot} />
       </BriefBlock>
 
       <BriefBlock title="Account fit">
         <p>
           Should we visit this clinic?
           {(intel.accountFitLine || fitScore != null) && (
-            <span className="ml-1 font-semibold">
+            <Box component="span" sx={{ ml: 1, fontWeight: 600 }}>
               {intel.accountFitLine ?? `Fit ${fitScore}/5`}
-            </span>
+            </Box>
           )}
         </p>
       </BriefBlock>
 
       {intel.whatTheyAppearToOffer.length > 0 && (
         <BriefBlock title="What they appear to offer">
-          <ul className="space-y-0.5">
+          <PlainList gap={0.5}>
             {intel.whatTheyAppearToOffer.slice(0, 10).map((o) => (
               <li key={o}>{o}</li>
             ))}
-          </ul>
+          </PlainList>
         </BriefBlock>
       )}
 
       {intel.bestOpportunity && (
         <BriefBlock title="Best NUVIOR opportunity">
-          <p className="font-semibold text-ink">{intel.bestOpportunity.productName}</p>
-          <p className="text-xs text-accent">{intel.bestOpportunity.headline}</p>
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+            {intel.bestOpportunity.productName}
+          </Typography>
+          <Typography variant="caption" sx={{ display: "block", color: "primary.main" }}>
+            {intel.bestOpportunity.headline}
+          </Typography>
         </BriefBlock>
       )}
 
       {intel.whyReasons.length > 0 && (
         <BriefBlock title="Why">
-          <ul className="space-y-1">
-            {intel.whyReasons.map((r) => (
-              <li key={r} className="flex gap-2">
-                <span className="mt-[8px] h-1 w-1 shrink-0 rounded-full bg-accent" />
-                <span>{r}</span>
-              </li>
-            ))}
-          </ul>
+          <DotList gap={1} items={intel.whyReasons} />
         </BriefBlock>
       )}
 
@@ -317,7 +313,9 @@ function IntelligenceBriefSections({
 
       {intel.verifyQuestion && (
         <BriefBlock title="Verify">
-          <p className="font-medium italic">&ldquo;{intel.verifyQuestion}&rdquo;</p>
+          <Typography variant="body2" sx={{ fontWeight: 500, fontStyle: "italic" }}>
+            &ldquo;{intel.verifyQuestion}&rdquo;
+          </Typography>
         </BriefBlock>
       )}
 
@@ -329,28 +327,30 @@ function IntelligenceBriefSections({
 
       {intel.watchOuts.length > 0 && (
         <BriefBlock title="Watch-outs">
-          <ul className="list-disc space-y-0.5 pl-4">
+          <Box component="ul" sx={{ m: 0, pl: 4, display: "grid", gap: 0.5 }}>
             {intel.watchOuts.map((w) => (
               <li key={w}>{w}</li>
             ))}
-          </ul>
+          </Box>
         </BriefBlock>
       )}
 
       {intel.lockedFromOpportunityEngine && (
-        <p className="text-[0.65rem] text-faint">
+        <Typography variant="caption" sx={{ color: "text.faint" }}>
           Primary product locked from opportunity engine — AI may polish wording only.
-        </p>
+        </Typography>
       )}
-    </div>
+    </Paper>
   );
 }
 
 function BriefBlock({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div>
-      <h4 className="text-[0.62rem] font-semibold tracking-[0.14em] text-faint uppercase">{title}</h4>
-      <div className="mt-1 text-[13px]">{children}</div>
-    </div>
+    <Box>
+      <Typography variant="eyebrow" component="h4" sx={{ display: "block" }}>
+        {title}
+      </Typography>
+      <Box sx={{ mt: 1, typography: "body2", "& > p": { m: 0 } }}>{children}</Box>
+    </Box>
   );
 }

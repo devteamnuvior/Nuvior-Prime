@@ -1,41 +1,19 @@
-/* Layer order: MUI (layer "mui") must beat Tailwind preflight ("base"). */
-@layer theme, base, mui, components, utilities;
-@import "tailwindcss";
-
 /*
   NUVIOR Prime — global styles.
 
-  The design system lives in the MUI theme (src/theme/tokens.ts + theme.ts), which emits
-  CSS variables prefixed `--nv-` (e.g. --nv-palette-primary-main). This file only:
-    1. bridges the v1 token names (--paper, --ink, --accent …) onto the MUI variables so the
-       Tailwind-based map workspace (src/components/today/*) keeps rendering unchanged;
-    2. holds the route-map marker styles (Google Advanced Markers + Leaflet divIcons).
-  New UI is built with MUI components and reads tokens from `theme`, never from here.
+  The design system lives in the MUI theme (src/theme/tokens.ts + theme.ts), which emits CSS
+  variables prefixed `--nv-` (e.g. --nv-palette-primary-main, --nv-palette-primary-tint). All UI is
+  MUI components reading tokens from `theme` / `sx`. This file only holds what cannot live in
+  Emotion styles:
+    1. font-stack variables that bridge next/font onto the theme (FONT_SANS / FONT_MONO in tokens.ts
+       read --font-*-loaded) and the mono stack reused by sx (`fontFamily: "var(--mono)"`);
+    2. route-map marker styles — Google Advanced Markers and Leaflet divIcons are raw DOM nodes
+       rendered by the map SDKs, outside React's styling;
+    3. Leaflet overrides, the shared keyframes used by the map workspace, and thin scrollbars.
 */
 
 :root {
-  /* ---- v1 aliases → MUI theme variables ---- */
-  --paper: var(--nv-palette-background-default);
-  --canvas: var(--nv-palette-background-sunken);
-  --panel: var(--nv-palette-background-paper);
-  --ink-surface: var(--nv-palette-background-inverse);
-  --ink: var(--nv-palette-text-primary);
-  --muted: var(--nv-palette-text-secondary);
-  --faint: var(--nv-palette-text-faint);
-  --rule: var(--nv-palette-divider);
-  --accent: var(--nv-palette-primary-main);
-  --accent-hover: var(--nv-palette-primary-dark);
-  --signal: var(--nv-palette-warning-main);
-  --danger: var(--nv-palette-error-main);
-  --marker-ring: var(--nv-palette-background-paper);
-
-  /* Tints have no MUI counterpart — values mirror src/theme/tokens.ts */
-  --rule-soft: #edebe3;
-  --accent-tint: #e9efec;
-  --signal-tint: #f6efe1;
-  --danger-tint: #f7eae7;
-
-  /* Type */
+  /* Type stacks (next/font sets the --font-*-loaded variables on <html>) */
   --display: var(--font-sans-loaded), "Inter", ui-sans-serif, system-ui, sans-serif;
   --body: var(--display);
   --brand-serif: var(--font-serif-loaded), "Fraunces", Georgia, serif;
@@ -50,33 +28,6 @@
   --nv-motion-start: 3400ms;
 }
 
-
-/* Tailwind utilities used by the legacy map workspace (bg-paper, text-ink, border-rule …) */
-@theme inline {
-  --color-ink: var(--ink);
-  --color-paper: var(--paper);
-  --color-canvas: var(--canvas);
-  --color-panel: var(--panel);
-  --color-inkwell: var(--ink-surface);
-  --color-rule: var(--rule);
-  --color-rule-soft: var(--rule-soft);
-  --color-accent: var(--accent);
-  --color-accent-hover: var(--accent-hover);
-  --color-accent-tint: var(--accent-tint);
-  --color-signal: var(--signal);
-  --color-signal-tint: var(--signal-tint);
-  --color-danger: var(--danger);
-  --color-danger-tint: var(--danger-tint);
-  --color-muted: var(--muted);
-  --color-faint: var(--faint);
-  --font-display: var(--display);
-  --font-body: var(--body);
-  --font-mono: var(--mono);
-  --shadow-card: var(--nv-shadows-1);
-  --shadow-float: var(--nv-shadows-3);
-  --shadow-sheet: 0 -8px 32px rgb(22 28 27 / 0.16);
-}
-
 /* ---------- Route map markers (Google Advanced Markers + Leaflet divIcons) ---------- */
 .nv-pin {
   position: relative;
@@ -86,12 +37,12 @@
   width: 28px;
   height: 28px;
   border-radius: 9999px;
-  background: var(--accent);
-  color: var(--marker-ring);
+  background: var(--nv-palette-primary-main);
+  color: var(--nv-palette-background-paper);
   font-family: var(--body);
   font-size: 12px;
   font-weight: 600;
-  border: 2px solid var(--marker-ring);
+  border: 2px solid var(--nv-palette-background-paper);
   box-shadow:
     0 1px 3px rgb(20 32 28 / 0.4),
     0 4px 10px rgb(20 32 28 / 0.18);
@@ -109,7 +60,7 @@
     0 6px 14px rgb(20 32 28 / 0.22);
 }
 .nv-pin--revisit {
-  background: var(--signal);
+  background: var(--nv-palette-warning-main);
 }
 /* Opening-hours warning: small amber badge dot */
 .nv-pin--warn::after {
@@ -120,12 +71,12 @@
   width: 10px;
   height: 10px;
   border-radius: 9999px;
-  background: var(--signal);
-  border: 2px solid var(--marker-ring);
+  background: var(--nv-palette-warning-main);
+  border: 2px solid var(--nv-palette-background-paper);
 }
 .nv-pin--selected {
   transform: scale(1.32);
-  background: var(--ink-surface);
+  background: var(--nv-palette-background-inverse);
   z-index: 1000;
 }
 .nv-pin--selected:hover {
@@ -137,30 +88,30 @@
   position: absolute;
   inset: -3px;
   border-radius: 9999px;
-  border: 2px solid var(--accent);
+  border: 2px solid var(--nv-palette-primary-main);
   animation: nv-select-ring 480ms ease-out forwards;
   pointer-events: none;
 }
 .nv-pin--candidate {
   width: 10px;
   height: 10px;
-  background: var(--accent);
+  background: var(--nv-palette-primary-main);
   opacity: 0.42;
-  border: 1.5px solid var(--marker-ring);
+  border: 1.5px solid var(--nv-palette-background-paper);
   box-shadow: none;
   font-size: 0;
   cursor: default;
   pointer-events: none;
 }
 .nv-pin--cand-revisit {
-  background: var(--signal);
+  background: var(--nv-palette-warning-main);
 }
 .nv-pin--cand-verify {
-  background: var(--ink-surface);
+  background: var(--nv-palette-background-inverse);
   opacity: 0.5;
 }
 .nv-pin--cand-nuvior {
-  background: var(--accent);
+  background: var(--nv-palette-primary-main);
   opacity: 0.7;
 }
 .nv-pin--cluster {
@@ -174,7 +125,7 @@
 .nv-pin--start {
   width: 26px;
   height: 26px;
-  background: var(--ink-surface);
+  background: var(--nv-palette-background-inverse);
   font-size: 10px;
   letter-spacing: 0.08em;
 }
@@ -182,7 +133,7 @@
   position: absolute;
   inset: -8px;
   border-radius: 9999px;
-  border: 1.5px solid var(--accent);
+  border: 1.5px solid var(--nv-palette-primary-main);
   opacity: 0.28;
   animation: nv-start-halo var(--nv-motion-start) ease-in-out infinite;
   pointer-events: none;
@@ -204,8 +155,8 @@
   width: 12px;
   height: 12px;
   border-radius: 9999px;
-  background: var(--accent);
-  border: 2px solid var(--marker-ring);
+  background: var(--nv-palette-primary-main);
+  border: 2px solid var(--nv-palette-background-paper);
   box-shadow: 0 1px 3px rgb(20 32 28 / 0.35);
   cursor: pointer;
   transition: transform 140ms ease;
@@ -216,8 +167,8 @@
 .nv-vertex--first {
   width: 16px;
   height: 16px;
-  background: var(--marker-ring);
-  border: 3px solid var(--accent);
+  background: var(--nv-palette-background-paper);
+  border: 3px solid var(--nv-palette-primary-main);
 }
 
 /* ---------- Motion ---------- */
@@ -296,11 +247,11 @@
 .nv-fade-in {
   animation: nv-fade-in 200ms ease backwards;
 }
-/* Clinic drawer: bottom sheet on mobile, floating card fade on desktop */
+/* Clinic drawer: bottom sheet on phones, floating card fade from the `sm` breakpoint (600px) */
 .nv-drawer-in {
   animation: nv-sheet-up 320ms cubic-bezier(0.2, 0.8, 0.25, 1) backwards;
 }
-@media (min-width: 768px) {
+@media (min-width: 600px) {
   .nv-drawer-in {
     animation: nv-fade-up 260ms cubic-bezier(0.2, 0.8, 0.3, 1) backwards;
   }
@@ -321,57 +272,34 @@
     transition: none !important;
   }
 }
+
+/* ---------- Leaflet fallback map ---------- */
 .leaflet-div-icon {
   background: transparent;
   border: none;
 }
 .leaflet-container {
   font-family: var(--body);
-  background: var(--canvas);
+  background: var(--nv-palette-background-sunken);
 }
 .leaflet-control-attribution {
   font-size: 9px !important;
-  background: color-mix(in srgb, var(--background) 75%, transparent) !important;
-  color: var(--faint) !important;
+  background: rgba(var(--nv-palette-background-paperChannel) / 0.75) !important;
+  color: var(--nv-palette-text-faint) !important;
 }
 .leaflet-control-attribution a {
-  color: var(--muted) !important;
+  color: var(--nv-palette-text-secondary) !important;
 }
 
 /* ---------- Thin scrollbars for panels ---------- */
 .nv-scroll {
   scrollbar-width: thin;
-  scrollbar-color: var(--rule) transparent;
+  scrollbar-color: var(--nv-palette-divider) transparent;
 }
 .nv-scroll::-webkit-scrollbar {
   width: 6px;
 }
 .nv-scroll::-webkit-scrollbar-thumb {
-  background: var(--rule);
+  background: var(--nv-palette-divider);
   border-radius: 3px;
-}
-
-/* ---------- Side drawer (admin) ---------- */
-@keyframes nv-slide-in-right {
-  from {
-    transform: translateX(24px);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-.nv-side-drawer-in {
-  animation: nv-sheet-up 320ms cubic-bezier(0.2, 0.8, 0.25, 1) backwards;
-}
-@media (min-width: 768px) {
-  .nv-side-drawer-in {
-    animation: nv-slide-in-right 260ms cubic-bezier(0.2, 0.8, 0.3, 1) backwards;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .nv-side-drawer-in {
-    animation: none !important;
-  }
 }

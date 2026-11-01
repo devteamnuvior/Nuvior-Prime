@@ -1,5 +1,8 @@
 "use client";
 
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import { StatusChip } from "@/components/feedback/StatusChip";
 import type { ProspectSearchSuccess } from "@/lib/prospecting";
 import { clockPlusMinutes, duration, km } from "@/lib/format";
 
@@ -33,11 +36,21 @@ export function SummaryStrip({
       : null;
 
   return (
-    <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-rule bg-panel px-4 py-2.5 md:px-6">
-      <Metric
-        value={`${shownStops} / ${summary.target}`}
-        label="visits"
-      />
+    <Box
+      sx={{
+        display: "flex",
+        flexWrap: "wrap",
+        alignItems: "center",
+        columnGap: 6,
+        rowGap: 2,
+        borderBottom: 1,
+        borderColor: "divider",
+        bgcolor: "background.paper",
+        px: { xs: 4, md: 6 },
+        py: 2.5,
+      }}
+    >
+      <Metric value={`${shownStops} / ${summary.target}`} label="visits" />
       {!manuallyAdjusted && summary.totalDriveMinutes != null && (
         <Metric value={duration(summary.totalDriveMinutes)} label="driving" />
       )}
@@ -47,7 +60,7 @@ export function SummaryStrip({
       )}
       {!manuallyAdjusted && finish && <Metric value={`Finish ${finish}`} label="" />}
 
-      <div className="ml-auto flex flex-wrap items-center gap-2">
+      <Box sx={{ ml: "auto", display: "flex", flexWrap: "wrap", alignItems: "center", gap: 2 }}>
         {manuallyAdjusted && <Status tone="signal">Manually adjusted — rebuild to recalculate</Status>}
         {summary.trafficAware && !manuallyAdjusted && <Status>Traffic aware</Status>}
         <Status>{providerLabel(summary.routingProvider)} routing</Status>
@@ -65,17 +78,23 @@ export function SummaryStrip({
         {summary.driveTimeConstraintWarning && (
           <Status tone="signal">Drive limit not verified</Status>
         )}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 }
 
 function Metric({ value, label }: { value: string; label: string }) {
   return (
-    <span className="text-[13px] whitespace-nowrap">
-      <span className="font-semibold text-ink">{value}</span>
-      {label ? <span className="ml-1 text-muted">{label}</span> : null}
-    </span>
+    <Typography variant="body2" component="span" sx={{ whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" }}>
+      <Box component="span" sx={{ fontWeight: 600 }}>
+        {value}
+      </Box>
+      {label ? (
+        <Box component="span" sx={{ ml: 1, color: "text.secondary" }}>
+          {label}
+        </Box>
+      ) : null}
+    </Typography>
   );
 }
 
@@ -86,18 +105,7 @@ function Status({
   children: React.ReactNode;
   tone?: "neutral" | "signal";
 }) {
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[0.68rem] font-medium whitespace-nowrap ${
-        tone === "signal" ? "bg-signal-tint text-signal" : "bg-canvas text-muted"
-      }`}
-    >
-      <span
-        className={`h-1 w-1 rounded-full ${tone === "signal" ? "bg-signal" : "bg-accent"}`}
-      />
-      {children}
-    </span>
-  );
+  return <StatusChip tone={tone === "signal" ? "warning" : "neutral"} label={children} sx={{ fontWeight: 500 }} />;
 }
 
 export function providerLabel(provider: string): string {

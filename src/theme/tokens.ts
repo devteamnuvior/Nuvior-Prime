@@ -39,12 +39,12 @@ export const blue = { 50: "#e6eef5", 400: "#6aa3d8", 600: "#2f5f8f", 900: "#162a
 /* ---------- Semantic palette (light only) ---------- */
 export const lightPalette = {
   mode: "light" as const,
-  primary: { main: teal[600], dark: teal[700], light: teal[400], contrastText: neutral[0] },
-  secondary: { main: neutral[700], dark: neutral[900], light: neutral[500], contrastText: neutral[0] },
-  success: { main: green[600], light: green[400], dark: "#25653f", contrastText: neutral[0] },
-  warning: { main: amber[600], light: amber[400], dark: "#6f4714", contrastText: neutral[0] },
-  error: { main: red[600], light: red[400], dark: "#7d2e23", contrastText: neutral[0] },
-  info: { main: blue[600], light: blue[400], dark: "#244a70", contrastText: neutral[0] },
+  primary: { main: teal[600], dark: teal[700], light: teal[400], contrastText: neutral[0], tint: teal[50] },
+  secondary: { main: neutral[700], dark: neutral[900], light: neutral[500], contrastText: neutral[0], tint: neutral[100] },
+  success: { main: green[600], light: green[400], dark: "#25653f", contrastText: neutral[0], tint: green[50] },
+  warning: { main: amber[600], light: amber[400], dark: "#6f4714", contrastText: neutral[0], tint: amber[50] },
+  error: { main: red[600], light: red[400], dark: "#7d2e23", contrastText: neutral[0], tint: red[50] },
+  info: { main: blue[600], light: blue[400], dark: "#244a70", contrastText: neutral[0], tint: blue[50] },
   grey: {
     50: neutral[50],
     100: neutral[100],

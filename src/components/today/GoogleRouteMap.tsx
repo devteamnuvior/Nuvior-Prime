@@ -9,14 +9,21 @@ import {
   useApiLoadingStatus,
   useMap,
 } from "@vis.gl/react-google-maps";
+import Box from "@mui/material/Box";
+import Paper from "@mui/material/Paper";
+import Typography from "@mui/material/Typography";
 import type { GeoPoint } from "@/domain/geo";
 import { prefersReducedMotion } from "@/lib/motion";
+import { amber, neutral, teal } from "@/theme/tokens";
 import type { MapStop, RouteMapCommonProps } from "./mapTypes";
 import { buildExternalRouteUrl } from "./mapTypes";
 import { GoogleRouteLayers } from "./GoogleRouteLayers";
+import { MapCaption, MapControls } from "./mapChrome";
 
-const ACCENT = "#14594f";
-const SIGNAL = "#8a5a1c";
+/* Google overlays take literal colours — read them from the design tokens, not the DOM. */
+const ACCENT = teal[600];
+const SIGNAL = amber[600];
+const CASING = neutral[50];
 
 /**
  * Production rep-facing map — Google Maps JavaScript API via
@@ -28,15 +35,17 @@ export default function GoogleRouteMap(props: RouteMapCommonProps & { mapId: str
 
   if (status === APILoadingStatus.FAILED || status === APILoadingStatus.AUTH_FAILURE) {
     return (
-      <div className="flex h-full w-full items-center justify-center bg-canvas">
-        <div className="max-w-xs rounded-xl border border-rule bg-panel px-5 py-4 text-center shadow-card">
-          <p className="text-sm font-semibold text-ink">Map unavailable</p>
-          <p className="mt-1 text-xs leading-relaxed text-muted">
+      <Box sx={{ display: "flex", width: 1, height: 1, alignItems: "center", justifyContent: "center", bgcolor: "background.sunken" }}>
+        <Paper variant="outlined" sx={{ maxWidth: 320, px: 5, py: 4, textAlign: "center", borderRadius: 1.5, boxShadow: 1 }}>
+          <Typography variant="h4" component="p">
+            Map unavailable
+          </Typography>
+          <Typography variant="caption" sx={{ display: "block", mt: 1, color: "text.secondary", lineHeight: 1.6 }}>
             Google Maps could not load. Your itinerary and route details remain available in the
             panel.
-          </p>
-        </div>
-      </div>
+          </Typography>
+        </Paper>
+      </Box>
     );
   }
 
@@ -111,7 +120,7 @@ function LoadedMap({
   const crosshair = interaction === "set-start" || interaction === "draw-area";
 
   return (
-    <div className="relative h-full w-full" style={crosshair ? { cursor: "crosshair" } : undefined}>
+    <Box sx={{ position: "relative", width: 1, height: 1, cursor: crosshair ? "crosshair" : undefined }}>
       <GoogleMap
         mapId={mapId}
         defaultCenter={start ?? fallbackCenter}
@@ -119,7 +128,7 @@ function LoadedMap({
         gestureHandling="greedy"
         disableDefaultUI
         clickableIcons={false}
-        className="h-full w-full"
+        style={{ width: "100%", height: "100%" }}
         onClick={(e) => {
           const ll = e.detail.latLng;
           if (ll && onMapClick) onMapClick({ lat: ll.lat, lng: ll.lng });
@@ -219,57 +228,21 @@ function LoadedMap({
       </GoogleMap>
 
       {/* Map controls — same visual system as the rest of the app */}
-      <div className="absolute top-3 right-3 z-10 flex flex-col overflow-hidden rounded-lg border border-rule bg-panel shadow-card">
-        <MapButton label="Zoom in" onClick={() => map?.setZoom((map.getZoom() ?? 12) + 1)}>
-          +
-        </MapButton>
-        <MapButton label="Zoom out" onClick={() => map?.setZoom((map.getZoom() ?? 12) - 1)}>
-          −
-        </MapButton>
-        <div className="border-t border-rule-soft" />
-        <MapButton label="Fit route" onClick={fitRoute}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <path d="M9 3H4v5M15 3h5v5M9 21H4v-5M15 21h5v-5" />
-          </svg>
-        </MapButton>
-        <MapButton
-          label="Center on start"
-          onClick={() => {
-            const target = start ?? fallbackCenter;
-            map?.panTo(target);
-            if ((map?.getZoom() ?? 0) < 12) map?.setZoom(12);
-          }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="3" />
-            <path d="M12 2v4M12 18v4M2 12h4M18 12h4" strokeLinecap="round" />
-          </svg>
-        </MapButton>
-        {externalUrl && (
-          <>
-            <div className="border-t border-rule-soft" />
-            <a
-              href={externalUrl}
-              target="_blank"
-              rel="noreferrer"
-              title="Open in Google Maps"
-              className="flex h-10 w-10 items-center justify-center text-muted hover:bg-canvas hover:text-ink"
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14 4h6v6M20 4 10 14M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5" />
-              </svg>
-            </a>
-          </>
-        )}
-      </div>
+      <MapControls
+        onZoomIn={() => map?.setZoom((map.getZoom() ?? 12) + 1)}
+        onZoomOut={() => map?.setZoom((map.getZoom() ?? 12) - 1)}
+        onFit={fitRoute}
+        onCenter={() => {
+          const target = start ?? fallbackCenter;
+          map?.panTo(target);
+          if ((map?.getZoom() ?? 0) < 12) map?.setZoom(12);
+        }}
+        externalUrl={externalUrl}
+      />
 
       {/* Honesty caption when showing schematic instead of road geometry */}
-      {!geometrySegments && ordered.length > 0 && (
-        <div className="absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-full border border-rule bg-panel/90 px-3 py-1 text-[0.66rem] font-medium text-muted shadow-card">
-          Planned sequence — mock path, not a road route
-        </div>
-      )}
-    </div>
+      {!geometrySegments && ordered.length > 0 && <MapCaption>Planned sequence — mock path, not a road route</MapCaption>}
+    </Box>
   );
 }
 
@@ -287,28 +260,6 @@ function pinClass(s: MapStop, selected: boolean, hovered: boolean, arrive: boole
     .join(" ");
 }
 
-function MapButton({
-  label,
-  onClick,
-  children,
-}: {
-  label: string;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      title={label}
-      aria-label={label}
-      onClick={onClick}
-      className="flex h-10 w-10 items-center justify-center text-[15px] text-muted hover:bg-canvas hover:text-ink"
-    >
-      {children}
-    </button>
-  );
-}
-
 /** Imperative google.maps.Polyline — vis.gl has no polyline component. */
 function MapPolyline({ path, variant }: { path: GeoPoint[]; variant: "road" | "schematic" | "draft" }) {
   const map = useMap();
@@ -321,7 +272,7 @@ function MapPolyline({ path, variant }: { path: GeoPoint[]; variant: "road" | "s
         new google.maps.Polyline({
           map,
           path,
-          strokeColor: "#FAF9F6",
+          strokeColor: CASING,
           strokeOpacity: 0.92,
           strokeWeight: 8,
           zIndex: 1,

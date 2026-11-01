@@ -2,6 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useMapsLibrary } from "@vis.gl/react-google-maps";
+import Box from "@mui/material/Box";
+import ListItemText from "@mui/material/ListItemText";
+import MenuItem from "@mui/material/MenuItem";
+import MenuList from "@mui/material/MenuList";
+import Paper from "@mui/material/Paper";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
 import {
   normalizeSelectedPlace,
   placesAutocompleteIsAvailable,
@@ -39,15 +46,16 @@ export function StartLocationField({
 }) {
   if (!googleEnabled) {
     return (
-      <input
+      <TextField
         value={value}
         onChange={(e) => {
           onValueChange(e.target.value);
           onResolvedStart(null);
         }}
         required
+        fullWidth
         placeholder="e.g. M5V 2T6"
-        className="h-10 w-full rounded-lg border border-rule bg-paper px-3 text-sm text-ink placeholder:text-faint"
+        aria-label="Start location"
       />
     );
   }
@@ -132,9 +140,11 @@ function GoogleAutocompleteInput({
     }
   };
 
+  const listOpen = open && suggestions.length > 0;
+
   return (
-    <div className="relative">
-      <input
+    <Box sx={{ position: "relative" }}>
+      <TextField
         value={value}
         onChange={(e) => {
           onValueChange(e.target.value);
@@ -143,36 +153,46 @@ function GoogleAutocompleteInput({
         onFocus={() => suggestions.length > 0 && setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
         required
+        fullWidth
         autoComplete="off"
         placeholder="Search address, postal code or place"
-        className="h-10 w-full rounded-lg border border-rule bg-paper px-3 text-sm text-ink placeholder:text-faint"
+        aria-label="Start location"
+        slotProps={{ htmlInput: { role: "combobox", "aria-expanded": listOpen, "aria-autocomplete": "list" } }}
       />
-      {open && suggestions.length > 0 && (
-        <ul className="absolute inset-x-0 top-11 z-20 overflow-hidden rounded-lg border border-rule bg-panel shadow-float">
-          {suggestions.map((s) => (
-            <li key={s.key}>
-              <button
-                type="button"
+      {listOpen && (
+        <Paper
+          variant="outlined"
+          sx={{ position: "absolute", left: 0, right: 0, top: "calc(100% + 4px)", zIndex: 2, overflow: "hidden", borderRadius: 1, boxShadow: 2 }}
+        >
+          <MenuList dense disablePadding role="listbox">
+            {suggestions.map((s) => (
+              <MenuItem
+                key={s.key}
+                role="option"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => select(s)}
-                className="w-full px-3 py-2.5 text-left hover:bg-canvas"
+                sx={{ borderRadius: 0, py: 2, alignItems: "flex-start" }}
               >
-                <span className="block truncate text-[13px] font-medium text-ink">{s.main}</span>
-                {s.secondary && (
-                  <span className="block truncate text-xs text-muted">{s.secondary}</span>
-                )}
-              </button>
-            </li>
-          ))}
-        </ul>
+                <ListItemText
+                  primary={s.main}
+                  secondary={s.secondary || undefined}
+                  slotProps={{
+                    primary: { variant: "body2", noWrap: true, sx: { fontWeight: 500 } },
+                    secondary: { variant: "caption", noWrap: true },
+                  }}
+                />
+              </MenuItem>
+            ))}
+          </MenuList>
+        </Paper>
       )}
       {suggestionsUnavailable && (
-        <p className="mt-1 text-[0.68rem] text-muted">
+        <Typography variant="caption" sx={{ display: "block", mt: 1, color: "text.secondary" }}>
           Suggestions unavailable. Type a postal code or address, then use this address — or
           drop a pin.
-        </p>
+        </Typography>
       )}
-    </div>
+    </Box>
   );
 }
 

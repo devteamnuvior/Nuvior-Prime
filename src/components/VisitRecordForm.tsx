@@ -1,7 +1,16 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import MenuItem from "@mui/material/MenuItem";
+import Paper from "@mui/material/Paper";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
 import { recordVisitAction, structureVisitNotesAction } from "@/app/actions";
+import { toast } from "@/components/feedback/toast";
+
+const VISIT_TYPES = ["first visit", "re-visit", "follow-up on a quote"] as const;
 
 export function VisitRecordForm({
   placeId,
@@ -23,19 +32,17 @@ export function VisitRecordForm({
   const [visitType, setVisitType] = useState("first visit");
 
   return (
-    <div className="border border-rule bg-panel p-5">
-      <h3
-        className="mb-3 text-[0.75rem] font-semibold tracking-[0.14em] text-muted uppercase"
-        style={{ fontFamily: "var(--display)" }}
-      >
+    <Paper variant="outlined" sx={{ p: 5 }}>
+      <Typography variant="eyebrow" component="h3" sx={{ display: "block", mb: 3, color: "text.secondary" }}>
         Record visit (dev)
-      </h3>
-      <p className="mb-3 text-xs text-muted">
+      </Typography>
+      <Typography variant="caption" sx={{ display: "block", mb: 3, color: "text.secondary" }}>
         {businessName} — no auth; rep placeholder = rep.dev. AI note structuring is a suggestion
         only (no autonomous CRM write).
-      </p>
-      <form
-        className="grid gap-2 text-sm md:grid-cols-2"
+      </Typography>
+      <Box
+        component="form"
+        sx={{ display: "grid", gap: 3, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))" } }}
         onSubmit={(e) => {
           e.preventDefault();
           const fd = new FormData(e.currentTarget);
@@ -53,6 +60,7 @@ export function VisitRecordForm({
               notes,
             });
             setMsg(r.message);
+            toast.result(r);
             if (r.ok) {
               setNotes("");
               setOutcome("");
@@ -64,92 +72,50 @@ export function VisitRecordForm({
           });
         }}
       >
-        <label className="text-xs">
-          Visit date
-          <input
-            name="visitDate"
-            type="date"
-            required
-            defaultValue={new Date().toISOString().slice(0, 10)}
-            className="mt-1 w-full border border-rule bg-canvas px-2 py-1"
-          />
-        </label>
-        <label className="text-xs">
-          Visit type
-          <select
-            name="visitType"
-            value={visitType}
-            onChange={(e) => setVisitType(e.target.value)}
-            className="mt-1 w-full border border-rule bg-canvas px-2 py-1"
-          >
-            <option value="first visit">first visit</option>
-            <option value="re-visit">re-visit</option>
-            <option value="follow-up on a quote">follow-up on a quote</option>
-          </select>
-        </label>
-        <label className="text-xs">
-          Outcome
-          <input
-            name="outcome"
-            value={outcome}
-            onChange={(e) => setOutcome(e.target.value)}
-            className="mt-1 w-full border border-rule bg-canvas px-2 py-1"
-          />
-        </label>
-        <label className="text-xs">
-          People met
-          <input
-            name="peopleMet"
-            value={peopleMet}
-            onChange={(e) => setPeopleMet(e.target.value)}
-            className="mt-1 w-full border border-rule bg-canvas px-2 py-1"
-          />
-        </label>
-        <label className="text-xs">
-          Products discussed
-          <input
-            name="productsDiscussed"
-            value={productsDiscussed}
-            onChange={(e) => setProductsDiscussed(e.target.value)}
-            className="mt-1 w-full border border-rule bg-canvas px-2 py-1"
-          />
-        </label>
-        <label className="text-xs">
-          Follow-up date
-          <input
-            name="followUpDate"
-            type="date"
-            value={followUpDate}
-            onChange={(e) => setFollowUpDate(e.target.value)}
-            className="mt-1 w-full border border-rule bg-canvas px-2 py-1"
-          />
-        </label>
-        <label className="text-xs md:col-span-2">
-          Next action
-          <input
-            name="nextAction"
-            value={nextAction}
-            onChange={(e) => setNextAction(e.target.value)}
-            className="mt-1 w-full border border-rule bg-canvas px-2 py-1"
-          />
-        </label>
-        <label className="text-xs md:col-span-2">
-          Notes
-          <textarea
-            name="notes"
-            rows={3}
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            className="mt-1 w-full border border-rule bg-canvas px-2 py-1"
-          />
-        </label>
-        <button
+        <TextField
+          name="visitDate"
+          label="Visit date"
+          type="date"
+          required
+          defaultValue={new Date().toISOString().slice(0, 10)}
+          slotProps={{ inputLabel: { shrink: true } }}
+        />
+        <TextField name="visitType" label="Visit type" select value={visitType} onChange={(e) => setVisitType(e.target.value)}>
+          {VISIT_TYPES.map((v) => (
+            <MenuItem key={v} value={v}>
+              {v}
+            </MenuItem>
+          ))}
+        </TextField>
+        <TextField name="outcome" label="Outcome" value={outcome} onChange={(e) => setOutcome(e.target.value)} />
+        <TextField name="peopleMet" label="People met" value={peopleMet} onChange={(e) => setPeopleMet(e.target.value)} />
+        <TextField name="productsDiscussed" label="Products discussed" value={productsDiscussed} onChange={(e) => setProductsDiscussed(e.target.value)} />
+        <TextField
+          name="followUpDate"
+          label="Follow-up date"
+          type="date"
+          value={followUpDate}
+          onChange={(e) => setFollowUpDate(e.target.value)}
+          slotProps={{ inputLabel: { shrink: true } }}
+        />
+        <TextField name="nextAction" label="Next action" value={nextAction} onChange={(e) => setNextAction(e.target.value)} sx={{ gridColumn: { sm: "1 / -1" } }} />
+        <TextField
+          name="notes"
+          label="Notes"
+          multiline
+          minRows={3}
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          sx={{ gridColumn: { sm: "1 / -1" } }}
+        />
+        <Button
           type="button"
+          variant="outlined"
           disabled={pending || !notes.trim()}
-          className="border border-rule px-3 py-2 text-xs text-muted"
+          sx={{ gridColumn: "1 / -1" }}
           onClick={() =>
             start(async () => {
-                  const r = await structureVisitNotesAction(notes, placeId);
+              const r = await structureVisitNotesAction(notes, placeId);
               if (!r.ok) {
                 setMsg(r.message);
                 return;
@@ -170,17 +136,16 @@ export function VisitRecordForm({
           }
         >
           Structure notes with AI
-        </button>
-        <button
-          type="submit"
-          disabled={pending}
-          className="border border-accent bg-accent px-3 py-2 text-xs font-semibold tracking-wide text-white uppercase"
-          style={{ fontFamily: "var(--display)" }}
-        >
+        </Button>
+        <Button type="submit" variant="contained" disabled={pending} sx={{ gridColumn: "1 / -1", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>
           {pending ? "Saving…" : "Save visit record"}
-        </button>
-      </form>
-      {msg && <p className="mt-2 font-mono text-[0.68rem] text-accent">{msg}</p>}
-    </div>
+        </Button>
+      </Box>
+      {msg && (
+        <Typography variant="caption" sx={{ display: "block", mt: 2, fontFamily: "var(--mono)", color: "primary.main" }} role="status">
+          {msg}
+        </Typography>
+      )}
+    </Paper>
   );
 }

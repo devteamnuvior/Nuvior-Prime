@@ -1,6 +1,15 @@
 "use client";
 
 import { useState, type RefObject } from "react";
+import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import MenuItem from "@mui/material/MenuItem";
+import Paper from "@mui/material/Paper";
+import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
+import { Disclosure } from "@/components/feedback/Disclosure";
 import type { CANADIAN_PROVINCES } from "@/domain/scopeOfPractice";
 import type { GeoPoint } from "@/domain/geo";
 import { polygonAreaKm2, serializeWorkingArea, validateDrawnArea } from "@/domain/geo/workingArea";
@@ -22,6 +31,7 @@ import {
 import type { PlannerPhase } from "@/domain/planning/plannerState";
 import type { OpportunitySummary } from "@/domain/planning/opportunity";
 import { StartLocationField } from "./StartLocationField";
+import { Segmented } from "./Segmented";
 
 type ProvinceOption = (typeof CANADIAN_PROVINCES)[number];
 
@@ -183,8 +193,31 @@ export function PlanningWorkspace({
 
   const drawnKm2 = area.kind === "drawn" && area.points.length >= 3 ? polygonAreaKm2(area.points) : 0;
 
+  const provinceNote = provinceError ? (
+    <Alert
+      severity="warning"
+      icon={false}
+      sx={{ mt: 3 }}
+      action={
+        canPlanSomewhereElse && onPlanSomewhereElse ? (
+          <Button size="small" color="inherit" onClick={onPlanSomewhereElse} sx={{ fontWeight: 600 }}>
+            Plan somewhere else
+          </Button>
+        ) : undefined
+      }
+    >
+      {provinceError}
+    </Alert>
+  ) : null;
+
   return (
-    <form ref={formRef} action={formAction} className="flex min-h-0 flex-1 flex-col" data-planner-phase={phase}>
+    <Box
+      component="form"
+      ref={formRef}
+      action={formAction}
+      data-planner-phase={phase}
+      sx={{ display: "flex", minHeight: 0, flex: 1, flexDirection: "column" }}
+    >
       <input type="hidden" name="startQuery" value={startText || start?.label || "start"} />
       <input type="hidden" name="startLat" value={start?.lat ?? ""} />
       <input type="hidden" name="startLng" value={start?.lng ?? ""} />
@@ -201,23 +234,29 @@ export function PlanningWorkspace({
       <input type="hidden" name="alreadyVisitedRaw" value={alreadyVisited} />
       <input type="hidden" name="revisitsDueRaw" value={revisitsDue} />
 
-      <div className="nv-scroll flex-1 space-y-5 overflow-y-auto px-4 py-4 md:px-5">
+      <Box className="nv-scroll" sx={{ flex: 1, overflowY: "auto", px: { xs: 4, sm: 5 }, py: 4, display: "flex", flexDirection: "column", gap: 5 }}>
         {/* ---- Start ---- */}
         {!hasStart || changingStart ? (
-          <section>
-            <h2 className="text-[15px] font-semibold text-ink">Where are you starting today?</h2>
-            <p className="mt-1 text-[13px] leading-relaxed text-muted">
+          <Box component="section">
+            <Typography variant="h3" component="h2">
+              Where are you starting today?
+            </Typography>
+            <Typography variant="body2" sx={{ mt: 1, color: "text.secondary", lineHeight: 1.6 }}>
               Choose your starting point. We&rsquo;ll build the day around it.
-            </p>
-            <div className="mt-4 grid gap-2">
-              <ActionRow onClick={useMyLocation} disabled={geoPending} primary>
+            </Typography>
+            <Stack spacing={2} sx={{ mt: 4 }}>
+              <Button variant="contained" size="large" fullWidth onClick={useMyLocation} disabled={geoPending}>
                 {geoPending ? "Locating…" : "Use my location"}
-              </ActionRow>
-              <ActionRow onClick={() => setSearchOpen((v) => !v)}>Search</ActionRow>
-              <ActionRow onClick={onRequestDropPin}>Drop a pin</ActionRow>
-            </div>
+              </Button>
+              <Button variant="outlined" size="large" fullWidth onClick={() => setSearchOpen((v) => !v)} aria-expanded={searchOpen}>
+                Search
+              </Button>
+              <Button variant="outlined" size="large" fullWidth onClick={onRequestDropPin}>
+                Drop a pin
+              </Button>
+            </Stack>
             {searchOpen && (
-              <div className="mt-3">
+              <Box sx={{ mt: 3 }}>
                 <StartLocationField
                   googleEnabled={googleEnabled}
                   value={startText}
@@ -228,364 +267,278 @@ export function PlanningWorkspace({
                   }}
                 />
                 {canCommitTypedStart(startText, start) && (
-                  <button
-                    type="button"
+                  <Button
+                    variant="outlined"
+                    fullWidth
                     onClick={() => {
                       onCommitTextStart();
                       setSearchOpen(false);
                     }}
-                    className="mt-2 h-9 w-full rounded-lg border border-rule bg-paper text-xs font-semibold text-ink hover:bg-canvas"
+                    sx={{ mt: 2, fontWeight: 600 }}
                   >
                     Use this address
-                  </button>
+                  </Button>
                 )}
-              </div>
+              </Box>
             )}
-            {geoError && <p className="mt-2 text-[0.72rem] leading-relaxed text-signal">{geoError}</p>}
-            {provinceError && (
-              <div className="mt-3 rounded-lg border border-signal/25 bg-signal-tint px-3 py-2.5">
-                <p className="text-[0.72rem] leading-relaxed text-signal">{provinceError}</p>
-                {canPlanSomewhereElse && onPlanSomewhereElse && (
-                  <button
-                    type="button"
-                    onClick={onPlanSomewhereElse}
-                    className="mt-2 text-xs font-semibold text-ink hover:underline"
-                  >
-                    Plan somewhere else
-                  </button>
-                )}
-              </div>
+            {geoError && (
+              <Typography variant="caption" sx={{ display: "block", mt: 2, color: "warning.main", lineHeight: 1.6 }}>
+                {geoError}
+              </Typography>
             )}
-          </section>
+            {provinceNote}
+          </Box>
         ) : (
-          <section>
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="text-[0.66rem] font-semibold tracking-[0.16em] text-faint uppercase">Start</div>
-                <p className="mt-0.5 truncate text-sm font-medium text-ink">{start?.label ?? startText}</p>
-              </div>
-              <button
-                type="button"
-                onClick={onChangeStart}
-                className="shrink-0 text-xs font-medium text-muted hover:text-ink"
-              >
+          <Box component="section">
+            <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 3 }}>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="eyebrow" component="h2" sx={{ display: "block" }}>
+                  Start
+                </Typography>
+                <Typography variant="body1" noWrap sx={{ mt: 0.5, fontWeight: 500 }}>
+                  {start?.label ?? startText}
+                </Typography>
+              </Box>
+              <Button size="small" variant="text" onClick={onChangeStart} sx={{ flexShrink: 0, color: "text.secondary", "&:hover": { color: "text.primary" } }}>
                 Change start
-              </button>
-            </div>
-            {provinceError && (
-              <div className="mt-3 rounded-lg border border-signal/25 bg-signal-tint px-3 py-2.5">
-                <p className="text-[0.72rem] leading-relaxed text-signal">{provinceError}</p>
-                {canPlanSomewhereElse && onPlanSomewhereElse && (
-                  <button
-                    type="button"
-                    onClick={onPlanSomewhereElse}
-                    className="mt-2 text-xs font-semibold text-ink hover:underline"
-                  >
-                    Plan somewhere else
-                  </button>
-                )}
-              </div>
-            )}
-          </section>
+              </Button>
+            </Box>
+            {provinceNote}
+          </Box>
         )}
 
         {showProvincePicker && hasStart && (
-          <label className="block">
-            <span className="mb-1.5 block text-xs font-medium text-ink">Province</span>
-            <select
-              value={province}
-              onChange={(e) => onProvinceChange(e.target.value)}
-              className="h-10 w-full rounded-lg border border-rule bg-paper px-3 text-sm text-ink"
-            >
-              {provinces.map((p) => (
-                <option key={p.code} value={p.code}>
-                  {p.name} ({p.code})
-                </option>
-              ))}
-            </select>
-          </label>
+          <TextField
+            select
+            label="Province"
+            value={province}
+            onChange={(e) => onProvinceChange(e.target.value)}
+            fullWidth
+          >
+            {provinces.map((p) => (
+              <MenuItem key={p.code} value={p.code}>
+                {p.name} ({p.code})
+              </MenuItem>
+            ))}
+          </TextField>
         )}
 
         {/* ---- Area ---- */}
         {hasStart && (
-          <section>
-            <div className="text-[0.66rem] font-semibold tracking-[0.16em] text-faint uppercase">
+          <Box component="section">
+            <Typography variant="eyebrow" component="h2" sx={{ display: "block" }}>
               Today&rsquo;s area
-            </div>
-            <p className="mt-1 text-[13px] text-muted">Where do you want to work today?</p>
+            </Typography>
+            <Typography variant="body2" sx={{ mt: 1, color: "text.secondary" }}>
+              Where do you want to work today?
+            </Typography>
 
-            <div className="mt-3">
-              <p className="mb-1.5 text-xs font-medium text-ink">Travel reach</p>
-              <div className="grid grid-cols-3 overflow-hidden rounded-lg border border-rule">
-                {TRAVEL_REACH_PRESETS.map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    onClick={() => onSelectReach(m)}
-                    className={`h-11 text-sm font-medium ${
-                      area.kind === "travel-reach" && area.minutes === m
-                        ? "bg-accent text-white"
-                        : "bg-paper text-muted hover:bg-canvas hover:text-ink"
-                    } ${m !== 30 ? "border-l border-rule" : ""}`}
-                  >
-                    {m} min
-                  </button>
-                ))}
-              </div>
+            <Box sx={{ mt: 3 }}>
+              <FieldLabel>Travel reach</FieldLabel>
+              <Segmented
+                ariaLabel="Travel reach"
+                height={44}
+                value={area.kind === "travel-reach" ? area.minutes : null}
+                options={TRAVEL_REACH_PRESETS.map((m) => ({ value: m, label: `${m} min` }))}
+                onChange={(m) => onSelectReach(m)}
+              />
               {area.kind === "travel-reach" && (
-                <p className="mt-2 text-[0.72rem] leading-relaxed text-muted">
+                <Typography variant="caption" sx={{ display: "block", mt: 2, color: "text.secondary", lineHeight: 1.6 }}>
                   {travelReachLabel(area.minutes)}
                   {driveHonest
-                    ? " — a drive-time limit for today&rsquo;s route, not a drawn road boundary."
+                    ? " — a drive-time limit for today’s route, not a drawn road boundary."
                     : " — drive times are estimated in this mode; a true road-time boundary is not shown."}
-                </p>
+                </Typography>
               )}
-            </div>
+            </Box>
 
-            <div className="mt-3">
+            <Box sx={{ mt: 3 }}>
               {area.kind === "drawn" && validateDrawnArea(area.points).ok ? (
-                <div className="flex items-center justify-between gap-3 rounded-lg border border-rule bg-paper px-3 py-2.5">
-                  <span className="text-xs text-ink">
+                <Paper variant="outlined" sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 3, px: 3, py: 1.5, bgcolor: "background.default" }}>
+                  <Typography variant="caption">
                     Today&rsquo;s area · {drawnKm2 >= 10 ? Math.round(drawnKm2) : drawnKm2.toFixed(1)} km²
-                  </span>
-                  <span className="flex gap-3">
-                    <button type="button" onClick={onRequestDrawArea} className="text-xs font-medium text-ink hover:underline">
+                  </Typography>
+                  <Box sx={{ display: "flex", gap: 1 }}>
+                    <Button size="small" variant="text" onClick={onRequestDrawArea}>
                       Edit
-                    </button>
-                    <button type="button" onClick={onClearArea} className="text-xs font-medium text-danger hover:underline">
+                    </Button>
+                    <Button size="small" variant="text" color="error" onClick={onClearArea}>
                       Clear
-                    </button>
-                  </span>
-                </div>
+                    </Button>
+                  </Box>
+                </Paper>
               ) : (
-                <button
-                  type="button"
+                <Button
+                  variant="outlined"
+                  size="large"
+                  fullWidth
                   onClick={onRequestDrawArea}
-                  className="flex h-11 w-full items-center justify-center rounded-lg border border-dashed border-rule bg-paper text-xs font-medium text-muted hover:bg-canvas hover:text-ink"
+                  sx={{ borderStyle: "dashed", color: "text.secondary", bgcolor: "background.default", fontWeight: 500, "&:hover": { borderStyle: "dashed", color: "text.primary" } }}
                 >
                   Draw today&rsquo;s area
-                </button>
+                </Button>
               )}
-              <p className="mt-1.5 text-[0.68rem] text-faint">
+              <Typography variant="caption" sx={{ display: "block", mt: 1.5, color: "text.faint" }}>
                 Can&rsquo;t draw? Use travel reach above.
-              </p>
-              <p className="mt-1 text-[0.68rem] text-faint">
+              </Typography>
+              <Typography variant="caption" sx={{ display: "block", mt: 1, color: "text.faint" }}>
                 Saved areas (later): Downtown Toronto, North York, Mississauga West.
-              </p>
-            </div>
-            {areaError && <p className="mt-2 text-[0.72rem] leading-relaxed text-signal">{areaError}</p>}
-          </section>
+              </Typography>
+            </Box>
+            {areaError && (
+              <Typography variant="caption" sx={{ display: "block", mt: 2, color: "warning.main", lineHeight: 1.6 }}>
+                {areaError}
+              </Typography>
+            )}
+          </Box>
         )}
 
         {/* ---- Day controls ---- */}
         {hasStart && area.kind !== "none" && (
-          <section className="space-y-3">
-            <div className="text-[0.66rem] font-semibold tracking-[0.16em] text-faint uppercase">Day</div>
-            <div className="grid grid-cols-2 gap-3">
-              <label className="block">
-                <span className="mb-1.5 block text-xs font-medium text-ink">Day start</span>
-                <select
-                  value={dayStart}
-                  onChange={(e) => onDayStart(e.target.value)}
-                  className="h-10 w-full rounded-lg border border-rule bg-paper px-3 text-sm text-ink"
-                >
-                  {TIMES.map((t) => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="block">
-                <span className="mb-1.5 block text-xs font-medium text-ink">Day end</span>
-                <select
-                  value={dayEnd}
-                  onChange={(e) => onDayEnd(e.target.value)}
-                  className="h-10 w-full rounded-lg border border-rule bg-paper px-3 text-sm text-ink"
-                >
-                  {TIMES.map((t) => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-            <label className="block">
-              <span className="mb-1.5 block text-xs font-medium text-ink">Target visits</span>
-              <input
-                type="number"
-                min={1}
-                max={50}
-                value={target}
-                onChange={(e) => onTarget(Number(e.target.value))}
-                className="h-10 w-full rounded-lg border border-rule bg-paper px-3 text-sm text-ink"
-              />
-            </label>
-            <div>
-              <span className="mb-1.5 block text-xs font-medium text-ink">Minimum fit</span>
-              <div className="grid grid-cols-5 overflow-hidden rounded-lg border border-rule">
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => onMinFit(n)}
-                    className={`h-10 text-sm font-medium ${
-                      minFit === n ? "bg-accent text-white" : "bg-paper text-muted hover:bg-canvas hover:text-ink"
-                    } ${n > 1 ? "border-l border-rule" : ""}`}
-                  >
-                    {n}+
-                  </button>
+          <Box component="section" sx={{ display: "grid", gap: 3 }}>
+            <Typography variant="eyebrow" component="h2" sx={{ display: "block" }}>
+              Day
+            </Typography>
+            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 3 }}>
+              <TextField select label="Day start" value={dayStart} onChange={(e) => onDayStart(e.target.value)} slotProps={TIME_MENU}>
+                {TIMES.map((t) => (
+                  <MenuItem key={t.value} value={t.value}>
+                    {t.label}
+                  </MenuItem>
                 ))}
-              </div>
-            </div>
-          </section>
+              </TextField>
+              <TextField select label="Day end" value={dayEnd} onChange={(e) => onDayEnd(e.target.value)} slotProps={TIME_MENU}>
+                {TIMES.map((t) => (
+                  <MenuItem key={t.value} value={t.value}>
+                    {t.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Box>
+            <TextField
+              label="Target visits"
+              type="number"
+              value={target}
+              onChange={(e) => onTarget(Number(e.target.value))}
+              slotProps={{ htmlInput: { min: 1, max: 50 } }}
+            />
+            <Box>
+              <FieldLabel>Minimum fit</FieldLabel>
+              <Segmented
+                ariaLabel="Minimum fit"
+                value={minFit}
+                options={[1, 2, 3, 4, 5].map((n) => ({ value: n, label: `${n}+` }))}
+                onChange={onMinFit}
+              />
+            </Box>
+          </Box>
         )}
 
         {opportunity && opportunity.qualified > 0 && (
-          <section className="rounded-lg border border-rule-soft bg-canvas/60 px-3.5 py-3">
-            <p className="text-sm font-semibold text-ink">
+          <Paper component="section" variant="outlined" sx={{ px: 3.5, py: 3, bgcolor: "background.sunken" }}>
+            <Typography variant="body1" sx={{ fontWeight: 600 }}>
               {opportunity.qualified} qualified account{opportunity.qualified === 1 ? "" : "s"}
-            </p>
-            <p className="mt-1 text-xs text-muted">
+            </Typography>
+            <Typography variant="caption" sx={{ display: "block", mt: 1, color: "text.secondary" }}>
               {[5, 4, 3, 2, 1]
                 .filter((f) => opportunity.byFit[f as 1 | 2 | 3 | 4 | 5] > 0)
                 .map((f) => `${opportunity.byFit[f as 1 | 2 | 3 | 4 | 5]} Fit ${f}`)
                 .join(" · ")}
               {opportunity.revisitsDue > 0 ? ` · ${opportunity.revisitsDue} revisit${opportunity.revisitsDue === 1 ? "" : "s"} due` : ""}
-            </p>
-          </section>
+            </Typography>
+          </Paper>
         )}
 
         {hasStart && (
-          <div>
-          <button
-            type="button"
-            onClick={() => setAdvancedOpen((v) => !v)}
-            className="flex items-center gap-1.5 text-xs font-medium text-muted hover:text-ink"
-          >
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={`transition-transform ${advancedOpen ? "rotate-90" : ""}`}>
-              <path d="m9 6 6 6-6 6" />
-            </svg>
-            Advanced planning
-          </button>
-          {advancedOpen && (
-            <div className="mt-3 space-y-3">
-              <label className="block">
-                <span className="mb-1.5 block text-xs font-medium text-ink">Search radius (km)</span>
-                <input
-                  type="number"
-                  min={1}
-                  max={500}
-                  value={radiusOverride ?? ""}
-                  placeholder="Auto"
-                  onChange={(e) => onRadiusOverride(e.target.value === "" ? null : Number(e.target.value))}
-                  className="h-10 w-full rounded-lg border border-rule bg-paper px-3 text-sm text-ink"
-                />
-              </label>
-              <label className="block">
-                <span className="mb-1.5 block text-xs font-medium text-ink">Max one-way drive (min)</span>
-                <input
-                  type="number"
-                  min={1}
-                  max={300}
-                  value={driveOverride ?? ""}
-                  placeholder={area.kind === "travel-reach" ? String(area.minutes) : "None"}
-                  onChange={(e) => onDriveOverride(e.target.value === "" ? null : Number(e.target.value))}
-                  className="h-10 w-full rounded-lg border border-rule bg-paper px-3 text-sm text-ink"
-                />
-              </label>
-              <label className="block">
-                <span className="mb-1.5 block text-xs font-medium text-ink">Already visited / not due</span>
-                <textarea
-                  rows={2}
-                  value={alreadyVisited}
-                  onChange={(e) => onAlreadyVisited(e.target.value)}
-                  className="w-full rounded-lg border border-rule bg-paper px-3 py-2 text-xs text-ink"
-                />
-              </label>
-              <label className="block">
-                <span className="mb-1.5 block text-xs font-medium text-ink">Revisits due today</span>
-                <textarea
-                  rows={2}
-                  value={revisitsDue}
-                  onChange={(e) => onRevisitsDue(e.target.value)}
-                  className="w-full rounded-lg border border-rule bg-paper px-3 py-2 text-xs text-ink"
-                />
-              </label>
-              <p className="text-[0.68rem] leading-relaxed text-faint">
+          <Disclosure label="Advanced planning" open={advancedOpen} onToggle={setAdvancedOpen} contentSx={{ pt: 3 }}>
+            <Stack spacing={3}>
+              <TextField
+                label="Search radius (km)"
+                type="number"
+                value={radiusOverride ?? ""}
+                placeholder="Auto"
+                onChange={(e) => onRadiusOverride(e.target.value === "" ? null : Number(e.target.value))}
+                slotProps={{ htmlInput: { min: 1, max: 500 }, inputLabel: { shrink: true } }}
+              />
+              <TextField
+                label="Max one-way drive (min)"
+                type="number"
+                value={driveOverride ?? ""}
+                placeholder={area.kind === "travel-reach" ? String(area.minutes) : "None"}
+                onChange={(e) => onDriveOverride(e.target.value === "" ? null : Number(e.target.value))}
+                slotProps={{ htmlInput: { min: 1, max: 300 }, inputLabel: { shrink: true } }}
+              />
+              <TextField
+                label="Already visited / not due"
+                multiline
+                minRows={2}
+                value={alreadyVisited}
+                onChange={(e) => onAlreadyVisited(e.target.value)}
+              />
+              <TextField
+                label="Revisits due today"
+                multiline
+                minRows={2}
+                value={revisitsDue}
+                onChange={(e) => onRevisitsDue(e.target.value)}
+              />
+              <Typography variant="caption" sx={{ color: "text.faint", lineHeight: 1.6 }}>
                 Visit length and lunch use routing defaults (20 min visit, optional lunch 12:00–2:00 PM).
-              </p>
-            </div>
-          )}
-        </div>
+              </Typography>
+            </Stack>
+          </Disclosure>
         )}
 
         {error && (
-          <div className="rounded-lg border border-danger/25 bg-danger-tint px-3.5 py-2.5 text-xs leading-relaxed text-danger">
+          <Alert severity="error" icon={false}>
             {error}
-          </div>
+          </Alert>
         )}
-      </div>
+      </Box>
 
-      <div className="border-t border-rule-soft px-4 py-3 md:px-5">
+      <Box sx={{ borderTop: 1, borderColor: "divider", px: { xs: 4, sm: 5 }, py: 3 }}>
         {hasStart && area.kind !== "none" && (
-          <button
+          <Button
             type="submit"
+            variant="contained"
+            fullWidth
             disabled={pending || !buildEnabled}
-            className="h-12 w-full rounded-lg bg-accent text-[13px] font-semibold tracking-[0.08em] text-white uppercase hover:bg-accent-hover disabled:opacity-45"
+            sx={{ minHeight: 48, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}
           >
             {pending ? "Building…" : ctaLabel}
-          </button>
+          </Button>
         )}
         {blockedReason && hasStart && !buildEnabled && (
-          <p className="mt-2 text-center text-[0.72rem] text-muted">{blockedReason}</p>
+          <Typography variant="caption" sx={{ display: "block", mt: 2, textAlign: "center", color: "text.secondary" }}>
+            {blockedReason}
+          </Typography>
         )}
         {buildEnabled && ctaLabel === "Build My Day" && (
-          <p className="mt-2 text-center text-[0.72rem] text-faint">
+          <Typography variant="caption" sx={{ display: "block", mt: 2, textAlign: "center", color: "text.faint" }}>
             Find the highest-value feasible visits in today&rsquo;s area.
-          </p>
+          </Typography>
         )}
         {hasStart && (
-          <button
-            type="button"
-            onClick={onNewPlan}
-            className="mt-2 h-9 w-full text-xs font-medium text-muted hover:text-ink"
-          >
+          <Button variant="text" size="small" fullWidth onClick={onNewPlan} sx={{ mt: 2, color: "text.secondary", "&:hover": { color: "text.primary" } }}>
             New plan
-          </button>
+          </Button>
         )}
-      </div>
-    </form>
+      </Box>
+    </Box>
   );
 }
 
-function ActionRow({
-  onClick,
-  children,
-  primary = false,
-  disabled = false,
-}: {
-  onClick: () => void;
-  children: React.ReactNode;
-  primary?: boolean;
-  disabled?: boolean;
-}) {
+/** Caption-weight label above a control that has no MUI label of its own (segmented groups). */
+function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={`flex h-11 items-center justify-center rounded-lg text-[13px] font-semibold disabled:opacity-60 ${
-        primary
-          ? "bg-accent text-white hover:bg-accent-hover"
-          : "border border-rule bg-paper text-ink hover:bg-canvas"
-      }`}
-    >
+    <Typography variant="caption" component="p" sx={{ mb: 1.5, fontWeight: 500, color: "text.primary" }}>
       {children}
-    </button>
+    </Typography>
   );
 }
+
+/** Tall option lists (15-minute clock) scroll inside the menu instead of covering the panel. */
+const TIME_MENU = { select: { MenuProps: { slotProps: { paper: { sx: { maxHeight: 320 } } } } } } as const;
 
 /** Placeholder for future saved working-area presets — not a completion requirement. */
 export const SAVED_AREA_PRESETS: { id: string; name: string; points: GeoPoint[] }[] = [];

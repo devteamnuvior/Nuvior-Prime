@@ -1,9 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import LinearProgress from "@mui/material/LinearProgress";
+import Link from "@mui/material/Link";
+import Typography from "@mui/material/Typography";
 import type { ClinicWebProfileDto } from "@/domain/clinicProfile/runClinicProfile";
 import type { ClinicWebProfile } from "@/domain/clinicProfile/schema";
 import { Badge } from "@/components/today/Itinerary";
+import { PlainList } from "@/components/feedback/DotList";
 
 /**
  * Public contact & identity facts about the clinic, researched by Claude from
@@ -25,10 +31,8 @@ export function ClinicWebProfileSection({
   if (state === "RUNNING") {
     return (
       <Shell title="Clinic contact research">
-        <p className="text-muted">Claude is searching the web and reading the clinic&apos;s site…</p>
-        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-rule">
-          <div className="h-full w-1/3 animate-pulse rounded-full bg-accent" />
-        </div>
+        <Muted>Claude is searching the web and reading the clinic&apos;s site…</Muted>
+        <LinearProgress aria-label="Researching clinic contact details" sx={{ mt: 2, height: 6, borderRadius: 999 }} />
       </Shell>
     );
   }
@@ -38,35 +42,36 @@ export function ClinicWebProfileSection({
     return (
       <Shell title="Clinic contact research">
         {failure ? (
-          <p className="text-signal">{failure}</p>
+          <Typography variant="body2" sx={{ color: "warning.main" }}>
+            {failure}
+          </Typography>
         ) : (
-          <p className="text-muted">
+          <Muted>
             Look up this clinic&apos;s address, phone numbers, website, social profiles and leadership
             from public sources.
-          </p>
+          </Muted>
         )}
-        <button
-          type="button"
-          onClick={onRun}
-          disabled={state === "UNAVAILABLE"}
-          className="mt-3 flex h-10 w-full items-center justify-center rounded-lg bg-accent text-[13px] font-semibold text-white hover:bg-accent-hover disabled:opacity-60"
-        >
+        <Button variant="contained" size="large" fullWidth onClick={onRun} disabled={state === "UNAVAILABLE"} sx={{ mt: 3, fontWeight: 600 }}>
           {failure ? "Retry with Claude" : "Find clinic info with Claude"}
-        </button>
+        </Button>
       </Shell>
     );
   }
 
   return (
     <Shell title="Clinic contact research">
-      <div className="flex flex-wrap items-center gap-1.5">
+      <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1.5 }}>
         <Badge tone={profile.matchConfidence === "HIGH" ? "accent" : profile.matchConfidence === "MEDIUM" ? "neutral" : "signal"}>
           Match {profile.matchConfidence.toLowerCase()}
         </Badge>
         {dto?.provider === "mock" && <Badge tone="outline">Mock data</Badge>}
         {state === "STALE" && <Badge tone="outline">May be outdated</Badge>}
-      </div>
-      {profile.matchReason && <p className="mt-1.5 text-xs text-muted">{profile.matchReason}</p>}
+      </Box>
+      {profile.matchReason && (
+        <Typography variant="caption" sx={{ display: "block", mt: 1.5, color: "text.secondary" }}>
+          {profile.matchReason}
+        </Typography>
+      )}
 
       {profile.address && (profile.address.formatted || profile.address.street) && (
         <Row label="Address">
@@ -81,33 +86,33 @@ export function ClinicWebProfileSection({
 
       {profile.phones.length > 0 && (
         <Row label="Phone">
-          <ul className="space-y-0.5">
+          <PlainList gap={0.5}>
             {profile.phones.map((p) => (
               <li key={`${p.number}-${p.label ?? ""}`}>
-                <a href={`tel:${p.number.replace(/[^+\d]/g, "")}`} className="text-ink underline-offset-2 hover:underline">
+                <Link href={`tel:${p.number.replace(/[^+\d]/g, "")}`} color="text.primary">
                   {p.number}
-                </a>
-                {p.label && <span className="text-muted"> · {p.label}</span>}
+                </Link>
+                {p.label && <MutedSpan> · {p.label}</MutedSpan>}
                 <SourceLink url={p.sourceUrl} />
               </li>
             ))}
-          </ul>
+          </PlainList>
         </Row>
       )}
 
       {profile.emails.length > 0 && (
         <Row label="Email">
-          <ul className="space-y-0.5">
+          <PlainList gap={0.5}>
             {profile.emails.map((e) => (
               <li key={e.address}>
-                <a href={`mailto:${e.address}`} className="text-ink underline-offset-2 hover:underline">
+                <Link href={`mailto:${e.address}`} color="text.primary">
                   {e.address}
-                </a>
-                {e.label && <span className="text-muted"> · {e.label}</span>}
+                </Link>
+                {e.label && <MutedSpan> · {e.label}</MutedSpan>}
                 <SourceLink url={e.sourceUrl} />
               </li>
             ))}
-          </ul>
+          </PlainList>
         </Row>
       )}
 
@@ -119,41 +124,43 @@ export function ClinicWebProfileSection({
 
       {profile.socialProfiles.length > 0 && (
         <Row label="Social">
-          <ul className="space-y-0.5">
+          <PlainList gap={0.5}>
             {profile.socialProfiles.map((s) => (
               <li key={s.url}>
-                <span className="capitalize text-muted">{s.platform}</span>{" "}
+                <MutedSpan sx={{ textTransform: "capitalize" }}>{s.platform}</MutedSpan>{" "}
                 <ExternalLink url={s.url} label={s.handle ?? undefined} />
               </li>
             ))}
-          </ul>
+          </PlainList>
         </Row>
       )}
 
       {profile.people.length > 0 && (
         <Row label="People">
-          <ul className="space-y-0.5">
+          <PlainList gap={0.5}>
             {profile.people.map((p) => (
               <li key={`${p.name}-${p.role}`}>
-                <span className="font-medium text-ink">{p.name}</span>
-                <span className="text-muted"> · {p.role}</span>
+                <Box component="span" sx={{ fontWeight: 500 }}>
+                  {p.name}
+                </Box>
+                <MutedSpan> · {p.role}</MutedSpan>
                 <SourceLink url={p.sourceUrl} />
               </li>
             ))}
-          </ul>
+          </PlainList>
         </Row>
       )}
 
       {profile.openingHours.length > 0 && (
         <Row label="Hours">
-          <ul className="space-y-0.5">
+          <PlainList gap={0.5}>
             {profile.openingHours.map((h) => (
               <li key={`${h.label}-${h.hours}`}>
-                <span className="text-muted">{h.label}</span> {h.hours}
+                <MutedSpan>{h.label}</MutedSpan> {h.hours}
                 <SourceLink url={h.sourceUrl} />
               </li>
             ))}
-          </ul>
+          </PlainList>
         </Row>
       )}
 
@@ -171,64 +178,80 @@ export function ClinicWebProfileSection({
 
       {profile.unknowns.length > 0 && (
         <Row label="Not found">
-          <p className="text-muted">{profile.unknowns.join(", ")}</p>
+          <Muted>{profile.unknowns.join(", ")}</Muted>
         </Row>
       )}
 
       {profile.notes.length > 0 && (
         <Row label="Notes">
-          <ul className="space-y-0.5 text-muted">
+          <PlainList gap={0.5} sx={{ color: "text.secondary" }}>
             {profile.notes.map((n) => (
               <li key={n}>{n}</li>
             ))}
-          </ul>
+          </PlainList>
         </Row>
       )}
 
-      <div className="mt-3 flex items-center justify-between gap-2">
-        <button
-          type="button"
-          onClick={() => setSourcesOpen((v) => !v)}
-          className="text-xs font-medium text-muted hover:text-ink"
-        >
+      <Box sx={{ mt: 3, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2 }}>
+        <Button size="small" variant="text" onClick={() => setSourcesOpen((v) => !v)} aria-expanded={sourcesOpen} sx={{ px: 1, mx: -1, minHeight: 28, fontSize: "0.75rem", color: "text.secondary", "&:hover": { color: "text.primary" } }}>
           {sourcesOpen ? "Hide sources" : `Sources (${profile.sources.length})`}
-        </button>
-        <button type="button" onClick={onRun} className="text-xs font-medium text-accent hover:underline">
+        </Button>
+        <Button size="small" variant="text" color="primary" onClick={onRun} sx={{ px: 1, mx: -1, minHeight: 28, fontSize: "0.75rem" }}>
           Refresh
-        </button>
-      </div>
+        </Button>
+      </Box>
       {sourcesOpen && (
-        <ul className="mt-1.5 space-y-0.5 text-xs">
+        <PlainList gap={0.5} sx={{ mt: 1.5, typography: "caption" }}>
           {profile.sources.map((s) => (
-            <li key={s.url} className="truncate">
+            <Box component="li" key={s.url} sx={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               <ExternalLink url={s.url} label={s.title ?? undefined} />
-            </li>
+            </Box>
           ))}
-        </ul>
+        </PlainList>
       )}
-      <p className="mt-2 text-[11px] text-faint">
+      <Typography variant="caption" sx={{ display: "block", mt: 2, color: "text.faint" }}>
         {dto?.provider === "claude" ? `Claude${dto.model ? ` · ${dto.model}` : ""}` : dto?.provider}
         {dto?.researchedAt ? ` · ${new Date(dto.researchedAt).toLocaleDateString()}` : ""} · Verify before relying on it.
-      </p>
+      </Typography>
     </Shell>
   );
 }
 
 function Shell({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="mt-4">
-      <h3 className="mb-1.5 text-[0.66rem] font-semibold tracking-[0.16em] text-faint uppercase">{title}</h3>
-      <div className="text-[13px] leading-relaxed text-ink">{children}</div>
-    </section>
+    <Box component="section" sx={{ mt: 4 }}>
+      <Typography variant="eyebrow" component="h3" sx={{ display: "block", mb: 1.5 }}>
+        {title}
+      </Typography>
+      <Box sx={{ typography: "body2", lineHeight: 1.6, color: "text.primary", "& p": { m: 0 } }}>{children}</Box>
+    </Box>
   );
 }
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="mt-2">
-      <div className="text-[11px] font-medium text-muted">{label}</div>
+    <Box sx={{ mt: 2 }}>
+      <Typography variant="caption" component="div" sx={{ fontWeight: 500, color: "text.secondary" }}>
+        {label}
+      </Typography>
       <div>{children}</div>
-    </div>
+    </Box>
+  );
+}
+
+function Muted({ children }: { children: React.ReactNode }) {
+  return (
+    <Typography variant="body2" sx={{ color: "text.secondary" }}>
+      {children}
+    </Typography>
+  );
+}
+
+function MutedSpan({ children, sx }: { children: React.ReactNode; sx?: Parameters<typeof Box>[0]["sx"] }) {
+  return (
+    <Box component="span" sx={[{ color: "text.secondary" }, ...(Array.isArray(sx) ? sx : [sx])]}>
+      {children}
+    </Box>
   );
 }
 
@@ -244,24 +267,26 @@ function Sourced({ url, children }: { url: string | null; children: React.ReactN
 function SourceLink({ url }: { url: string | null }) {
   if (!url) return null;
   return (
-    <a
+    <Link
       href={url}
       target="_blank"
       rel="noreferrer"
       title={url}
-      className="ml-1 align-baseline text-[10px] text-faint hover:text-accent"
       aria-label={`Source: ${hostOf(url)}`}
+      variant="caption"
+      underline="hover"
+      sx={{ ml: 1, verticalAlign: "baseline", fontSize: "0.625rem", color: "text.faint", "&:hover": { color: "primary.main" } }}
     >
       [{hostOf(url)}]
-    </a>
+    </Link>
   );
 }
 
 function ExternalLink({ url, label }: { url: string; label?: string }) {
   return (
-    <a href={url} target="_blank" rel="noreferrer" className="text-accent underline-offset-2 hover:underline">
+    <Link href={url} target="_blank" rel="noreferrer" color="primary.main" sx={{ overflowWrap: "anywhere" }}>
       {label ?? url.replace(/^https?:\/\//, "").replace(/\/$/, "")}
-    </a>
+    </Link>
   );
 }
 

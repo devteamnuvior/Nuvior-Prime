@@ -1,6 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import Box from "@mui/material/Box";
+import Paper from "@mui/material/Paper";
+import Typography from "@mui/material/Typography";
+import { Disclosure } from "@/components/feedback/Disclosure";
+import { PlainList } from "@/components/feedback/DotList";
 import type { ProspectSearchSuccess } from "@/lib/prospecting";
 import { MatchingQueuePanel } from "@/components/MatchingQueuePanel";
 import { VerificationQueuePanel } from "@/components/VerificationQueuePanel";
@@ -20,129 +25,119 @@ export function Diagnostics({ data }: { data: ProspectSearchSuccess }) {
     data.result.excludedDoNotContact.length;
 
   return (
-    <div className="border-t border-rule">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between px-4 py-3 text-left text-xs font-medium text-muted hover:bg-canvas hover:text-ink"
+    <Box sx={{ borderTop: 1, borderColor: "divider" }}>
+      <Disclosure
+        variant="row"
+        label="Run diagnostics"
+        open={open}
+        onToggle={setOpen}
+        trailing={attention > 0 ? `${attention} items` : undefined}
+        contentSx={{ display: "grid", gap: 4, px: 4, pb: 6 }}
       >
-        <span className="flex items-center gap-1.5">
-          <svg
-            width="10"
-            height="10"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            className={`transition-transform ${open ? "rotate-90" : ""}`}
-          >
-            <path d="m9 6 6 6-6 6" />
-          </svg>
-          Run diagnostics
-        </span>
-        {attention > 0 && <span className="text-faint">{attention} items</span>}
-      </button>
-
-      {open && (
-        <div className="space-y-4 px-4 pb-6">
-          <dl className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-lg border border-rule bg-panel p-4 text-xs">
-            <Stat label="Discovered" value={String(data.discovery.discoveredCount)} />
-            <Stat label="Qualified" value={String(data.qualifiedCount)} />
-            <Stat label="Places" value={data.placesProvider} />
-            <Stat label="CRM" value={data.crmProvider + (data.crmUnavailable ? " (unavailable)" : "")} />
-            <Stat label="Routing" value={data.routingProvider} />
+        <Paper component="dl" variant="outlined" sx={{ m: 0, display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", columnGap: 4, rowGap: 2, p: 4 }}>
+          <Stat label="Discovered" value={String(data.discovery.discoveredCount)} />
+          <Stat label="Qualified" value={String(data.qualifiedCount)} />
+          <Stat label="Places" value={data.placesProvider} />
+          <Stat label="CRM" value={data.crmProvider + (data.crmUnavailable ? " (unavailable)" : "")} />
+          <Stat label="Routing" value={data.routingProvider} />
+          <Stat
+            label="AI briefs"
+            value={
+              data.llm.enabled
+                ? `${data.llm.briefsSynthesized} synthesized / ${data.llm.briefsFallback} fallback`
+                : "template"
+            }
+          />
+          <Stat
+            label="Road geometry"
+            value={
+              data.routeGeometry
+                ? `${data.routeGeometry.provider} · ${data.routeGeometry.encodedSegments.length} segment(s)${data.routeGeometry.fromCache ? " · cached" : ""}`
+                : "unavailable — schematic line shown"
+            }
+          />
+          {data.workingAreaApplied && (
             <Stat
-              label="AI briefs"
-              value={
-                data.llm.enabled
-                  ? `${data.llm.briefsSynthesized} synthesized / ${data.llm.briefsFallback} fallback`
-                  : "template"
-              }
+              label="Working area"
+              value={`${data.workingAreaApplied.points} points · ${data.workingAreaApplied.excludedOutsideArea} candidates outside excluded`}
             />
-            <Stat
-              label="Road geometry"
-              value={
-                data.routeGeometry
-                  ? `${data.routeGeometry.provider} · ${data.routeGeometry.encodedSegments.length} segment(s)${data.routeGeometry.fromCache ? " · cached" : ""}`
-                  : "unavailable — schematic line shown"
-              }
-            />
-            {data.workingAreaApplied && (
-              <Stat
-                label="Working area"
-                value={`${data.workingAreaApplied.points} points · ${data.workingAreaApplied.excludedOutsideArea} candidates outside excluded`}
-              />
-            )}
-          </dl>
-
-          {summary && summary.warnings.length > 0 && (
-            <Block title="Routing warnings">
-              <ul className="list-disc space-y-1 pl-4">
-                {summary.warnings.map((w) => (
-                  <li key={w}>{w}</li>
-                ))}
-              </ul>
-            </Block>
           )}
+        </Paper>
 
-          {excluded.length > 0 && (
-            <Block title={`Not routed (${excluded.length})`}>
-              <ul className="space-y-1">
-                {excluded.map((e) => (
-                  <li key={e.accountId} className="flex justify-between gap-3">
-                    <span className="truncate">{e.businessName}</span>
-                    <span className="shrink-0 text-faint">{e.reason}</span>
-                  </li>
-                ))}
-              </ul>
-            </Block>
-          )}
+        {summary && summary.warnings.length > 0 && (
+          <Block title="Routing warnings">
+            <Box component="ul" sx={{ m: 0, pl: 4, display: "grid", gap: 1 }}>
+              {summary.warnings.map((w) => (
+                <li key={w}>{w}</li>
+              ))}
+            </Box>
+          </Block>
+        )}
 
-          {data.result.excludedDoNotContact.length > 0 && (
-            <Block title="Excluded — do not contact">
-              <ul className="space-y-1">
-                {data.result.excludedDoNotContact.map((n) => (
-                  <li key={n}>{n}</li>
-                ))}
-              </ul>
-            </Block>
-          )}
+        {excluded.length > 0 && (
+          <Block title={`Not routed (${excluded.length})`}>
+            <PlainList>
+              {excluded.map((e) => (
+                <Box component="li" key={e.accountId} sx={{ display: "flex", justifyContent: "space-between", gap: 3 }}>
+                  <Box component="span" sx={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {e.businessName}
+                  </Box>
+                  <Box component="span" sx={{ flexShrink: 0, color: "text.faint" }}>
+                    {e.reason}
+                  </Box>
+                </Box>
+              ))}
+            </PlainList>
+          </Block>
+        )}
 
-          {data.result.unverifiedAccounts.length > 0 && (
-            <Block title="Verify manually">
-              <ul className="space-y-1">
-                {data.result.unverifiedAccounts.map((a) => (
-                  <li key={a.accountId}>{a.businessName}</li>
-                ))}
-              </ul>
-            </Block>
-          )}
+        {data.result.excludedDoNotContact.length > 0 && (
+          <Block title="Excluded — do not contact">
+            <PlainList>
+              {data.result.excludedDoNotContact.map((n) => (
+                <li key={n}>{n}</li>
+              ))}
+            </PlainList>
+          </Block>
+        )}
 
-          <MatchingQueuePanel items={data.matchingQueue} />
-          <VerificationQueuePanel items={data.verificationQueue} />
-        </div>
-      )}
-    </div>
+        {data.result.unverifiedAccounts.length > 0 && (
+          <Block title="Verify manually">
+            <PlainList>
+              {data.result.unverifiedAccounts.map((a) => (
+                <li key={a.accountId}>{a.businessName}</li>
+              ))}
+            </PlainList>
+          </Block>
+        )}
+
+        <MatchingQueuePanel items={data.matchingQueue} />
+        <VerificationQueuePanel items={data.verificationQueue} />
+      </Disclosure>
+    </Box>
   );
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div>
-      <dt className="text-[0.62rem] font-semibold tracking-[0.14em] text-faint uppercase">{label}</dt>
-      <dd className="mt-0.5 text-ink">{value}</dd>
-    </div>
+    <Box sx={{ minWidth: 0 }}>
+      <Typography component="dt" variant="eyebrow" sx={{ display: "block" }}>
+        {label}
+      </Typography>
+      <Typography component="dd" variant="caption" sx={{ display: "block", m: 0, mt: 0.5, color: "text.primary", overflowWrap: "anywhere" }}>
+        {value}
+      </Typography>
+    </Box>
   );
 }
 
 function Block({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-rule bg-panel p-4 text-xs text-ink">
-      <h4 className="mb-2 text-[0.62rem] font-semibold tracking-[0.14em] text-faint uppercase">
+    <Paper variant="outlined" sx={{ p: 4, typography: "caption", color: "text.primary" }}>
+      <Typography component="h4" variant="eyebrow" sx={{ display: "block", mb: 2 }}>
         {title}
-      </h4>
+      </Typography>
       {children}
-    </div>
+    </Paper>
   );
 }

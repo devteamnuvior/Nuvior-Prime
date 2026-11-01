@@ -1,8 +1,15 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Paper from "@mui/material/Paper";
+import Typography from "@mui/material/Typography";
 import type { MatchResult } from "@/domain/crm/matching";
 import { resolveCrmMatchAction } from "@/app/actions";
+import { toast } from "@/components/feedback/toast";
+
+const MONO = { fontFamily: "var(--mono)" } as const;
 
 export function MatchingQueuePanel({
   items,
@@ -14,88 +21,80 @@ export function MatchingQueuePanel({
 
   if (items.length === 0) {
     return (
-      <div className="border border-rule bg-panel p-5 text-sm text-muted">
-        Matching queue empty — no POSSIBLE / CONFLICT matches this run.
-      </div>
+      <Paper variant="outlined" sx={{ p: 5 }}>
+        <Typography variant="body1" sx={{ color: "text.secondary" }}>
+          Matching queue empty — no POSSIBLE / CONFLICT matches this run.
+        </Typography>
+      </Paper>
     );
   }
 
+  const resolve = (
+    item: { placeId: string },
+    c: MatchResult["candidates"][number],
+    decision: "confirm" | "reject",
+  ) =>
+    start(async () => {
+      const r = await resolveCrmMatchAction({
+        placeId: item.placeId,
+        crmExternalId: c.crmExternalId,
+        matchMethod: c.method,
+        matchConfidence: c.confidence,
+        decision,
+      });
+      setMessages((m) => [...m, r.message]);
+      toast.result(r);
+    });
+
   return (
-    <div className="border border-rule bg-panel p-5">
-      <h3
-        className="mb-3 text-[0.75rem] font-semibold tracking-[0.14em] text-muted uppercase"
-        style={{ fontFamily: "var(--display)" }}
-      >
+    <Paper variant="outlined" sx={{ p: 5 }}>
+      <Typography variant="eyebrow" component="h3" sx={{ display: "block", mb: 3, color: "text.secondary" }}>
         CRM matching queue (dev)
-      </h3>
-      <p className="mb-3 text-xs text-muted">
+      </Typography>
+      <Typography variant="caption" sx={{ display: "block", mb: 3, color: "text.secondary" }}>
         Uncertain matches are not auto-merged. Confirm, reject, or leave unresolved.
-      </p>
-      <ul className="space-y-4">
+      </Typography>
+      <Box component="ul" sx={{ m: 0, p: 0, listStyle: "none", display: "grid", gap: 4 }}>
         {items.map((item) => (
-          <li key={item.placeId} className="border border-rule-soft p-3">
-            <div className="font-semibold text-sm">{item.businessName}</div>
-            <div className="font-mono text-[0.68rem] text-muted">
+          <Paper component="li" key={item.placeId} variant="outlined" sx={{ p: 3 }}>
+            <Typography variant="body1" sx={{ fontWeight: 600 }}>
+              {item.businessName}
+            </Typography>
+            <Typography variant="caption" sx={{ display: "block", ...MONO, color: "text.secondary" }}>
               {item.match.state} · {item.match.method} · conf={item.match.confidence.toFixed(2)}
-            </div>
-            <div className="mt-1 text-xs text-muted">{item.match.reason}</div>
-            <ul className="mt-2 font-mono text-[0.65rem] text-muted">
+            </Typography>
+            <Typography variant="caption" sx={{ display: "block", mt: 1, color: "text.secondary" }}>
+              {item.match.reason}
+            </Typography>
+            <Box component="ul" sx={{ m: 0, mt: 2, p: 0, listStyle: "none", display: "grid", gap: 2 }}>
               {item.match.candidates.map((c) => (
                 <li key={c.crmExternalId}>
-                  {c.crmExternalId} ({c.method} {c.confidence.toFixed(2)})
-                  <div className="mt-1 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      disabled={pending}
-                      className="border border-accent px-2 py-0.5 text-accent"
-                      onClick={() =>
-                        start(async () => {
-                          const r = await resolveCrmMatchAction({
-                            placeId: item.placeId,
-                            crmExternalId: c.crmExternalId,
-                            matchMethod: c.method,
-                            matchConfidence: c.confidence,
-                            decision: "confirm",
-                          });
-                          setMessages((m) => [...m, r.message]);
-                        })
-                      }
-                    >
+                  <Typography variant="caption" sx={{ display: "block", ...MONO, fontSize: "0.65rem", color: "text.secondary" }}>
+                    {c.crmExternalId} ({c.method} {c.confidence.toFixed(2)})
+                  </Typography>
+                  <Box sx={{ mt: 1, display: "flex", flexWrap: "wrap", gap: 2 }}>
+                    <Button size="small" variant="outlined" color="primary" disabled={pending} onClick={() => resolve(item, c, "confirm")} sx={{ borderColor: "primary.main", color: "primary.main" }}>
                       Confirm
-                    </button>
-                    <button
-                      type="button"
-                      disabled={pending}
-                      className="border border-rule px-2 py-0.5 text-muted"
-                      onClick={() =>
-                        start(async () => {
-                          const r = await resolveCrmMatchAction({
-                            placeId: item.placeId,
-                            crmExternalId: c.crmExternalId,
-                            matchMethod: c.method,
-                            matchConfidence: c.confidence,
-                            decision: "reject",
-                          });
-                          setMessages((m) => [...m, r.message]);
-                        })
-                      }
-                    >
+                    </Button>
+                    <Button size="small" variant="outlined" disabled={pending} onClick={() => resolve(item, c, "reject")} sx={{ color: "text.secondary" }}>
                       Reject
-                    </button>
-                  </div>
+                    </Button>
+                  </Box>
                 </li>
               ))}
-            </ul>
-          </li>
+            </Box>
+          </Paper>
         ))}
-      </ul>
+      </Box>
       {messages.length > 0 && (
-        <ul className="mt-3 font-mono text-[0.65rem] text-accent">
+        <Box component="ul" role="log" sx={{ m: 0, mt: 3, p: 0, listStyle: "none", display: "grid", gap: 0.5 }}>
           {messages.map((m, i) => (
-            <li key={`${i}-${m}`}>{m}</li>
+            <Typography component="li" key={`${i}-${m}`} variant="caption" sx={{ ...MONO, fontSize: "0.65rem", color: "primary.main" }}>
+              {m}
+            </Typography>
           ))}
-        </ul>
+        </Box>
       )}
-    </div>
+    </Paper>
   );
 }

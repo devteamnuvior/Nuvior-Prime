@@ -12,10 +12,17 @@ import { useEffect, useRef, useState } from "react";
 import { MapContainer, TileLayer, Marker, Polyline, Polygon, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import Box from "@mui/material/Box";
 import type { RouteMapCommonProps } from "./mapTypes";
 import { buildExternalRouteUrl } from "./mapTypes";
 import { LeafletRouteLayers } from "./LeafletRouteLayers";
+import { MapCaption, MapControls } from "./mapChrome";
 import { prefersReducedMotion } from "@/lib/motion";
+import { amber, teal } from "@/theme/tokens";
+
+/* Leaflet path options take literal colours — read them from the design tokens. */
+const ACCENT = teal[600];
+const SIGNAL = amber[600];
 
 const TILE_URL = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
 const TILE_ATTRIBUTION =
@@ -156,13 +163,13 @@ export default function RouteMap({
   const crosshair = interaction === "set-start" || interaction === "draw-area";
 
   return (
-    <div className="relative h-full w-full" style={crosshair ? { cursor: "crosshair" } : undefined}>
+    <Box sx={{ position: "relative", width: 1, height: 1, cursor: crosshair ? "crosshair" : undefined }}>
       <MapContainer
         ref={mapRef}
         center={[start?.lat ?? fallbackCenter.lat, start?.lng ?? fallbackCenter.lng]}
         zoom={start ? 12 : 10}
         zoomControl={false}
-        className="h-full w-full"
+        style={{ width: "100%", height: "100%" }}
       >
         <TileLayer url={TILE_URL} attribution={TILE_ATTRIBUTION} />
         <ClickCapture onMapClick={onMapClick} />
@@ -179,20 +186,20 @@ export default function RouteMap({
         {workingArea.length >= 3 && (
           <Polygon
             positions={workingArea.map((p) => [p.lat, p.lng] as [number, number])}
-            pathOptions={{ color: "#14594f", weight: 2, opacity: 0.8, fillOpacity: 0.08 }}
+            pathOptions={{ color: ACCENT, weight: 2, opacity: 0.8, fillOpacity: 0.08 }}
           />
         )}
         {draftArea.length > 1 && (
           <Polyline
             positions={draftArea.map((p) => [p.lat, p.lng] as [number, number])}
-            pathOptions={{ color: "#8a5a1c", weight: 2.5, opacity: 0.9, dashArray: "1 7" }}
+            pathOptions={{ color: SIGNAL, weight: 2.5, opacity: 0.9, dashArray: "1 7" }}
           />
         )}
         {/* Live fill preview once the draft is closable */}
         {draftArea.length >= 3 && (
           <Polygon
             positions={draftArea.map((p) => [p.lat, p.lng] as [number, number])}
-            pathOptions={{ stroke: false, fillColor: "#14594f", fillOpacity: 0.06 }}
+            pathOptions={{ stroke: false, fillColor: ACCENT, fillOpacity: 0.06 }}
           />
         )}
         {draftArea.map((p, i) => {
@@ -259,70 +266,15 @@ export default function RouteMap({
         ))}
       </MapContainer>
 
-      <div className="absolute top-3 right-3 z-[1000] flex flex-col overflow-hidden rounded-lg border border-rule bg-panel shadow-card">
-        <MapButton label="Zoom in" onClick={() => mapRef.current?.zoomIn()}>
-          +
-        </MapButton>
-        <MapButton label="Zoom out" onClick={() => mapRef.current?.zoomOut()}>
-          −
-        </MapButton>
-        <div className="border-t border-rule-soft" />
-        <MapButton label="Fit route" onClick={fitRoute}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <path d="M9 3H4v5M15 3h5v5M9 21H4v-5M15 21h5v-5" />
-          </svg>
-        </MapButton>
-        <MapButton label="Center on start" onClick={centerStart}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="3" />
-            <path d="M12 2v4M12 18v4M2 12h4M18 12h4" strokeLinecap="round" />
-          </svg>
-        </MapButton>
-        {externalUrl && (
-          <>
-            <div className="border-t border-rule-soft" />
-            <a
-              href={externalUrl}
-              target="_blank"
-              rel="noreferrer"
-              title="Open in Google Maps"
-              className="flex h-10 w-10 items-center justify-center text-muted hover:bg-canvas hover:text-ink"
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14 4h6v6M20 4 10 14M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5" />
-              </svg>
-            </a>
-          </>
-        )}
-      </div>
+      <MapControls
+        onZoomIn={() => mapRef.current?.zoomIn()}
+        onZoomOut={() => mapRef.current?.zoomOut()}
+        onFit={fitRoute}
+        onCenter={centerStart}
+        externalUrl={externalUrl}
+      />
 
-      {!geometrySegments && ordered.length > 0 && (
-        <div className="absolute bottom-3 left-1/2 z-[1000] -translate-x-1/2 rounded-full border border-rule bg-panel/90 px-3 py-1 text-[0.66rem] font-medium text-muted shadow-card">
-          Planned sequence — mock path, not a road route
-        </div>
-      )}
-    </div>
-  );
-}
-
-function MapButton({
-  label,
-  onClick,
-  children,
-}: {
-  label: string;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      title={label}
-      aria-label={label}
-      onClick={onClick}
-      className="flex h-10 w-10 items-center justify-center text-[15px] text-muted hover:bg-canvas hover:text-ink"
-    >
-      {children}
-    </button>
+      {!geometrySegments && ordered.length > 0 && <MapCaption>Planned sequence — mock path, not a road route</MapCaption>}
+    </Box>
   );
 }

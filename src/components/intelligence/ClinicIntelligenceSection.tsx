@@ -1,8 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Divider from "@mui/material/Divider";
+import LinearProgress from "@mui/material/LinearProgress";
+import Link from "@mui/material/Link";
+import Paper from "@mui/material/Paper";
+import Typography from "@mui/material/Typography";
 import type { ClinicIntelligenceDto, EvidenceItem } from "@/domain/intelligence/clinicIntelligenceDto";
 import { Badge } from "@/components/today/Itinerary";
+import { Disclosure } from "@/components/feedback/Disclosure";
+import { DotList, PlainList } from "@/components/feedback/DotList";
 
 export function ClinicIntelligenceSection({
   intelligence,
@@ -23,15 +32,10 @@ export function ClinicIntelligenceSection({
   if (!intelligence) {
     return (
       <IntelSection title="Clinic Intelligence">
-        <p className="text-muted">Research this clinic to see offerings, gaps, and the best NUVIOR opportunity.</p>
-        <button
-          type="button"
-          onClick={onResearch}
-          disabled={isResearching}
-          className="mt-3 flex h-10 w-full items-center justify-center rounded-lg bg-accent text-[13px] font-semibold text-white hover:bg-accent-hover disabled:opacity-60"
-        >
+        <Muted>Research this clinic to see offerings, gaps, and the best NUVIOR opportunity.</Muted>
+        <Button variant="contained" size="large" fullWidth onClick={onResearch} disabled={isResearching} sx={{ mt: 3, fontWeight: 600 }}>
           {isResearching ? "Researching…" : "Research clinic"}
-        </button>
+        </Button>
       </IntelSection>
     );
   }
@@ -41,15 +45,10 @@ export function ClinicIntelligenceSection({
   if (state === "NOT_RESEARCHED") {
     return (
       <IntelSection title="Clinic Intelligence">
-        <p className="text-muted">Research this clinic to see offerings, gaps, and the best NUVIOR opportunity.</p>
-        <button
-          type="button"
-          onClick={onResearch}
-          disabled={isResearching}
-          className="mt-3 flex h-10 w-full items-center justify-center rounded-lg bg-accent text-[13px] font-semibold text-white hover:bg-accent-hover disabled:opacity-60"
-        >
+        <Muted>Research this clinic to see offerings, gaps, and the best NUVIOR opportunity.</Muted>
+        <Button variant="contained" size="large" fullWidth onClick={onResearch} disabled={isResearching} sx={{ mt: 3, fontWeight: 600 }}>
           Research clinic
-        </button>
+        </Button>
       </IntelSection>
     );
   }
@@ -57,10 +56,8 @@ export function ClinicIntelligenceSection({
   if (state === "RESEARCHING") {
     return (
       <IntelSection title="Clinic Intelligence">
-        <p className="text-muted">Researching clinic website and profile…</p>
-        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-rule">
-          <div className="h-full w-1/3 animate-pulse rounded-full bg-accent" />
-        </div>
+        <Muted>Researching clinic website and profile…</Muted>
+        <LinearProgress aria-label="Researching clinic" sx={{ mt: 2, height: 6, borderRadius: 999 }} />
       </IntelSection>
     );
   }
@@ -68,14 +65,12 @@ export function ClinicIntelligenceSection({
   if (state === "FAILED") {
     return (
       <IntelSection title="Clinic Intelligence">
-        <p className="text-signal">{intelligence.failureMessage ?? "Research failed. Try again."}</p>
-        <button
-          type="button"
-          onClick={onResearch}
-          className="mt-3 flex h-10 w-full items-center justify-center rounded-lg border border-rule bg-panel text-[13px] font-medium text-ink hover:bg-canvas"
-        >
+        <Typography variant="body2" sx={{ color: "warning.main" }}>
+          {intelligence.failureMessage ?? "Research failed. Try again."}
+        </Typography>
+        <Button variant="outlined" size="large" fullWidth onClick={onResearch} sx={{ mt: 3 }}>
           Retry research
-        </button>
+        </Button>
       </IntelSection>
     );
   }
@@ -83,158 +78,141 @@ export function ClinicIntelligenceSection({
   return (
     <IntelSection title="Clinic Intelligence">
       {state === "STALE" && (
-        <p className="mb-3 text-xs text-signal">Source pages changed — refresh for updated intelligence.</p>
+        <Typography variant="caption" sx={{ display: "block", mb: 3, color: "warning.main" }}>
+          Source pages changed — refresh for updated intelligence.
+        </Typography>
       )}
 
       {/* Account Fit — visually separate */}
-      <div className="rounded-lg border border-rule-soft bg-canvas/60 px-3 py-2.5">
-        <p className="text-[0.62rem] font-semibold tracking-[0.14em] text-faint uppercase">
-          Account fit
-        </p>
-        <p className="mt-0.5 text-[13px] text-ink">
+      <Paper variant="outlined" sx={{ px: 3, py: 2.5, bgcolor: "background.sunken" }}>
+        <Eyebrow>Account fit</Eyebrow>
+        <Typography variant="body2" sx={{ mt: 0.5 }}>
           Should we visit this clinic?
           {intelligence.accountFitScore != null && (
-            <span className="ml-2 font-semibold text-accent">Fit {intelligence.accountFitScore}</span>
+            <Box component="span" sx={{ ml: 2, fontWeight: 600, color: "primary.main" }}>
+              Fit {intelligence.accountFitScore}
+            </Box>
           )}
-        </p>
-      </div>
+        </Typography>
+      </Paper>
 
       {/* Primary opportunity */}
-      <div className="mt-3">
-        <p className="text-[0.62rem] font-semibold tracking-[0.14em] text-faint uppercase">
-          Best NUVIOR opportunity
-        </p>
+      <Box sx={{ mt: 3 }}>
+        <Eyebrow>Best NUVIOR opportunity</Eyebrow>
         {intelligence.blockedDnc ? (
-          <p className="mt-1.5 text-[13px] text-muted">
+          <Muted sx={{ mt: 1.5 }}>
             {intelligence.noRecommendationMessage ??
               "Do-not-contact — no actionable sales recommendation."}
-          </p>
+          </Muted>
         ) : intelligence.primary ? (
-          <div className="mt-2 rounded-lg border border-accent/30 bg-accent-tint/40 px-3.5 py-3">
-            <p className="text-[15px] font-semibold text-ink">{intelligence.primary.productName}</p>
-            <p className="mt-0.5 text-xs font-medium text-accent">{intelligence.primary.headline}</p>
-          </div>
+          <Paper variant="outlined" sx={{ mt: 2, px: 3.5, py: 3, borderColor: "primary.light", bgcolor: "primary.tint" }}>
+            <Typography variant="body1" sx={{ fontWeight: 600 }}>
+              {intelligence.primary.productName}
+            </Typography>
+            <Typography variant="caption" sx={{ display: "block", mt: 0.5, fontWeight: 500, color: "primary.main" }}>
+              {intelligence.primary.headline}
+            </Typography>
+          </Paper>
         ) : (
-          <p className="mt-1.5 text-[13px] text-muted">
-            {intelligence.noRecommendationMessage ?? "No clear product opportunity yet"}
-          </p>
+          <Muted sx={{ mt: 1.5 }}>{intelligence.noRecommendationMessage ?? "No clear product opportunity yet"}</Muted>
         )}
-      </div>
+      </Box>
 
       {intelligence.primary?.whyReasons && intelligence.primary.whyReasons.length > 0 && (
-        <div className="mt-3">
-          <p className="text-[0.62rem] font-semibold tracking-[0.14em] text-faint uppercase">Why this fits</p>
-          <ul className="mt-1.5 space-y-1">
-            {intelligence.primary.whyReasons.map((r) => (
-              <li key={r} className="flex gap-2 text-[13px]">
-                <span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-accent" />
-                <span>{r}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <Box sx={{ mt: 3 }}>
+          <Eyebrow>Why this fits</Eyebrow>
+          <DotList gap={1} items={intelligence.primary.whyReasons} sx={{ mt: 1.5 }} />
+        </Box>
       )}
 
       {intelligence.primary?.verifyQuestion && (
-        <div className="mt-3 rounded-lg border border-signal/30 bg-signal-tint/30 px-3.5 py-3">
-          <p className="text-[0.62rem] font-semibold tracking-[0.14em] text-signal uppercase">
+        <Paper variant="outlined" sx={{ mt: 3, px: 3.5, py: 3, borderColor: "warning.light", bgcolor: "warning.tint" }}>
+          <Typography variant="eyebrow" sx={{ display: "block", color: "warning.main" }}>
             Verify on visit
-          </p>
-          <p className="mt-1 text-[13px] font-medium text-ink">&ldquo;{intelligence.primary.verifyQuestion}&rdquo;</p>
-        </div>
+          </Typography>
+          <Typography variant="body2" sx={{ mt: 1, fontWeight: 500 }}>
+            &ldquo;{intelligence.primary.verifyQuestion}&rdquo;
+          </Typography>
+        </Paper>
       )}
 
       {intelligence.primary?.gap && (
-        <div className="mt-3">
-          <p className="text-[0.62rem] font-semibold tracking-[0.14em] text-faint uppercase">Opportunity gap</p>
-          <p className="mt-1 text-[13px] font-medium text-ink">{intelligence.primary.gap.capabilityLabel}</p>
-          <p className="text-xs text-muted">{intelligence.primary.gap.inventoryStateLabel}</p>
-          <p className="mt-1.5 text-[13px] text-ink">
-            <span className="font-medium">Why it matters: </span>
+        <Box sx={{ mt: 3 }}>
+          <Eyebrow>Opportunity gap</Eyebrow>
+          <Typography variant="body2" sx={{ mt: 1, fontWeight: 500 }}>
+            {intelligence.primary.gap.capabilityLabel}
+          </Typography>
+          <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>
+            {intelligence.primary.gap.inventoryStateLabel}
+          </Typography>
+          <Typography variant="body2" sx={{ mt: 1.5 }}>
+            <Box component="span" sx={{ fontWeight: 500 }}>
+              Why it matters:{" "}
+            </Box>
             {intelligence.primary.gap.whyItMatters}
-          </p>
-        </div>
+          </Typography>
+        </Box>
       )}
 
       {intelligence.offerings.length > 0 && (
-        <div className="mt-3">
-          <p className="text-[0.62rem] font-semibold tracking-[0.14em] text-faint uppercase">
-            What they appear to offer
-          </p>
-          <ul className="mt-1.5 space-y-1">
+        <Box sx={{ mt: 3 }}>
+          <Eyebrow>What they appear to offer</Eyebrow>
+          <PlainList sx={{ mt: 1.5 }}>
             {intelligence.offerings.slice(0, 12).map((o) => (
-              <li key={`${o.category}-${o.label}`} className="flex items-baseline justify-between gap-2 text-[13px]">
+              <Box component="li" key={`${o.category}-${o.label}`} sx={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 2 }}>
                 <span>{o.label}</span>
-                <span className="shrink-0 text-[0.65rem] text-muted">{o.inventoryStateLabel}</span>
-              </li>
+                <Typography component="span" variant="caption" sx={{ flexShrink: 0, color: "text.secondary" }}>
+                  {o.inventoryStateLabel}
+                </Typography>
+              </Box>
             ))}
-          </ul>
-        </div>
+          </PlainList>
+        </Box>
       )}
 
       {intelligence.secondaryOpportunities.length > 0 && (
-        <div className="mt-3">
-          <button
-            type="button"
-            onClick={() => setSecondaryOpen((v) => !v)}
-            className="flex items-center gap-1.5 text-xs font-medium text-muted hover:text-ink"
-          >
-            <svg
-              width="10"
-              height="10"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              className={`transition-transform ${secondaryOpen ? "rotate-90" : ""}`}
-            >
-              <path d="m9 6 6 6-6 6" />
-            </svg>
-            View other opportunities ({intelligence.secondaryOpportunities.length})
-          </button>
-          {secondaryOpen && (
-            <ul className="mt-2 space-y-2 border-l-2 border-rule-soft pl-3">
-              {intelligence.secondaryOpportunities.map((s) => (
-                <li key={s.productId} className="text-[13px]">
-                  <span className="font-medium text-ink">{s.productName}</span>
-                  <span className="ml-2 text-xs text-muted">{s.headline}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        <Disclosure
+          label={`View other opportunities (${intelligence.secondaryOpportunities.length})`}
+          open={secondaryOpen}
+          onToggle={setSecondaryOpen}
+          sx={{ mt: 3 }}
+          contentSx={{ pt: 2 }}
+        >
+          <PlainList gap={2} sx={{ pl: 3, borderLeft: 2, borderColor: "divider" }}>
+            {intelligence.secondaryOpportunities.map((s) => (
+              <li key={s.productId}>
+                <Box component="span" sx={{ fontWeight: 500 }}>
+                  {s.productName}
+                </Box>
+                <Typography component="span" variant="caption" sx={{ ml: 2, color: "text.secondary" }}>
+                  {s.headline}
+                </Typography>
+              </li>
+            ))}
+          </PlainList>
+        </Disclosure>
       )}
 
       {intelligence.evidence.length > 0 && (
-        <div className="mt-3">
-          <button
-            type="button"
-            onClick={() => setEvidenceOpen((v) => !v)}
-            className="text-xs font-medium text-accent hover:text-accent-hover"
-          >
+        <Box sx={{ mt: 3 }}>
+          <Button size="small" variant="text" color="primary" onClick={() => setEvidenceOpen((v) => !v)} aria-expanded={evidenceOpen} sx={{ px: 1, mx: -1, minHeight: 28, fontSize: "0.75rem" }}>
             {evidenceOpen ? "Hide evidence" : "View evidence"}
-          </button>
+          </Button>
           {evidenceOpen && <EvidencePanel items={intelligence.evidence.slice(0, 20)} />}
-        </div>
+        </Box>
       )}
 
       {isPrivileged && intelligence.diagnostics && (
         <DiagnosticsPanel diagnostics={intelligence.diagnostics} />
       )}
 
-      <div className="mt-3 flex gap-2">
-        {(state === "STALE" || state === "NEEDS_VERIFICATION" || intelligence.canRefresh) && onRefresh && (
-          <button
-            type="button"
-            onClick={onRefresh}
-            disabled={isResearching}
-            className="flex h-9 flex-1 items-center justify-center rounded-md border border-rule bg-panel text-xs font-medium text-ink hover:bg-canvas disabled:opacity-60"
-          >
+      {(state === "STALE" || state === "NEEDS_VERIFICATION" || intelligence.canRefresh) && onRefresh && (
+        <Box sx={{ mt: 3, display: "flex", gap: 2 }}>
+          <Button variant="outlined" fullWidth onClick={onRefresh} disabled={isResearching}>
             Refresh research
-          </button>
-        )}
-      </div>
+          </Button>
+        </Box>
+      )}
     </IntelSection>
   );
 }
@@ -266,41 +244,61 @@ export function IntelligenceItineraryBadge({
 
 function IntelSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="mt-4 border-t border-rule-soft pt-4">
-      <h3 className="mb-2 text-[0.66rem] font-semibold tracking-[0.16em] text-faint uppercase">
+    <Box component="section" sx={{ mt: 4, pt: 4, borderTop: 1, borderColor: "divider" }}>
+      <Typography variant="eyebrow" component="h3" sx={{ display: "block", mb: 2 }}>
         {title}
-      </h3>
-      <div className="text-[13px] leading-relaxed text-ink">{children}</div>
-    </section>
+      </Typography>
+      <Box sx={{ typography: "body2", lineHeight: 1.6, color: "text.primary" }}>{children}</Box>
+    </Box>
+  );
+}
+
+function Eyebrow({ children }: { children: React.ReactNode }) {
+  return (
+    <Typography variant="eyebrow" component="p" sx={{ display: "block" }}>
+      {children}
+    </Typography>
+  );
+}
+
+function Muted({ children, sx }: { children: React.ReactNode; sx?: Parameters<typeof Typography>[0]["sx"] }) {
+  return (
+    <Typography variant="body2" sx={[{ color: "text.secondary" }, ...(Array.isArray(sx) ? sx : [sx])]}>
+      {children}
+    </Typography>
   );
 }
 
 function EvidencePanel({ items }: { items: EvidenceItem[] }) {
   return (
-    <ul className="mt-2 max-h-48 space-y-2 overflow-y-auto rounded-lg border border-rule bg-paper p-3">
-      {items.map((e) => (
-        <li key={e.id} className="border-b border-rule-soft pb-2 last:border-0 last:pb-0">
-          {e.sourcePage && <p className="text-[0.65rem] font-medium text-muted">{e.sourcePage}</p>}
+    <Paper component="ul" variant="outlined" className="nv-scroll" sx={{ m: 0, mt: 2, p: 3, listStyle: "none", maxHeight: 192, overflowY: "auto", bgcolor: "background.default" }}>
+      {items.map((e, i) => (
+        <li key={e.id}>
+          {i > 0 && <Divider sx={{ my: 2 }} />}
+          {e.sourcePage && (
+            <Typography variant="caption" sx={{ display: "block", fontWeight: 500, color: "text.secondary" }}>
+              {e.sourcePage}
+            </Typography>
+          )}
           {e.url && (
-            <a
-              href={e.url}
-              target="_blank"
-              rel="noreferrer"
-              className="text-[0.65rem] text-accent hover:underline"
-            >
+            <Link href={e.url} target="_blank" rel="noreferrer" variant="caption" sx={{ display: "block", color: "primary.main", overflowWrap: "anywhere" }}>
               {e.url.length > 48 ? `${e.url.slice(0, 48)}…` : e.url}
-            </a>
+            </Link>
           )}
           {e.extractedItem && (
-            <p className="mt-0.5 text-xs font-medium text-ink">{e.extractedItem}</p>
+            <Typography variant="caption" sx={{ display: "block", mt: 0.5, fontWeight: 500, color: "text.primary" }}>
+              {e.extractedItem}
+            </Typography>
           )}
-          <p className="mt-0.5 text-xs text-ink">{e.snippet}</p>
-          <p className="mt-0.5 text-[0.6rem] text-faint">
+          <Typography variant="caption" sx={{ display: "block", mt: 0.5, color: "text.primary" }}>
+            {e.snippet}
+          </Typography>
+          <Typography variant="caption" sx={{ display: "block", mt: 0.5, color: "text.faint" }}>
             {e.confidence} confidence · {e.retrievedAt.slice(0, 10)}
-          </p>
+          </Typography>
         </li>
       ))}
-    </ul>
+    </Paper>
   );
 }
 
@@ -309,47 +307,30 @@ function DiagnosticsPanel({
 }: {
   diagnostics: NonNullable<ClinicIntelligenceDto["diagnostics"]>;
 }) {
+  const rows: [string, React.ReactNode, boolean?][] = [
+    ["Score", `${diagnostics.opportunityScore} (${diagnostics.scoreBand})`, true],
+    ["Confidence", diagnostics.confidence],
+    ["Profile", diagnostics.profileVersion.slice(0, 12), true],
+    ["Gap rules", diagnostics.gapRulesVersion],
+    ["Scoring", diagnostics.scoringVersion],
+    ["Catalog", diagnostics.catalogVersion.slice(0, 12), true],
+    ["Provider", `${diagnostics.researchProvider}${diagnostics.researchModel ? ` / ${diagnostics.researchModel}` : ""}`],
+  ];
   return (
-    <details className="mt-3 rounded-lg border border-dashed border-faint bg-canvas/50 p-3">
-      <summary className="cursor-pointer text-[0.65rem] font-semibold tracking-wide text-faint uppercase">
-        Manager diagnostics
-      </summary>
-      <dl className="mt-2 space-y-1 text-[0.7rem] text-muted">
-        <div className="flex justify-between gap-2">
-          <dt>Score</dt>
-          <dd className="font-mono text-ink">
-            {diagnostics.opportunityScore} ({diagnostics.scoreBand})
-          </dd>
-        </div>
-        <div className="flex justify-between gap-2">
-          <dt>Confidence</dt>
-          <dd>{diagnostics.confidence}</dd>
-        </div>
-        <div className="flex justify-between gap-2">
-          <dt>Profile</dt>
-          <dd className="truncate font-mono">{diagnostics.profileVersion.slice(0, 12)}</dd>
-        </div>
-        <div className="flex justify-between gap-2">
-          <dt>Gap rules</dt>
-          <dd>{diagnostics.gapRulesVersion}</dd>
-        </div>
-        <div className="flex justify-between gap-2">
-          <dt>Scoring</dt>
-          <dd>{diagnostics.scoringVersion}</dd>
-        </div>
-        <div className="flex justify-between gap-2">
-          <dt>Catalog</dt>
-          <dd className="truncate font-mono">{diagnostics.catalogVersion.slice(0, 12)}</dd>
-        </div>
-        <div className="flex justify-between gap-2">
-          <dt>Provider</dt>
-          <dd>
-            {diagnostics.researchProvider}
-            {diagnostics.researchModel ? ` / ${diagnostics.researchModel}` : ""}
-          </dd>
-        </div>
-      </dl>
-    </details>
+    <Paper variant="outlined" sx={{ mt: 3, p: 3, borderStyle: "dashed", borderColor: "text.disabled", bgcolor: "background.sunken" }}>
+      <Disclosure label={<Typography variant="eyebrow" component="span">Manager diagnostics</Typography>} contentSx={{ pt: 2 }}>
+        <Box component="dl" sx={{ m: 0, display: "grid", gap: 1, typography: "caption", color: "text.secondary" }}>
+          {rows.map(([label, value, mono]) => (
+            <Box key={label} sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
+              <dt>{label}</dt>
+              <Box component="dd" sx={{ m: 0, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", ...(mono ? { fontFamily: "var(--mono)", color: "text.primary" } : {}) }}>
+                {value}
+              </Box>
+            </Box>
+          ))}
+        </Box>
+      </Disclosure>
+    </Paper>
   );
 }
 
