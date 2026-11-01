@@ -93,4 +93,7 @@ export const LAYOUT = {
   sidebarWidth: 240,
   sidebarCollapsedWidth: 64,
   headerHeight: 56,
+  brandMarkSize: 36,
+  /** Gap between the rail edge and the centred brand mark. The header gutter matches it so the crumbs and user menu line up with the logo. */
+  railInset: (64 - 36) / 2,
 } as const;

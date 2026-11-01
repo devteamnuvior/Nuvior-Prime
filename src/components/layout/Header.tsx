@@ -54,7 +54,7 @@ export function Header({
 
   return (
     <AppBar sx={{ zIndex: (t) => t.zIndex.drawer - 1 }}>
-      <Toolbar disableGutters sx={{ minHeight: LAYOUT.headerHeight, height: LAYOUT.headerHeight, px: { xs: 4, md: 6 }, gap: 3 }}>
+      <Toolbar disableGutters sx={{ minHeight: LAYOUT.headerHeight, height: LAYOUT.headerHeight, px: { xs: 4, md: `${LAYOUT.railInset}px` }, gap: 3 }}>
         <IconButton size="small" onClick={() => setMobileOpen(true)} aria-label="Open navigation" sx={{ display: { md: "none" } }}>
           <MenuOutlined fontSize="small" />
         </IconButton>
@@ -64,7 +64,7 @@ export function Header({
 
         {/* Keyed on the route so the entrance replays on every navigation. */}
         <Box component="nav" aria-label="breadcrumb" key={pathname} sx={{ minWidth: 0, flex: 1 }}>
-          <Box component="ol" sx={{ display: "flex", alignItems: "center", gap: 0.5, m: 0, p: 0, listStyle: "none", minWidth: 0 }}>
+          <Box component="ol" sx={{ display: "flex", alignItems: "center", gap: 0.5, m: 0, mx: { md: -1.5 }, p: 0, listStyle: "none", minWidth: 0 }}>
             {all.map((c, i) => {
               const last = i === all.length - 1;
               return (
@@ -142,6 +142,7 @@ export function Header({
             display: "flex",
             alignItems: "center",
             gap: 2,
+            mr: user ? { md: -1.5 } : 0,
             animation: `${settle} 420ms ${EASE} both`,
             animationDelay: "120ms",
             [REDUCED]: { animation: "none" },

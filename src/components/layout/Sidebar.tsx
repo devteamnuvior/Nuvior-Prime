@@ -28,7 +28,7 @@ export function Sidebar({ groups }: { groups: NavGroup[] }) {
       }}
     >
       <Box component={Link} href="/" aria-label="NUVIOR Prime home" sx={{ display: "flex", alignItems: "center", color: "inherit", textDecoration: "none", borderRadius: 1 }}>
-        <BrandMark />
+        <BrandMark size={LAYOUT.brandMarkSize} />
       </Box>
     </Box>
   );
