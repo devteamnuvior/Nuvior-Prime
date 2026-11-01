@@ -69,24 +69,33 @@ export function CommandSearch({ groups }: { groups: NavGroup[] }) {
           onClick={() => setOpen(true)}
           aria-label="Search pages"
           sx={{
-            height: 32,
-            px: 2.5,
+            height: 34,
+            px: 3,
             gap: 2,
-            borderRadius: 1.5,
+            borderRadius: 999,
             border: 1,
             borderColor: "divider",
             bgcolor: "background.paper",
             color: "text.secondary",
-            width: { xs: 32, sm: 224 },
+            width: { xs: 34, sm: 224 },
             justifyContent: "flex-start",
-            "&:hover": { bgcolor: "background.sunken" },
+            transition: (t) => t.transitions.create(["width", "border-color", "box-shadow", "background-color"], { duration: t.transitions.duration.standard }),
+            "& .nv-search-icon": { transition: (t) => t.transitions.create(["color", "transform"], { duration: t.transitions.duration.short }) },
+            "&:hover": {
+              width: { sm: 260 },
+              borderColor: "primary.light",
+              boxShadow: "0 0 0 3px rgba(var(--nv-palette-primary-mainChannel) / 0.08)",
+              "& .nv-search-icon": { color: "primary.main", transform: "scale(1.1)" },
+            },
+            "&.Mui-focusVisible": { borderColor: "primary.main", boxShadow: (t) => `0 0 0 3px ${(t.vars ?? t).palette.action.focus}` },
+            "@media (prefers-reduced-motion: reduce)": { transition: "none", "& .nv-search-icon": { transition: "none" } },
           }}
         >
-          <SearchOutlined sx={{ fontSize: 18 }} />
+          <SearchOutlined className="nv-search-icon" sx={{ fontSize: 18 }} />
           <Typography variant="body2" sx={{ flex: 1, textAlign: "left", display: { xs: "none", sm: "block" } }}>
             Search…
           </Typography>
-          <Box component="kbd" sx={{ display: { xs: "none", sm: "inline" }, px: 1, borderRadius: 0.5, border: 1, borderColor: "divider", bgcolor: "background.sunken", fontSize: "0.6875rem", fontFamily: "inherit", color: "text.disabled" }}>
+          <Box component="kbd" sx={{ display: { xs: "none", sm: "inline" }, px: 1.5, py: 0.25, borderRadius: 999, border: 1, borderColor: "divider", bgcolor: "background.sunken", fontSize: "0.6875rem", fontFamily: "inherit", color: "text.disabled" }}>
             ⌘K
           </Box>
         </ButtonBase>

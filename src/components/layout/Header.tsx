@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { keyframes } from "@emotion/react";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
-import Breadcrumbs from "@mui/material/Breadcrumbs";
-import Chip from "@mui/material/Chip";
 import IconButton from "@mui/material/IconButton";
-import MuiLink from "@mui/material/Link";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
+import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
+import ChevronRightRounded from "@mui/icons-material/ChevronRightRounded";
 import MenuOutlined from "@mui/icons-material/MenuOutlined";
 import { LAYOUT } from "@/theme/tokens";
 import { BrandMark } from "./BrandMark";
@@ -17,6 +17,26 @@ import { CommandSearch } from "./CommandSearch";
 import { UserMenu } from "./UserMenu";
 import { breadcrumbsFor, type NavGroup } from "./nav";
 import { useShell } from "./shell-context";
+
+const EASE = "cubic-bezier(0.2, 0.8, 0.3, 1)";
+
+/* Crumbs slide in from the left, one after another, each time the route changes. */
+const crumbIn = keyframes`
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
+`;
+/* The current page gets an underline that grows from the left once the crumbs have landed. */
+const underline = keyframes`
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+`;
+/* Right-hand controls settle in from slightly above on first paint. */
+const settle = keyframes`
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+
+const REDUCED = "@media (prefers-reduced-motion: reduce)";
 
 export function Header({
   groups,
@@ -42,38 +62,108 @@ export function Header({
           <BrandMark size={32} />
         </Box>
 
-        <Breadcrumbs
-          aria-label="breadcrumb"
-          maxItems={4}
+        {/* Keyed on the route so the entrance replays on every navigation. */}
+        <Box component="nav" aria-label="breadcrumb" key={pathname} sx={{ minWidth: 0, flex: 1 }}>
+          <Box component="ol" sx={{ display: "flex", alignItems: "center", gap: 0.5, m: 0, p: 0, listStyle: "none", minWidth: 0 }}>
+            {all.map((c, i) => {
+              const last = i === all.length - 1;
+              return (
+                <Box
+                  component="li"
+                  key={c.href}
+                  sx={{
+                    display: last ? "flex" : { xs: "none", sm: "flex" },
+                    alignItems: "center",
+                    gap: 0.5,
+                    minWidth: 0,
+                    animation: `${crumbIn} 360ms ${EASE} both`,
+                    animationDelay: `${i * 70}ms`,
+                    [REDUCED]: { animation: "none" },
+                  }}
+                >
+                  {i > 0 && <ChevronRightRounded aria-hidden sx={{ fontSize: 18, color: "text.disabled", display: { xs: "none", sm: "block" } }} />}
+                  {last ? (
+                    <Typography
+                      variant="body2"
+                      component="span"
+                      noWrap
+                      aria-current="page"
+                      sx={{
+                        position: "relative",
+                        px: 1.5,
+                        py: 0.5,
+                        fontWeight: 600,
+                        color: "text.primary",
+                        "&::after": {
+                          content: '""',
+                          position: "absolute",
+                          left: 6,
+                          right: 6,
+                          bottom: -2,
+                          height: 2,
+                          borderRadius: 1,
+                          bgcolor: "primary.main",
+                          transformOrigin: "left center",
+                          animation: `${underline} 420ms ${EASE} both`,
+                          animationDelay: `${i * 70 + 180}ms`,
+                          [REDUCED]: { animation: "none" },
+                        },
+                      }}
+                    >
+                      {c.label}
+                    </Typography>
+                  ) : (
+                    <Typography
+                      component={Link}
+                      href={c.href}
+                      variant="body2"
+                      noWrap
+                      sx={{
+                        px: 1.5,
+                        py: 0.5,
+                        borderRadius: 1,
+                        color: "text.secondary",
+                        textDecoration: "none",
+                        transition: (t) => t.transitions.create(["color", "background-color"], { duration: t.transitions.duration.short }),
+                        "&:hover": { color: "text.primary", bgcolor: "action.hover" },
+                      }}
+                    >
+                      {c.label}
+                    </Typography>
+                  )}
+                </Box>
+              );
+            })}
+          </Box>
+        </Box>
+
+        <Box
           sx={{
-            minWidth: 0,
-            flex: 1,
-            "& .MuiBreadcrumbs-ol": { flexWrap: "nowrap" },
-            "& .MuiBreadcrumbs-li": { minWidth: 0 },
-            // Phones: only the current page; the drawer carries the hierarchy.
-            "& .MuiBreadcrumbs-li:not(:last-of-type), & .MuiBreadcrumbs-separator": { display: { xs: "none", sm: "flex" } },
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+            animation: `${settle} 420ms ${EASE} both`,
+            animationDelay: "120ms",
+            [REDUCED]: { animation: "none" },
           }}
         >
-          {all.map((c, i) => {
-            const last = i === all.length - 1;
-            return last ? (
-              <Typography key={c.href} variant="body2" noWrap sx={{ fontWeight: 600, color: "text.primary" }} aria-current="page">
-                {c.label}
-              </Typography>
-            ) : (
-              <MuiLink key={c.href} component={Link} href={c.href} color="text.secondary" variant="body2">
-                {c.label}
-              </MuiLink>
-            );
-          })}
-        </Breadcrumbs>
-
-        <Typography variant="body2" sx={{ color: "text.secondary", display: { xs: "none", xl: "block" } }}>
-          {today}
-        </Typography>
-        {user && <Chip label={user.territory} size="small" variant="outlined" sx={{ display: { xs: "none", lg: "inline-flex" }, borderRadius: 999 }} />}
-
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box
+            sx={{
+              display: { xs: "none", xl: "inline-flex" },
+              alignItems: "center",
+              gap: 1.5,
+              height: 34,
+              px: 3,
+              borderRadius: 999,
+              bgcolor: "background.sunken",
+              color: "text.secondary",
+            }}
+          >
+            <CalendarTodayOutlined aria-hidden sx={{ fontSize: 14 }} />
+            <Typography variant="body2" sx={{ fontSize: "0.8125rem", whiteSpace: "nowrap" }}>
+              {today}
+            </Typography>
+          </Box>
           <CommandSearch groups={groups} />
           {user && <UserMenu user={user} signOutAction={signOutAction} />}
         </Box>
