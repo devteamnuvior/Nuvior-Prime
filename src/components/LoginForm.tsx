@@ -7,6 +7,7 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import ButtonBase from "@mui/material/ButtonBase";
 import Checkbox from "@mui/material/Checkbox";
+import CircularProgress from "@mui/material/CircularProgress";
 import Collapse from "@mui/material/Collapse";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import IconButton from "@mui/material/IconButton";
@@ -126,6 +127,7 @@ export function LoginForm() {
           size="large"
           loading={pending}
           loadingPosition="center"
+          loadingIndicator={<CircularProgress size={20} sx={{ color: "primary.contrastText" }} />}
           fullWidth
           endIcon={<ArrowForwardOutlined />}
           sx={{ height: 50, borderRadius: 3, letterSpacing: "0.1em", textTransform: "uppercase", fontSize: "0.8125rem", fontWeight: 600 }}
