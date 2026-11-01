@@ -125,7 +125,7 @@ function DataTableToolbar() {
                       size="small"
                       placeholder={searchPlaceholder}
                       aria-label="Search table"
-                      sx={{ width: { xs: 1, sm: 256 } }}
+                      sx={{ width: { xs: 1, sm: 256 }, "& .MuiInputBase-root": { fontSize: "0.8125rem" } }}
                       slotProps={{
                         input: {
                           ...controlProps.slotProps?.input,

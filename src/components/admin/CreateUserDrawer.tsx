@@ -127,7 +127,7 @@ export function CreateUserDrawer({
             <Typography variant="body1" noWrap sx={{ fontWeight: 600 }}>
               {displayName.trim() || "New user"}
             </Typography>
-            <Typography variant="caption" noWrap sx={{ display: "block", color: "text.secondary", fontFamily: "var(--mono)" }}>
+            <Typography variant="caption" noWrap sx={{ display: "block", color: "text.secondary" }}>
               {email.trim() || "name@nuvior.ca"}
             </Typography>
             <StatusChip dot={false} tone={ROLE_META[role].tone === "inverse" ? "primary" : ROLE_META[role].tone} label={ROLE_META[role].label} sx={{ mt: 1 }} />

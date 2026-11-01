@@ -6,25 +6,23 @@ import Button from "@mui/material/Button";
 import FormControl from "@mui/material/FormControl";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
-import ToggleButton from "@mui/material/ToggleButton";
-import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
-import AddOutlined from "@mui/icons-material/AddOutlined";
-import BlockOutlined from "@mui/icons-material/BlockOutlined";
-import CheckCircleOutlineOutlined from "@mui/icons-material/CheckCircleOutlineOutlined";
-import LoginOutlined from "@mui/icons-material/LoginOutlined";
-import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
 import { adminUpdateUserAction } from "@/app/actions";
 import type { AppRoleName } from "@/domain/auth/permissions";
 import type { AdminUserRow, UserActionResult } from "@/domain/auth/userAdmin";
 import { ConfirmDialog } from "@/components/feedback/ConfirmDialog";
-import { KpiCard, KpiGrid } from "@/components/feedback/KpiCard";
 import { toast } from "@/components/feedback/toast";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { AddUserButton } from "./admin/AddUserButton";
 import { CreateUserDrawer } from "./admin/CreateUserDrawer";
+import { TeamStats } from "./admin/TeamStats";
 import { UsersTable } from "./admin/UsersTable";
 import { PROVINCE_OPTIONS, ROLE_META, ROLE_ORDER } from "./admin/userPresentation";
 
 type RoleFilter = "ALL" | AppRoleName;
 type StatusFilter = "ALL" | "ACTIVE" | "DISABLED";
+
+/** Filter selects read like the search placeholder until a value is chosen. */
+const filterSx = (isDefault: boolean) => ({ fontSize: "0.8125rem", color: isDefault ? "text.disabled" : "text.primary" });
 
 export function AdminUsersPanel({
   users,
@@ -106,36 +104,29 @@ export function AdminUsersPanel({
 
   const filters = (
     <>
-      <ToggleButtonGroup
-        size="small"
-        exclusive
-        value={roleFilter}
-        onChange={(_e, v: RoleFilter | null) => v && setRoleFilter(v)}
-        aria-label="Filter by role"
-        sx={{ height: 36, "& .MuiToggleButton-root": { px: 2.5, textTransform: "none", fontSize: "0.75rem", gap: 1 } }}
-      >
-        {(["ALL", ...ROLE_ORDER] as RoleFilter[]).map((r) => {
-          const count = r === "ALL" ? stats.total : (stats.byRole.find((b) => b.role === r)?.count ?? 0);
-          return (
-            <ToggleButton key={r} value={r}>
-              {r === "ALL" ? "All" : ROLE_META[r].short}
-              <Box component="span" sx={{ fontFamily: "var(--mono)", fontSize: "0.625rem", color: "text.disabled" }}>
-                {count}
+      <FormControl size="small" sx={{ minWidth: 150 }}>
+        <Select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value as RoleFilter)} inputProps={{ "aria-label": "Filter by role" }} sx={filterSx(roleFilter === "ALL")}>
+          <MenuItem value="ALL">All Roles</MenuItem>
+          {ROLE_ORDER.map((r) => (
+            <MenuItem key={r} value={r}>
+              {ROLE_META[r].short}
+              <Box component="span" sx={{ ml: "auto", pl: 3, fontFamily: "var(--mono)", fontSize: "0.6875rem", color: "text.disabled" }}>
+                {stats.byRole.find((b) => b.role === r)?.count ?? 0}
               </Box>
-            </ToggleButton>
-          );
-        })}
-      </ToggleButtonGroup>
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
       <FormControl size="small" sx={{ minWidth: 130 }}>
-        <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as StatusFilter)} inputProps={{ "aria-label": "Filter by status" }}>
-          <MenuItem value="ALL">Any status</MenuItem>
+        <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as StatusFilter)} inputProps={{ "aria-label": "Filter by status" }} sx={filterSx(statusFilter === "ALL")}>
+          <MenuItem value="ALL">Any Status</MenuItem>
           <MenuItem value="ACTIVE">Active</MenuItem>
           <MenuItem value="DISABLED">Disabled</MenuItem>
         </Select>
       </FormControl>
       <FormControl size="small" sx={{ minWidth: 150 }}>
-        <Select value={provinceFilter} onChange={(e) => setProvinceFilter(e.target.value)} displayEmpty inputProps={{ "aria-label": "Filter by province" }}>
-          <MenuItem value="">Any province</MenuItem>
+        <Select value={provinceFilter} onChange={(e) => setProvinceFilter(e.target.value)} displayEmpty inputProps={{ "aria-label": "Filter by province" }} sx={filterSx(provinceFilter === "")}>
+          <MenuItem value="">Any Province</MenuItem>
           {PROVINCE_OPTIONS.map((p) => (
             <MenuItem key={p.code} value={p.code}>
               {p.code} · {p.name}
@@ -152,45 +143,42 @@ export function AdminUsersPanel({
   );
 
   return (
-    <Box sx={{ display: "grid", gap: 6 }}>
-      <KpiGrid>
-        <KpiCard label="Total users" value={stats.total} icon={PeopleOutlined} />
-        <KpiCard label="Active" value={stats.active} icon={CheckCircleOutlineOutlined} tone="success" />
-        <KpiCard label="Disabled" value={stats.disabled} icon={BlockOutlined} tone={stats.disabled ? "warning" : "neutral"} />
-        <KpiCard label="Signed in · 30 days" value={stats.recent} hint={`of ${stats.active} active`} icon={LoginOutlined} tone="primary" />
-      </KpiGrid>
-
-      <UsersTable
-        users={filtered}
-        currentUserId={currentUserId}
-        now={now}
-        busyUserId={busyUserId}
-        hasFilters={hasFilters}
-        onClearFilters={clearFilters}
-        onChangeRole={onChangeRole}
-        onToggleStatus={onToggleStatus}
-        filters={filters}
-        actions={
-          <Button variant="contained" startIcon={<AddOutlined />} onClick={() => setDrawerOpen(true)}>
-            Add user
-          </Button>
-        }
+    <>
+      <PageHeader
+        title="Team Members"
+        description="Manage who can sign in, what they can do and where they operate. Every change is written to the audit log."
+        actions={<AddUserButton onClick={() => setDrawerOpen(true)} />}
       />
+      <Box sx={{ display: "grid", gap: 6 }}>
+        <TeamStats total={stats.total} active={stats.active} disabled={stats.disabled} recent={stats.recent} byRole={stats.byRole} />
 
-      <CreateUserDrawer open={drawerOpen} onClose={closeDrawer} onCreated={onCreated} />
+        <UsersTable
+          users={filtered}
+          currentUserId={currentUserId}
+          now={now}
+          busyUserId={busyUserId}
+          hasFilters={hasFilters}
+          onClearFilters={clearFilters}
+          onChangeRole={onChangeRole}
+          onToggleStatus={onToggleStatus}
+          filters={filters}
+        />
 
-      <ConfirmDialog
-        open={!!confirmDisable}
-        onClose={() => setConfirmDisable(null)}
-        title={`Disable ${confirmDisable?.displayName ?? "this user"}?`}
-        description="They will be signed out and unable to sign in until the account is enabled again. This is recorded in the audit log."
-        confirmLabel="Disable account"
-        destructive
-        onConfirm={() => {
-          if (confirmDisable) runUpdate(confirmDisable, { status: "DISABLED" });
-          setConfirmDisable(null);
-        }}
-      />
-    </Box>
+        <CreateUserDrawer open={drawerOpen} onClose={closeDrawer} onCreated={onCreated} />
+
+        <ConfirmDialog
+          open={!!confirmDisable}
+          onClose={() => setConfirmDisable(null)}
+          title={`Disable ${confirmDisable?.displayName ?? "this user"}?`}
+          description="They will be signed out and unable to sign in until the account is enabled again. This is recorded in the audit log."
+          confirmLabel="Disable account"
+          destructive
+          onConfirm={() => {
+            if (confirmDisable) runUpdate(confirmDisable, { status: "DISABLED" });
+            setConfirmDisable(null);
+          }}
+        />
+      </Box>
+    </>
   );
 }

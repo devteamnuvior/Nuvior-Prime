@@ -5,7 +5,6 @@ import { prisma } from "@/lib/prisma";
 import { AdminUsersPanel } from "@/components/AdminUsersPanel";
 import { AdminTabs } from "@/components/admin/AdminTabs";
 import { PageContainer } from "@/components/layout/PageContainer";
-import { PageHeader } from "@/components/layout/PageHeader";
 import type { AdminUserRow } from "@/domain/auth/userAdmin";
 
 export default async function AdminUsersPage() {
@@ -35,10 +34,6 @@ export default async function AdminUsersPage() {
   return (
     <PageContainer>
       <AdminTabs />
-      <PageHeader
-        title="Team members"
-        description="Manage who can sign in, what they can do and where they operate. Every change is written to the audit log."
-      />
       <AdminUsersPanel users={rows} currentUserId={user.id} renderedAt={Date.now()} />
     </PageContainer>
   );

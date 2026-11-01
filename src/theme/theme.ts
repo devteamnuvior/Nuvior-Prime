@@ -1,6 +1,7 @@
 "use client";
 
 import { createTheme, type Shadows } from "@mui/material/styles";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
   EASE,
   FONT_MONO,
@@ -147,11 +148,18 @@ export const theme = createTheme({
           "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderWidth: 1, borderColor: theme.vars.palette.primary.main, boxShadow: `0 0 0 3px ${theme.vars.palette.action.focus}` },
           "&.Mui-error.Mui-focused .MuiOutlinedInput-notchedOutline": { boxShadow: `0 0 0 3px rgba(${theme.vars.palette.error.mainChannel} / 0.2)` },
         }),
-        input: { paddingBlock: 8.5 },
+        input: ({ theme }) => ({
+          paddingBlock: 8.5,
+          // Solid placeholder instead of MUI's 42% opacity so it matches text.disabled exactly.
+          "&::placeholder": { color: theme.vars.palette.text.disabled, opacity: 1 },
+        }),
       },
     },
     MuiFormHelperText: { styleOverrides: { root: { marginInline: 2, fontSize: "0.75rem" } } },
-    MuiSelect: { defaultProps: { size: "small" } },
+    MuiSelect: {
+      defaultProps: { size: "small", IconComponent: ExpandMoreIcon },
+      styleOverrides: { icon: ({ theme }) => ({ color: theme.vars.palette.text.disabled }) },
+    },
     MuiChip: {
       styleOverrides: {
         root: { borderRadius: RADIUS.sm, fontWeight: 500, height: 24, fontSize: "0.75rem" },
