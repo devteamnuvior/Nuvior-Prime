@@ -39,7 +39,7 @@ export default async function AdminAuditPage({ searchParams }: { searchParams: P
   }));
 
   return (
-    <PageContainer maxWidth="xl">
+    <PageContainer>
       <AdminTabs />
       <PageHeader title="Audit Log" description="Append-only. No edit/delete in UI. Secrets are never stored here. Showing the latest 100 events." />
       <AuditTable rows={rows} actionFilter={sp.action ?? ""} userFilter={sp.user ?? ""} />

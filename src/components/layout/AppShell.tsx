@@ -1,9 +1,8 @@
-import { cookies } from "next/headers";
 import { auth, signOut } from "@/auth";
 import { hasPermission } from "@/domain/auth/permissions";
 import { DashboardShell } from "./DashboardShell";
 import { PRIMARY_NAV, SECONDARY_NAV, type NavGroup, type NavItem } from "./nav";
-import { SIDEBAR_COOKIE, type ShellUser } from "./shell-context";
+import type { ShellUser } from "./shell-context";
 
 /** Server shell: resolves the session, filters navigation by permission and renders the dashboard chrome. */
 export async function AppShell({ children }: { children: React.ReactNode }) {
@@ -19,9 +18,6 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
   const groups: NavGroup[] = [{ items: visible(PRIMARY_NAV) }];
   const secondary = visible(SECONDARY_NAV);
   if (secondary.length) groups.push({ label: "Management", items: secondary });
-
-  const cookieStore = await cookies();
-  const initialCollapsed = cookieStore.get(SIDEBAR_COOKIE)?.value === "collapsed";
 
   const today = new Intl.DateTimeFormat("en-CA", { weekday: "long", month: "long", day: "numeric" }).format(new Date());
 
@@ -43,7 +39,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <DashboardShell groups={groups} user={shellUser} initialCollapsed={initialCollapsed} signOutAction={signOutAction} today={today}>
+    <DashboardShell groups={groups} user={shellUser} signOutAction={signOutAction} today={today}>
       {children}
     </DashboardShell>
   );

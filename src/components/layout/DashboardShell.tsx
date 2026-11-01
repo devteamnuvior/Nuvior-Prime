@@ -9,20 +9,18 @@ import type { NavGroup } from "./nav";
 export function DashboardShell({
   groups,
   user,
-  initialCollapsed,
   signOutAction,
   today,
   children,
 }: {
   groups: NavGroup[];
   user: ShellUser | null;
-  initialCollapsed: boolean;
   signOutAction: () => Promise<void>;
   today: string;
   children: React.ReactNode;
 }) {
   return (
-    <ShellProvider initialCollapsed={initialCollapsed} user={user}>
+    <ShellProvider user={user}>
       <Box sx={{ display: "flex", minHeight: "100vh" }}>
         <Sidebar groups={groups} />
         <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0, minHeight: "100vh" }}>

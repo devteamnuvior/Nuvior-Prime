@@ -18,7 +18,7 @@ export default async function MatchingPage() {
   const mappings = await prisma.crmAccountMapping.findMany({ orderBy: { updatedAt: "desc" }, take: 100 });
 
   return (
-    <PageContainer maxWidth="xl">
+    <PageContainer>
       <PageHeader
         title="Account Matching"
         description="Review how CRM accounts were matched to discovered places. Confirming or rejecting requires the mapping.confirm permission; every decision is audited."

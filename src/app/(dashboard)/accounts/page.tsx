@@ -52,7 +52,7 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
   });
 
   return (
-    <PageContainer maxWidth="xl">
+    <PageContainer>
       <PageHeader
         title="Prospecting"
         description="Account research in your territory. Use Today to build the day's route; this page is for deeper discovery. Fit and lead product reflect the latest qualification run."

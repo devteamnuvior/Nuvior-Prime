@@ -40,7 +40,7 @@ export default async function VerificationPage() {
   }));
 
   return (
-    <PageContainer maxWidth="xl">
+    <PageContainer>
       <PageHeader
         title="Verification"
         description="Fields that could not be confirmed from public or internal sources. Items surfaced during a route run also appear under Run diagnostics on Today's Route."
