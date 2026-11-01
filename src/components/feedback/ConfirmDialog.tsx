@@ -1,7 +1,6 @@
 "use client";
 
 import Button from "@mui/material/Button";
-import CircularProgress from "@mui/material/CircularProgress";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
@@ -42,7 +41,7 @@ export function ConfirmDialog({
         <Button variant="outlined" onClick={onClose} disabled={loading}>
           {cancelLabel}
         </Button>
-        <Button variant="contained" color={destructive ? "error" : "primary"} onClick={onConfirm} disabled={loading} startIcon={loading ? <CircularProgress size={14} color="inherit" /> : undefined}>
+        <Button variant="contained" color={destructive ? "error" : "primary"} onClick={onConfirm} loading={loading} loadingPosition="start">
           {confirmLabel}
         </Button>
       </DialogActions>

@@ -8,12 +8,10 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import ButtonBase from "@mui/material/ButtonBase";
 import Checkbox from "@mui/material/Checkbox";
-import CircularProgress from "@mui/material/CircularProgress";
 import Collapse from "@mui/material/Collapse";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
-import Link from "@mui/material/Link";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import ArrowForwardOutlined from "@mui/icons-material/ArrowForwardOutlined";
@@ -39,7 +37,6 @@ export function LoginForm() {
   const [password, setPassword] = useState(SHOW_DEV_ACCOUNTS ? DEV_USERS[0]!.password : "");
   const [remember, setRemember] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
-  const [showHelp, setShowHelp] = useState(false);
   const [showDev, setShowDev] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -120,22 +117,11 @@ export function LoginForm() {
           }}
         />
 
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 3 }}>
-          <FormControlLabel
-            control={<Checkbox checked={remember} onChange={(e) => setRemember(e.target.checked)} />}
-            label="Remember me"
-            slotProps={{ typography: { variant: "body2" } }}
-          />
-          <Link component="button" type="button" variant="body2" color="text.secondary" onClick={() => setShowHelp((v) => !v)}>
-            Forgot password?
-          </Link>
-        </Box>
-
-        <Collapse in={showHelp}>
-          <Alert severity="info" role="status">
-            Passwords are managed by your NUVIOR administrator. Ask your regional manager to reset it, then sign in with the new password.
-          </Alert>
-        </Collapse>
+        <FormControlLabel
+          control={<Checkbox checked={remember} onChange={(e) => setRemember(e.target.checked)} />}
+          label="Remember me"
+          slotProps={{ typography: { variant: "body2" } }}
+        />
 
         {error && (
           <Alert severity="error" role="alert">
@@ -147,9 +133,10 @@ export function LoginForm() {
           type="submit"
           variant="contained"
           size="large"
-          disabled={pending}
+          loading={pending}
+          loadingPosition="end"
           fullWidth
-          endIcon={pending ? <CircularProgress size={16} color="inherit" /> : <ArrowForwardOutlined />}
+          endIcon={<ArrowForwardOutlined />}
           sx={{ height: 50, borderRadius: 3, letterSpacing: "0.1em", textTransform: "uppercase", fontSize: "0.8125rem", fontWeight: 600 }}
         >
           {pending ? "Signing in…" : "Sign in"}

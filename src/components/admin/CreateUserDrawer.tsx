@@ -9,7 +9,6 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
 import Chip from "@mui/material/Chip";
-import CircularProgress from "@mui/material/CircularProgress";
 import FormControl from "@mui/material/FormControl";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import FormHelperText from "@mui/material/FormHelperText";
@@ -114,7 +113,7 @@ export function CreateUserDrawer({
           <Button variant="outlined" onClick={onClose} disabled={pending}>
             Cancel
           </Button>
-          <Button type="submit" form="create-user-form" variant="contained" disabled={pending} startIcon={pending ? <CircularProgress size={14} color="inherit" /> : undefined}>
+          <Button type="submit" form="create-user-form" variant="contained" loading={pending} loadingPosition="start">
             {pending ? "Creating…" : "Create user"}
           </Button>
         </>
