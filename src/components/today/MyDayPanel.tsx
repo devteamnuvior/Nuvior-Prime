@@ -12,7 +12,10 @@ import ExpandMoreOutlined from "@mui/icons-material/ExpandMoreOutlined";
 import LocalFireDepartmentOutlined from "@mui/icons-material/LocalFireDepartmentOutlined";
 import type { RepDashboardDto } from "@/lib/repDashboard";
 import { TARGET_METRIC_LABELS, type TargetProgress } from "@/domain/performance/targets";
+import { BADGES, badgeDefinition } from "@/domain/performance/xp";
 import { StatusChip, type StatusTone } from "@/components/feedback/StatusChip";
+import { BadgeIcon } from "@/components/performance/BadgeIcon";
+import { LevelBar } from "@/components/performance/LevelBar";
 
 const STORAGE_KEY = "nuvior.today.myday.collapsed";
 
@@ -204,6 +207,44 @@ export function MyDayPanel({ data }: { data: RepDashboardDto }) {
               />
             ))}
           </Box>
+
+          {data.competition && (
+            <Box sx={{ display: "grid", gap: 3, pt: 3, borderTop: 1, borderColor: "divider" }}>
+              <LevelBar level={data.competition.xp.level} totalXp={data.competition.xp.totalXp} compact />
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, flexWrap: "wrap" }}>
+                {data.competition.rank ? (
+                  <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                    <Box component="span" sx={{ fontWeight: 600, color: "text.primary" }}>
+                      #{data.competition.rank.rank} of {data.competition.rank.of}
+                    </Box>{" "}
+                    in {data.competition.rank.provinceCode} this week · {data.competition.rank.points} XP
+                    {data.competition.rank.toFirst > 0 ? ` · ${data.competition.rank.toFirst} to first place` : data.competition.rank.of > 1 ? " · leading" : ""}
+                  </Typography>
+                ) : (
+                  <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                    {data.competition.xp.weekPoints} XP this week
+                  </Typography>
+                )}
+                <Typography component={Link} href="/leaderboard" variant="caption" sx={{ color: "primary.main", fontWeight: 600, textDecoration: "none", "&:hover": { textDecoration: "underline" } }}>
+                  Leaderboard →
+                </Typography>
+              </Box>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
+                {data.competition.xp.badges.map((b) => {
+                  const def = badgeDefinition(b.code);
+                  return def ? <BadgeIcon key={b.code} badge={def} earned size={30} /> : null;
+                })}
+                {data.competition.xp.nextBadges.map((b) => (
+                  <BadgeIcon key={b.code} badge={b} earned={false} size={30} hint={`(${b.value} / ${b.threshold})`} />
+                ))}
+                {data.competition.xp.badges.length === 0 && data.competition.xp.nextBadges.length === 0 && BADGES.length > 0 && (
+                  <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                    Badges unlock as you log visits.
+                  </Typography>
+                )}
+              </Box>
+            </Box>
+          )}
 
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2 }}>
             {data.overdueFollowUps > 0 ? (

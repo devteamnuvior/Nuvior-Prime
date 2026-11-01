@@ -9,6 +9,7 @@ import AdminPanelSettingsOutlined from "@mui/icons-material/AdminPanelSettingsOu
 import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
 import StorageOutlined from "@mui/icons-material/StorageOutlined";
 import ReceiptLongOutlined from "@mui/icons-material/ReceiptLongOutlined";
+import EmojiEventsOutlined from "@mui/icons-material/EmojiEventsOutlined";
 import type { NavIconKey } from "./nav";
 
 export const NAV_ICONS: Record<NavIconKey, SvgIconComponent> = {
@@ -22,4 +23,5 @@ export const NAV_ICONS: Record<NavIconKey, SvgIconComponent> = {
   users: PeopleOutlined,
   database: StorageOutlined,
   audit: ReceiptLongOutlined,
+  trophy: EmojiEventsOutlined,
 };

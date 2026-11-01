@@ -23,6 +23,9 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { TerritoryBadges } from "../ProvinceBadge";
 import { UserAvatar } from "../UserAvatar";
 import { ROLE_META, formatDate, formatRelative } from "../userPresentation";
+import { BADGES, badgeDefinition } from "@/domain/performance/xp";
+import { BadgeIcon } from "@/components/performance/BadgeIcon";
+import { LevelBar } from "@/components/performance/LevelBar";
 import { ActivityCalendar } from "./ActivityCalendar";
 import { FunnelBars, ProductMixChart, VisitsTrendChart } from "./RepCharts";
 import { AuditList, RecentRoutesTable, RecentVisitsTable } from "./RepTables";
@@ -192,6 +195,42 @@ export function RepProfileView({
             )}
           </Section>
         </Box>
+
+        <Section title="XP and badges" hint="Every point is a ledger row tied to a visit, a day or a streak; totals are sums over that ledger.">
+          <LevelBar level={profile.xp.level} totalXp={profile.xp.totalXp} />
+          <Box sx={{ display: "grid", gap: 3, gridTemplateColumns: "repeat(3, minmax(0, 1fr))" }}>
+            <Stat label="This week" value={profile.xp.weekPoints} />
+            <Stat label="This month" value={profile.xp.monthPoints} />
+            <Stat label="Badges" value={`${profile.xp.badges.length} / ${BADGES.length}`} />
+          </Box>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5 }}>
+            {BADGES.map((b) => {
+              const earned = profile.xp.badges.find((x) => x.code === b.code);
+              const next = profile.xp.nextBadges.find((n) => n.code === b.code);
+              return <BadgeIcon key={b.code} badge={badgeDefinition(b.code) ?? b} earned={!!earned} hint={earned ? `Earned ${earned.earnedAt.slice(0, 10)}.` : next ? `(${next.value} / ${next.threshold})` : undefined} />;
+            })}
+          </Box>
+          {profile.pointEvents.length > 0 && (
+            <Box component="ol" sx={{ listStyle: "none", m: 0, p: 0, pt: 3, borderTop: 1, borderColor: "divider", display: "grid" }}>
+              {profile.pointEvents.map((e) => (
+                <Box component="li" key={e.id} sx={{ display: "grid", gridTemplateColumns: "92px minmax(0, 1fr) auto", alignItems: "center", gap: 3, py: 1.25, borderBottom: 1, borderColor: "divider", "&:last-of-type": { borderBottom: 0 } }}>
+                  <Typography variant="caption" sx={{ fontFamily: "var(--mono)", color: "text.secondary" }}>
+                    {e.day}
+                  </Typography>
+                  <Box sx={{ minWidth: 0, display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
+                    <Typography variant="body2" noWrap>
+                      {e.label}
+                    </Typography>
+                    {e.multiplier !== 1 && <StatusChip dot={false} tone="success" label={`× ${e.multiplier}${e.challengeTitle ? ` · ${e.challengeTitle}` : ""}`} />}
+                  </Box>
+                  <Typography variant="body2" sx={{ fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
+                    +{e.points}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          )}
+        </Section>
 
         <Section title="Targets" hint={canManageTargets ? "Active targets drive the rep's progress bars. Changes are audited." : "Set by a manager or admin."}>
           {profile.progress.length > 0 && (

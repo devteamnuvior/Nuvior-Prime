@@ -500,6 +500,76 @@ model RepDailySummary {
   @@index([day])
 }
 
+/// Performance phase 4 — why points were awarded. Values and labels live in
+/// src/domain/performance/xp.ts.
+enum PointReason {
+  VISIT
+  QUALITY_VISIT
+  OUTCOME_SAME_DAY
+  FOLLOW_UP_ON_TIME
+  ACADEMY_SIGNUP
+  FIRST_ORDER
+  DAILY_TARGET_MET
+  STREAK_MILESTONE
+}
+
+/// Append-only XP ledger. One row per (user, reason, source) so re-running the
+/// awarder never double-counts; totals are sums over this table.
+model PointEvent {
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation("PointEvents", fields: [userId], references: [id], onDelete: Cascade)
+  day         DateTime    @db.Date
+  provinceCode String?
+  reason      PointReason
+  basePoints  Int
+  multiplier  Float       @default(1)
+  points      Int
+  sourceType  String
+  sourceId    String
+  challengeId String?
+  challenge   Challenge?  @relation(fields: [challengeId], references: [id], onDelete: SetNull)
+  createdAt   DateTime    @default(now())
+
+  @@unique([userId, reason, sourceType, sourceId])
+  @@index([userId, day])
+  @@index([day])
+}
+
+/// Earned badges. Definitions are code (BADGES in src/domain/performance/xp.ts).
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation("Badges", fields: [userId], references: [id], onDelete: Cascade)
+  badgeCode String
+  earnedAt  DateTime @default(now())
+  /// Snapshot of the stat that earned it, e.g. {"value": 5}
+  meta      Json?
+
+  @@unique([userId, badgeCode])
+  @@index([userId])
+}
+
+/// A manager-defined window during which one point reason is worth more
+/// (e.g. "PRP month": ACADEMY_SIGNUP × 2). Empty provinceCodes = everywhere.
+model Challenge {
+  id            String       @id @default(cuid())
+  title         String
+  description   String?
+  reason        PointReason
+  multiplier    Float        @default(2)
+  provinceCodes String[]     @default([])
+  startsOn      DateTime     @db.Date
+  endsOn        DateTime     @db.Date
+  createdById   String?
+  createdBy     User?        @relation("ChallengesCreated", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  pointEvents   PointEvent[]
+
+  @@index([startsOn, endsOn])
+}
+
 /// Phase 5: cache LLM synthesis responses (narrative only — never qualification truth).
 model LlmResponseCache {
   id           String   @id @default(cuid())
@@ -613,6 +683,9 @@ model User {
   targetsHeld        SalesTarget[]       @relation("TargetsHeld")
   targetsCreated     SalesTarget[]       @relation("TargetsCreated")
   dailySummaries     RepDailySummary[]   @relation("DailySummaries")
+  pointEvents        PointEvent[]        @relation("PointEvents")
+  badges             UserBadge[]         @relation("Badges")
+  challengesCreated  Challenge[]         @relation("ChallengesCreated")
 
   @@index([role])
   @@index([status])

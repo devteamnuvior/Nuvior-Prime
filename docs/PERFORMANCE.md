@@ -1,7 +1,59 @@
-# Rep performance — phases 1 to 3
+# Rep performance — phases 1 to 4
 
-**Status:** Phase 1 complete (structured outcomes, targets, daily summaries) · Phase 2 complete (admin per-rep page) · Phase 3 complete (rep "My day" panel)  
-**Next:** Phase 4 XP / leaderboard · Phase 5 Odoo orders (deferred until Odoo access exists)
+**Status:** Phase 1 complete (structured outcomes, targets, daily summaries) · Phase 2 complete (admin per-rep page) · Phase 3 complete (rep "My day" panel) · Phase 4 complete (XP, levels, badges, leaderboard, challenges)  
+**Next:** Phase 5 Odoo orders (deferred until Odoo access exists)
+
+## Phase 4 — competition layer
+
+Rules are pure in `src/domain/performance/xp.ts` (tested in `xp.test.ts`);
+persistence in `src/lib/xp.ts`; page at `/leaderboard` (nav item for everyone
+with `performance.view.own`).
+
+### XP ledger
+
+`PointEvent` is append-only and unique per (user, reason, sourceType,
+sourceId), so re-running the awarder never double-counts. Totals are sums over
+the ledger. `npm run xp:backfill` awards points for visits logged before the
+ledger existed (idempotent).
+
+| Reason | Base | When |
+| --- | --- | --- |
+| `QUALITY_VISIT` | 20 | Logged visit, fit 4–5 (one per clinic per day) |
+| `VISIT` | 8 | Logged visit, fit 1–3 or unknown (one per clinic per day) |
+| `OUTCOME_SAME_DAY` | 5 | Structured outcome recorded on the visit day |
+| `FOLLOW_UP_ON_TIME` | 10 | Visit on or before a follow-up date set by an earlier visit to that account |
+| `ACADEMY_SIGNUP` | 40 | Outcome `ACADEMY_SIGNUP` |
+| `FIRST_ORDER` | 60 | Outcome `ORDER_PLACED` on an account with no earlier order |
+| `DAILY_TARGET_MET` | 15 | `RepDailySummary.visits` ≥ the DAY/VISITS target |
+| `STREAK_MILESTONE` | 25 | Streak reaches 5, 10, 20 or 50 working days |
+
+Anti-gaming: a second visit to the same clinic on the same day earns nothing;
+visits without an account earn nothing; DNC accounts never reach the awarder
+because they never reach a route.
+
+### Levels and badges
+
+Levels by total XP: Associate 0 · Specialist 500 · Senior 1 500 · Elite 3 500 ·
+Master 7 000. Levels never go down. Badges are code-defined (`BADGES`) and
+stored in `UserBadge` when earned: First steps, Century, Quality focus, Route
+master, On a roll (5-day streak), Unstoppable (20), Academy builder, Opener,
+Closer, Follow-through.
+
+### Challenges
+
+`Challenge` = a window where one point reason is multiplied (default × 2),
+optionally limited to provinces. Managers create them only for their own
+provinces, admins anywhere (`createChallengeAction` / `removeChallengeAction`,
+audited as `challenge.*`). Removing a challenge keeps points already awarded.
+The highest active multiplier wins when windows overlap.
+
+### Leaderboard
+
+`getLeaderboard` ranks active reps by period points (week Mon–Sun or calendar
+month) within one province, or nationally for admins. Ties share a rank.
+Reps see the top 3 plus the two reps on either side of themselves; managers
+and admins see the full list. Managers and admins are never ranked.
+"My day" shows the rep's level, this week's rank and distance to first place.
 
 ## Phase 3 — rep "My day" panel
 

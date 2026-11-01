@@ -21,6 +21,14 @@ import {
   type TargetProgress,
 } from "@/domain/performance";
 import { getTargetProgress, listSalesTargets } from "@/lib/performance";
+import { getLeaderboard, getUserXp, type UserXp } from "@/lib/xp";
+import { leaderboardView } from "@/domain/performance";
+
+export type RepCompetition = {
+  xp: UserXp;
+  /** This week's standing among active reps in the rep's province (null when not ranked). */
+  rank: { rank: number; of: number; toFirst: number; provinceCode: string; points: number } | null;
+};
 
 export type RepDashboardDto = {
   today: string;
@@ -44,7 +52,25 @@ export type RepDashboardDto = {
   spark: { day: string; visits: number }[];
   overdueFollowUps: number;
   dueTodayFollowUps: number;
+  competition: RepCompetition | null;
 };
+
+async function loadCompetition(user: AuthUser, today: string): Promise<RepCompetition | null> {
+  try {
+    const xp = await getUserXp(user.id, today);
+    const provinceCode = user.provinces.includes("*") ? "*" : (user.provinces[0] ?? null);
+    let rank: RepCompetition["rank"] = null;
+    if (provinceCode && user.role === "REP") {
+      const { ranked } = await getLeaderboard({ period: "WEEK", day: today, provinceCode });
+      const view = leaderboardView(ranked, user.id, true);
+      if (view.me) rank = { rank: view.me.rank, of: ranked.length, toFirst: view.toFirst, provinceCode, points: view.me.points };
+    }
+    return { xp, rank };
+  } catch (e) {
+    console.warn("[dashboard] competition unavailable:", e instanceof Error ? e.message : e);
+    return null;
+  }
+}
 
 export async function loadRepDashboard(user: AuthUser): Promise<RepDashboardDto> {
   const now = new Date();
@@ -115,6 +141,7 @@ export async function loadRepDashboard(user: AuthUser): Promise<RepDashboardDto>
 
   const streak = computeStreak(rows.filter((r) => r.day >= streakStart), targets, today);
   const message = buildDayMessage({ progress, streak, overdueFollowUps, dueTodayFollowUps, isWorkingDay });
+  const competition = await loadCompetition(user, today);
 
   const byDay = new Map(rows.map((r) => [r.day, r.visits] as const));
   const spark: { day: string; visits: number }[] = [];
@@ -141,5 +168,6 @@ export async function loadRepDashboard(user: AuthUser): Promise<RepDashboardDto>
     spark,
     overdueFollowUps,
     dueTodayFollowUps,
+    competition,
   };
 }

@@ -36,7 +36,8 @@ import {
 import { getClinicProfileProvider } from "@/providers/clinicProfile";
 import { getClinicProfileConfig } from "@/lib/clinicProfileConfig";
 import { recomputeRepDailySummary, upsertSalesTarget, deleteSalesTarget, type SalesTargetRow } from "@/lib/performance";
-import { TARGET_METRICS, TARGET_PERIODS, VISIT_OUTCOME_CODES } from "@/domain/performance";
+import { TARGET_METRICS, TARGET_PERIODS, VISIT_OUTCOME_CODES, POINT_REASONS } from "@/domain/performance";
+import { awardAfterVisit, createChallenge, deleteChallenge, type ChallengeRow } from "@/lib/xp";
 
 const provinceCodes = CANADIAN_PROVINCES.map((p) => p.code) as [string, ...string[]];
 
@@ -266,8 +267,10 @@ export async function recordVisitAction(input: {
     });
 
     await recomputeRepDailySummary(user.id, visitDate);
+    await awardAfterVisit(result.id, user.id, visitDate);
     revalidatePath("/visits");
     revalidatePath("/");
+    revalidatePath("/leaderboard");
 
     return { ok: true, message: `Visit saved ${result.id}` };
   } catch (e) {
@@ -904,6 +907,100 @@ export async function removeSalesTargetAction(targetId: string): Promise<{ ok: b
     revalidatePath("/visits");
     revalidatePath("/admin/users");
     return { ok: true, message: "Target removed" };
+  } catch (e) {
+    if (e instanceof AuthError) return { ok: false, message: `${e.code}: ${e.message}` };
+    return { ok: false, message: e instanceof Error ? e.message : "Failed" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Performance phase 4 — challenges (manager / admin)
+// ---------------------------------------------------------------------------
+
+const challengeSchema = z.object({
+  title: z.string().trim().min(3).max(80),
+  description: z.string().trim().max(300).nullable().optional(),
+  reason: z.enum(POINT_REASONS),
+  multiplier: z.coerce.number().min(1).max(5),
+  provinceCodes: z.array(z.enum(provinceCodes)).default([]),
+  startsOn: dayKeySchema,
+  endsOn: dayKeySchema,
+});
+
+export type ChallengeActionResult =
+  | { ok: true; message: string; challenge: ChallengeRow }
+  | { ok: false; message: string; fieldErrors?: Record<string, string> };
+
+export async function createChallengeAction(rawInput: z.input<typeof challengeSchema>): Promise<ChallengeActionResult> {
+  try {
+    const actor = await requireSessionUser();
+    requirePermission(actor, "target.manage");
+
+    const parsed = challengeSchema.safeParse(rawInput);
+    if (!parsed.success) {
+      const fieldErrors: Record<string, string> = {};
+      for (const issue of parsed.error.issues) {
+        const key = String(issue.path[0] ?? "form");
+        if (!fieldErrors[key]) fieldErrors[key] = issue.message;
+      }
+      return { ok: false, message: "Check the highlighted fields", fieldErrors };
+    }
+    const input = parsed.data;
+    if (input.endsOn < input.startsOn) {
+      return { ok: false, message: "End date must be on or after the start date", fieldErrors: { endsOn: "Before start" } };
+    }
+    // Managers run challenges only inside their own provinces; admins anywhere.
+    if (!actor.provinces.includes("*")) {
+      if (!input.provinceCodes.length) {
+        return { ok: false, message: "Pick at least one of your provinces", fieldErrors: { provinceCodes: "Required for managers" } };
+      }
+      const outside = input.provinceCodes.filter((p) => !actor.provinces.includes(p));
+      if (outside.length) throw new AuthError(`No access to province ${outside.join(", ")}`, "TERRITORY");
+    }
+
+    const challenge = await createChallenge({ ...input, description: input.description ?? null, createdById: actor.id });
+
+    await writeAuditEvent({
+      actor,
+      action: "challenge.create",
+      resourceType: "Challenge",
+      resourceId: challenge.id,
+      afterState: challenge,
+    });
+
+    revalidatePath("/leaderboard");
+    return { ok: true, message: `Challenge "${challenge.title}" created`, challenge };
+  } catch (e) {
+    if (e instanceof AuthError) return { ok: false, message: `${e.code}: ${e.message}` };
+    return { ok: false, message: e instanceof Error ? e.message : "Failed" };
+  }
+}
+
+export async function removeChallengeAction(challengeId: string): Promise<{ ok: boolean; message: string }> {
+  try {
+    const actor = await requireSessionUser();
+    requirePermission(actor, "target.manage");
+
+    const existing = await prisma.challenge.findUnique({ where: { id: challengeId }, select: { provinceCodes: true } });
+    if (!existing) return { ok: false, message: "Challenge not found" };
+    if (!actor.provinces.includes("*")) {
+      const outside = !existing.provinceCodes.length || existing.provinceCodes.some((p) => !actor.provinces.includes(p));
+      if (outside) throw new AuthError("Only an admin can remove a challenge outside your provinces", "TERRITORY");
+    }
+
+    const removed = await deleteChallenge(challengeId);
+    if (!removed) return { ok: false, message: "Challenge not found" };
+
+    await writeAuditEvent({
+      actor,
+      action: "challenge.remove",
+      resourceType: "Challenge",
+      resourceId: challengeId,
+      beforeState: removed,
+    });
+
+    revalidatePath("/leaderboard");
+    return { ok: true, message: "Challenge removed — points already awarded under it stay." };
   } catch (e) {
     if (e instanceof AuthError) return { ok: false, message: `${e.code}: ${e.message}` };
     return { ok: false, message: e instanceof Error ? e.message : "Failed" };
