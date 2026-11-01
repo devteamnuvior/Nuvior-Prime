@@ -394,6 +394,19 @@ model CrmAccountMapping {
   @@unique([crmExternalId, placeId])
 }
 
+/// Structured visit outcome (performance phase 1). Labels live in src/domain/performance/visitOutcome.ts.
+enum VisitOutcome {
+  MET_DECISION_MAKER
+  INTERESTED
+  SAMPLE_LEFT
+  QUOTE_REQUESTED
+  ORDER_PLACED
+  ACADEMY_SIGNUP
+  NOT_INTERESTED
+  NOT_AVAILABLE
+  CLOSED_OR_MOVED
+}
+
 /// Phase 4: persisted visit outcomes (no patient information).
 model VisitRecord {
   id                 String    @id @default(cuid())
@@ -406,6 +419,10 @@ model VisitRecord {
   createdByUser      User?     @relation("VisitsCreated", fields: [createdByUserId], references: [id], onDelete: SetNull)
   visitDate          DateTime
   visitType          String
+  /// Structured outcome; `outcome` below stays as the free-text note.
+  outcomeCode        VisitOutcome?
+  /// Account fit score at the time of the visit (quality-visit metric).
+  fitScoreSnapshot   Int?
   outcome            String?
   peopleMet          String?
   productsDiscussed  String?
@@ -418,6 +435,69 @@ model VisitRecord {
   @@index([crmExternalId])
   @@index([visitDate])
   @@index([createdByUserId])
+  @@index([createdByUserId, visitDate])
+}
+
+/// Performance phase 1 — target periods and metrics.
+enum TargetPeriod {
+  DAY
+  WEEK
+  MONTH
+}
+
+enum TargetMetric {
+  VISITS
+  QUALITY_VISITS
+  NEW_ACCOUNTS
+  FOLLOW_UPS
+  ACADEMY_SIGNUPS
+  ORDERS
+}
+
+/// A target set by a manager/admin for one rep. The row whose `startsOn` is the
+/// latest on or before a given day (and whose `endsOn` is null or after it) is the active one.
+model SalesTarget {
+  id          String       @id @default(cuid())
+  userId      String
+  user        User         @relation("TargetsHeld", fields: [userId], references: [id], onDelete: Cascade)
+  period      TargetPeriod
+  metric      TargetMetric
+  value       Int
+  startsOn    DateTime     @db.Date
+  endsOn      DateTime?    @db.Date
+  note        String?
+  createdById String?
+  createdBy   User?        @relation("TargetsCreated", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@unique([userId, period, metric, startsOn])
+  @@index([userId, period, metric])
+}
+
+/// Performance phase 1 — one row per rep per calendar day, recomputed from
+/// VisitRecord / VisitListRun whenever a visit is saved. Read by dashboards; never edited by hand.
+model RepDailySummary {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation("DailySummaries", fields: [userId], references: [id], onDelete: Cascade)
+  day             DateTime @db.Date
+  provinceCode    String?
+  plannedStops    Int      @default(0)
+  visits          Int      @default(0)
+  qualityVisits   Int      @default(0)
+  newAccounts     Int      @default(0)
+  followUpsDone   Int      @default(0)
+  academySignups  Int      @default(0)
+  orders          Int      @default(0)
+  /// Count per VisitOutcome code, e.g. {"INTERESTED": 2}
+  outcomeCounts   Json?
+  plannedDriveMinutes Float?
+  avgFitScore     Float?
+  computedAt      DateTime @default(now())
+
+  @@unique([userId, day])
+  @@index([day])
 }
 
 /// Phase 5: cache LLM synthesis responses (narrative only — never qualification truth).
@@ -530,6 +610,9 @@ model User {
   assignmentsGiven   AccountAssignment[] @relation("AssignmentsCreated")
   assignmentsHeld    AccountAssignment[] @relation("AssignmentsHeld")
   auditEvents        AuditEvent[]
+  targetsHeld        SalesTarget[]       @relation("TargetsHeld")
+  targetsCreated     SalesTarget[]       @relation("TargetsCreated")
+  dailySummaries     RepDailySummary[]   @relation("DailySummaries")
 
   @@index([role])
   @@index([status])

@@ -1,4 +1,4 @@
-import { PrismaClient, OrganizationType, PricePositioning, CertificationPathway, EvidenceSourceType, AppRole, UserStatus } from "@prisma/client";
+import { PrismaClient, OrganizationType, PricePositioning, CertificationPathway, EvidenceSourceType, AppRole, UserStatus, TargetPeriod, TargetMetric } from "@prisma/client";
 import { hash } from "bcryptjs";
 import { TAXONOMY } from "../src/domain/taxonomy";
 import { PRODUCTS, KEYWORD_BANK } from "../src/domain/products";
@@ -41,6 +41,8 @@ function pathwayEnum(p: string): CertificationPathway {
 async function main() {
   // Clear reference + mock account data for idempotent seed
   await prisma.preVisitBrief.deleteMany();
+  await prisma.repDailySummary.deleteMany();
+  await prisma.salesTarget.deleteMany();
   await prisma.visitRecord.deleteMany();
   await prisma.visitListItem.deleteMany();
   await prisma.visitListRun.deleteMany();
@@ -239,7 +241,27 @@ async function main() {
   }
   counts.users = await prisma.user.count();
 
-  console.log("Seed complete:", counts);
+  // Performance phase 1 — default targets for reps (set by the dev manager/admin).
+  const admin = await prisma.user.findUnique({ where: { email: "admin@nuvior.local" } });
+  const reps = await prisma.user.findMany({ where: { role: AppRole.REP } });
+  const startsOn = new Date(Date.UTC(new Date().getUTCFullYear(), 0, 1));
+  const defaultTargets: Array<{ period: TargetPeriod; metric: TargetMetric; value: number }> = [
+    { period: TargetPeriod.DAY, metric: TargetMetric.VISITS, value: 7 },
+    { period: TargetPeriod.DAY, metric: TargetMetric.QUALITY_VISITS, value: 4 },
+    { period: TargetPeriod.WEEK, metric: TargetMetric.FOLLOW_UPS, value: 5 },
+    { period: TargetPeriod.MONTH, metric: TargetMetric.NEW_ACCOUNTS, value: 4 },
+    { period: TargetPeriod.MONTH, metric: TargetMetric.ACADEMY_SIGNUPS, value: 2 },
+  ];
+  for (const rep of reps) {
+    for (const t of defaultTargets) {
+      await prisma.salesTarget.create({
+        data: { userId: rep.id, ...t, startsOn, createdById: admin?.id ?? null, note: "Seed default" },
+      });
+    }
+  }
+  const targetCount = await prisma.salesTarget.count();
+
+  console.log("Seed complete:", { ...counts, targets: targetCount });
   console.log(
     "Organization type labels (spec):",
     Object.values(ORGANIZATION_TYPE_LABELS).join(" / "),

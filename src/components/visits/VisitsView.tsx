@@ -33,11 +33,27 @@ export type LoggedVisitRow = {
   accountName: string;
   city: string | null;
   visitType: string;
-  outcome: string | null;
+  outcomeCode: string | null;
+  outcomeLabel: string | null;
+  fitScore: number | null;
   nextAction: string | null;
 };
 
+const OUTCOME_TONE: Record<string, "neutral" | "primary" | "success" | "warning" | "danger"> = {
+  INTERESTED: "success",
+  QUOTE_REQUESTED: "success",
+  ORDER_PLACED: "success",
+  ACADEMY_SIGNUP: "success",
+  MET_DECISION_MAKER: "primary",
+  SAMPLE_LEFT: "primary",
+  NOT_AVAILABLE: "warning",
+  NOT_INTERESTED: "danger",
+  CLOSED_OR_MOVED: "neutral",
+};
+
 const dateFmt = new Intl.DateTimeFormat("en-CA", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+/** Visit dates are calendar dates stored at UTC midnight — format them in UTC so they never shift a day. */
+const visitDateFmt = new Intl.DateTimeFormat("en-CA", { weekday: "short", month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 
 export function VisitsView({ runs, visits }: { runs: PlannedRouteRow[]; visits: LoggedVisitRow[] }) {
   const [tab, setTab] = React.useState<"routes" | "visits">("routes");
@@ -109,10 +125,27 @@ export function VisitsView({ runs, visits }: { runs: PlannedRouteRow[]; visits: 
         headerName: "Date",
         width: 170,
         valueGetter: (v) => new Date(v as string).getTime(),
-        valueFormatter: (v) => dateFmt.format(new Date(v as number)),
+        valueFormatter: (v) => visitDateFmt.format(new Date(v as number)),
       },
       { field: "visitType", headerName: "Type", width: 130, renderCell: ({ value }) => <StatusChip dot={false} tone="primary" label={String(value)} /> },
-      { field: "outcome", headerName: "Outcome", width: 150, valueFormatter: (v) => (v ? String(v) : "—") },
+      {
+        field: "outcomeLabel",
+        headerName: "Outcome",
+        width: 220,
+        renderCell: ({ row }) =>
+          row.outcomeLabel ? (
+            <StatusChip tone={row.outcomeCode ? (OUTCOME_TONE[row.outcomeCode] ?? "neutral") : "neutral"} label={row.outcomeLabel} />
+          ) : (
+            "—"
+          ),
+      },
+      {
+        field: "fitScore",
+        headerName: "Fit",
+        type: "number",
+        width: 70,
+        valueFormatter: (v) => (v == null ? "—" : String(v)),
+      },
       { field: "nextAction", headerName: "Next action", flex: 1, minWidth: 220, valueFormatter: (v) => (v ? String(v) : "—") },
     ],
     [],

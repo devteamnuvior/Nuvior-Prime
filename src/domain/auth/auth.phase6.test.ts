@@ -40,6 +40,15 @@ describe("permission matrix", () => {
     expect(hasPermission("ADMIN", "audit.view")).toBe(true);
     expect(permissionsForRole("ADMIN")).toContain("admin.settings");
   });
+
+  it("performance: REP sees own, MANAGER/ADMIN see team and manage targets", () => {
+    expect(hasPermission("REP", "performance.view.own")).toBe(true);
+    expect(hasPermission("REP", "performance.view.team")).toBe(false);
+    expect(hasPermission("REP", "target.manage")).toBe(false);
+    expect(hasPermission("MANAGER", "performance.view.team")).toBe(true);
+    expect(hasPermission("MANAGER", "target.manage")).toBe(true);
+    expect(hasPermission("ADMIN", "target.manage")).toBe(true);
+  });
 });
 
 describe("territory access", () => {

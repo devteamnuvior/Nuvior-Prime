@@ -5,6 +5,9 @@ import { prisma } from "@/lib/prisma";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { VisitsView, type LoggedVisitRow, type PlannedRouteRow } from "@/components/visits/VisitsView";
+import { TargetProgressStrip } from "@/components/visits/TargetProgressStrip";
+import { getTargetProgress } from "@/lib/performance";
+import { dayKey, visitOutcomeLabel } from "@/domain/performance";
 
 export default async function MyVisitsPage() {
   let user;
@@ -28,6 +31,8 @@ export default async function MyVisitsPage() {
     take: 50,
     include: { account: { select: { businessName: true, city: true } } },
   });
+  const today = dayKey(new Date());
+  const progress = await getTargetProgress(user.id, today);
 
   const runRows: PlannedRouteRow[] = runs.map((r) => {
     const summary = r.routeSummaryJson as { totalDriveMinutes?: number | null; stopCount?: number } | null;
@@ -49,13 +54,16 @@ export default async function MyVisitsPage() {
     accountName: v.account?.businessName ?? v.placeId ?? "Unknown account",
     city: v.account?.city ?? null,
     visitType: v.visitType,
-    outcome: v.outcome ?? null,
+    outcomeCode: v.outcomeCode ?? null,
+    outcomeLabel: visitOutcomeLabel(v.outcomeCode) ?? v.outcome ?? null,
+    fitScore: v.fitScoreSnapshot ?? null,
     nextAction: v.nextAction ?? null,
   }));
 
   return (
     <PageContainer>
       <PageHeader title="Visit History" description="Routes you planned and visits you logged, most recent first." />
+      <TargetProgressStrip progress={progress} day={today} />
       <VisitsView runs={runRows} visits={visitRows} />
     </PageContainer>
   );

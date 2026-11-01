@@ -35,6 +35,8 @@ import {
 } from "@/domain/clinicProfile/runClinicProfile";
 import { getClinicProfileProvider } from "@/providers/clinicProfile";
 import { getClinicProfileConfig } from "@/lib/clinicProfileConfig";
+import { recomputeRepDailySummary, upsertSalesTarget, deleteSalesTarget, type SalesTargetRow } from "@/lib/performance";
+import { TARGET_METRICS, TARGET_PERIODS, VISIT_OUTCOME_CODES } from "@/domain/performance";
 
 const provinceCodes = CANADIAN_PROVINCES.map((p) => p.code) as [string, ...string[]];
 
@@ -228,6 +230,7 @@ export async function recordVisitAction(input: {
   crmExternalId: string | null;
   visitDate: string;
   visitType: string;
+  outcomeCode?: string | null;
   outcome?: string;
   peopleMet?: string;
   productsDiscussed?: string;
@@ -240,8 +243,13 @@ export async function recordVisitAction(input: {
     requirePermission(user, "visit.create");
     await requireAccountAccess(user, { placeId: input.placeId });
 
+    const visitDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Visit date must be YYYY-MM-DD").parse(input.visitDate);
+    const outcomeCode = z.enum(VISIT_OUTCOME_CODES).nullable().optional().parse(input.outcomeCode || null);
+
     const result = await createVisitRecord({
       ...input,
+      visitDate,
+      outcomeCode,
       createdByUserId: user.id,
       repIdPlaceholder: user.email,
     });
@@ -254,8 +262,11 @@ export async function recordVisitAction(input: {
       action: "visit.create",
       resourceType: "VisitRecord",
       resourceId: result.id,
-      metadata: { placeId: input.placeId, visitType: input.visitType },
+      metadata: { placeId: input.placeId, visitType: input.visitType, outcomeCode: outcomeCode ?? null },
     });
+
+    await recomputeRepDailySummary(user.id, visitDate);
+    revalidatePath("/visits");
 
     return { ok: true, message: `Visit saved ${result.id}` };
   } catch (e) {
@@ -778,5 +789,122 @@ export async function runClinicWebProfileAction(
   } catch (e) {
     if (e instanceof AuthError) return { ok: false, error: `${e.code}: ${e.message}` };
     return { ok: false, error: e instanceof Error ? e.message : "Unexpected error" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Performance phase 1 — sales targets (manager / admin)
+// ---------------------------------------------------------------------------
+
+const dayKeySchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD");
+
+const salesTargetSchema = z.object({
+  userId: z.string().min(1),
+  period: z.enum(TARGET_PERIODS),
+  metric: z.enum(TARGET_METRICS),
+  value: z.coerce.number().int().min(0).max(10_000),
+  startsOn: dayKeySchema,
+  endsOn: dayKeySchema.nullable().optional(),
+  note: z.string().max(200).nullable().optional(),
+});
+
+export type SalesTargetActionResult =
+  | { ok: true; message: string; target: SalesTargetRow }
+  | { ok: false; message: string; fieldErrors?: Record<string, string> };
+
+/** Managers may only set targets for reps inside their own provinces; admins anywhere. */
+async function requireTargetSubject(actor: AuthUserLike, userId: string) {
+  const subject = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, email: true, role: true, provinces: true, status: true },
+  });
+  if (!subject) throw new AuthError("User not found", "FORBIDDEN");
+  if (actor.provinces.includes("*")) return subject;
+  const shared = subject.provinces.some((p) => actor.provinces.includes(p));
+  if (!shared) throw new AuthError("No access to this user's territory", "TERRITORY");
+  return subject;
+}
+
+type AuthUserLike = { id: string; provinces: string[] };
+
+export async function setSalesTargetAction(
+  rawInput: z.input<typeof salesTargetSchema>,
+): Promise<SalesTargetActionResult> {
+  try {
+    const actor = await requireSessionUser();
+    requirePermission(actor, "target.manage");
+
+    const parsed = salesTargetSchema.safeParse(rawInput);
+    if (!parsed.success) {
+      const fieldErrors: Record<string, string> = {};
+      for (const issue of parsed.error.issues) {
+        const key = String(issue.path[0] ?? "form");
+        if (!fieldErrors[key]) fieldErrors[key] = issue.message;
+      }
+      return { ok: false, message: "Check the highlighted fields", fieldErrors };
+    }
+    const input = parsed.data;
+    if (input.endsOn && input.endsOn < input.startsOn) {
+      return { ok: false, message: "End date must be on or after the start date", fieldErrors: { endsOn: "Before start" } };
+    }
+
+    const subject = await requireTargetSubject(actor, input.userId);
+
+    const target = await upsertSalesTarget({
+      userId: subject.id,
+      period: input.period,
+      metric: input.metric,
+      value: input.value,
+      startsOn: input.startsOn,
+      endsOn: input.endsOn ?? null,
+      note: input.note ?? null,
+      createdById: actor.id,
+    });
+
+    await writeAuditEvent({
+      actor,
+      action: "target.set",
+      resourceType: "SalesTarget",
+      resourceId: target.id,
+      afterState: target,
+      metadata: { subjectUserId: subject.id, subjectEmail: subject.email },
+    });
+
+    revalidatePath("/visits");
+    revalidatePath("/admin/users");
+    return { ok: true, message: `Target saved for ${subject.email}`, target };
+  } catch (e) {
+    if (e instanceof AuthError) return { ok: false, message: `${e.code}: ${e.message}` };
+    return { ok: false, message: e instanceof Error ? e.message : "Failed" };
+  }
+}
+
+export async function removeSalesTargetAction(targetId: string): Promise<{ ok: boolean; message: string }> {
+  try {
+    const actor = await requireSessionUser();
+    requirePermission(actor, "target.manage");
+
+    const existing = await prisma.salesTarget.findUnique({ where: { id: targetId }, select: { userId: true } });
+    if (!existing) return { ok: false, message: "Target not found" };
+    await requireTargetSubject(actor, existing.userId);
+
+    const removed = await deleteSalesTarget(targetId);
+    if (!removed) return { ok: false, message: "Target not found" };
+
+    await writeAuditEvent({
+      actor,
+      action: "target.remove",
+      resourceType: "SalesTarget",
+      resourceId: targetId,
+      beforeState: removed,
+      metadata: { subjectUserId: removed.userId },
+    });
+
+    revalidatePath("/visits");
+    revalidatePath("/admin/users");
+    return { ok: true, message: "Target removed" };
+  } catch (e) {
+    if (e instanceof AuthError) return { ok: false, message: `${e.code}: ${e.message}` };
+    return { ok: false, message: e instanceof Error ? e.message : "Failed" };
   }
 }

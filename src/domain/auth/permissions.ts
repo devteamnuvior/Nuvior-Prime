@@ -17,7 +17,10 @@ export type Permission =
   | "account.assign"
   | "user.manage"
   | "audit.view"
-  | "admin.settings";
+  | "admin.settings"
+  | "performance.view.own"
+  | "performance.view.team"
+  | "target.manage";
 
 export type AppRoleName = "REP" | "MANAGER" | "ADMIN";
 
@@ -30,6 +33,7 @@ const ROLE_PERMISSIONS: Record<AppRoleName, readonly Permission[]> = {
     "visit.create",
     "visit.view.own",
     "verification.review",
+    "performance.view.own",
   ],
   MANAGER: [
     "prospect.run",
@@ -43,6 +47,9 @@ const ROLE_PERMISSIONS: Record<AppRoleName, readonly Permission[]> = {
     "mapping.confirm",
     "verification.review",
     "account.assign",
+    "performance.view.own",
+    "performance.view.team",
+    "target.manage",
   ],
   ADMIN: [
     "prospect.run",
@@ -59,6 +66,9 @@ const ROLE_PERMISSIONS: Record<AppRoleName, readonly Permission[]> = {
     "user.manage",
     "audit.view",
     "admin.settings",
+    "performance.view.own",
+    "performance.view.team",
+    "target.manage",
   ],
 };
 

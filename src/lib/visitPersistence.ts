@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import type { LeadProduct, Prisma } from "@prisma/client";
+import type { LeadProduct, Prisma, VisitOutcome } from "@prisma/client";
+import { isVisitOutcomeCode } from "@/domain/performance/visitOutcome";
 import type { VisitListEntry } from "@/domain/visitList";
 import type { PlannedRouteStop, RoutePlanSummary } from "@/domain/routing/optimize";
 
@@ -132,6 +133,8 @@ export async function createVisitRecord(input: {
   crmExternalId?: string | null;
   visitDate: string;
   visitType: string;
+  /** Structured outcome code (VisitOutcome); invalid values are stored as null. */
+  outcomeCode?: string | null;
   outcome?: string | null;
   peopleMet?: string | null;
   productsDiscussed?: string | null;
@@ -143,11 +146,38 @@ export async function createVisitRecord(input: {
 }): Promise<{ id: string } | { error: string }> {
   try {
     let accountId: string | null = null;
+    let fitScoreSnapshot: number | null = null;
     if (input.placeId) {
       const account = await prisma.account.findFirst({
         where: { placeId: input.placeId },
+        select: {
+          id: true,
+          qualifications: { orderBy: { computedAt: "desc" }, take: 1, select: { fitScore: true } },
+        },
       });
       accountId = account?.id ?? null;
+      fitScoreSnapshot = account?.qualifications[0]?.fitScore ?? null;
+
+      // Qualification is computed at prospecting time and not persisted per
+      // account today, so fall back to the fit score of the most recent planned
+      // stop for this account — preferring the rep's own route.
+      if (fitScoreSnapshot == null && accountId) {
+        const own = input.createdByUserId
+          ? await prisma.visitListItem.findFirst({
+              where: { accountId, run: { createdByUserId: input.createdByUserId } },
+              orderBy: { run: { createdAt: "desc" } },
+              select: { fitScore: true },
+            })
+          : null;
+        const any =
+          own ??
+          (await prisma.visitListItem.findFirst({
+            where: { accountId },
+            orderBy: { run: { createdAt: "desc" } },
+            select: { fitScore: true },
+          }));
+        fitScoreSnapshot = any?.fitScore ?? null;
+      }
     }
 
     const row = await prisma.visitRecord.create({
@@ -159,6 +189,8 @@ export async function createVisitRecord(input: {
         createdByUserId: input.createdByUserId ?? null,
         visitDate: new Date(input.visitDate),
         visitType: input.visitType,
+        outcomeCode: isVisitOutcomeCode(input.outcomeCode) ? (input.outcomeCode as VisitOutcome) : null,
+        fitScoreSnapshot,
         outcome: input.outcome ?? null,
         peopleMet: input.peopleMet ?? null,
         productsDiscussed: input.productsDiscussed ?? null,

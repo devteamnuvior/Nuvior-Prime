@@ -9,6 +9,12 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { recordVisitAction, structureVisitNotesAction } from "@/app/actions";
 import { toast } from "@/components/feedback/toast";
+import {
+  VISIT_OUTCOMES,
+  inferVisitOutcomeCode,
+  visitOutcomeDefinition,
+  type VisitOutcomeCode,
+} from "@/domain/performance/visitOutcome";
 
 const VISIT_TYPES = ["first visit", "re-visit", "follow-up on a quote"] as const;
 
@@ -24,27 +30,34 @@ export function VisitRecordForm({
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
-  const [outcome, setOutcome] = useState("");
+  const [outcomeCode, setOutcomeCode] = useState<VisitOutcomeCode | "">("");
+  const [outcomeNote, setOutcomeNote] = useState("");
   const [peopleMet, setPeopleMet] = useState("");
   const [productsDiscussed, setProductsDiscussed] = useState("");
   const [nextAction, setNextAction] = useState("");
   const [followUpDate, setFollowUpDate] = useState("");
   const [visitType, setVisitType] = useState("first visit");
+  const [outcomeError, setOutcomeError] = useState<string | null>(null);
+
+  const outcomeHint = outcomeCode ? visitOutcomeDefinition(outcomeCode).hint : "Required — pick what happened.";
 
   return (
     <Paper variant="outlined" sx={{ p: 5 }}>
       <Typography variant="eyebrow" component="h3" sx={{ display: "block", mb: 3, color: "text.secondary" }}>
-        Record visit (dev)
+        Record visit
       </Typography>
       <Typography variant="caption" sx={{ display: "block", mb: 3, color: "text.secondary" }}>
-        {businessName} — no auth; rep placeholder = rep.dev. AI note structuring is a suggestion
-        only (no autonomous CRM write).
+        {businessName} — AI note structuring is a suggestion only (no autonomous CRM write).
       </Typography>
       <Box
         component="form"
         sx={{ display: "grid", gap: 3, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))" } }}
         onSubmit={(e) => {
           e.preventDefault();
+          if (!outcomeCode) {
+            setOutcomeError("Choose an outcome before saving.");
+            return;
+          }
           const fd = new FormData(e.currentTarget);
           start(async () => {
             const r = await recordVisitAction({
@@ -52,18 +65,20 @@ export function VisitRecordForm({
               crmExternalId,
               visitDate: String(fd.get("visitDate")),
               visitType,
-              outcome: outcome || String(fd.get("outcome") || ""),
-              peopleMet: peopleMet || String(fd.get("peopleMet") || ""),
-              productsDiscussed: productsDiscussed || String(fd.get("productsDiscussed") || ""),
-              nextAction: nextAction || String(fd.get("nextAction") || ""),
-              followUpDate: followUpDate || String(fd.get("followUpDate") || ""),
+              outcomeCode,
+              outcome: outcomeNote,
+              peopleMet,
+              productsDiscussed,
+              nextAction,
+              followUpDate,
               notes,
             });
             setMsg(r.message);
             toast.result(r);
             if (r.ok) {
               setNotes("");
-              setOutcome("");
+              setOutcomeCode("");
+              setOutcomeNote("");
               setPeopleMet("");
               setProductsDiscussed("");
               setNextAction("");
@@ -87,7 +102,27 @@ export function VisitRecordForm({
             </MenuItem>
           ))}
         </TextField>
-        <TextField name="outcome" label="Outcome" value={outcome} onChange={(e) => setOutcome(e.target.value)} />
+        <TextField
+          name="outcomeCode"
+          label="Outcome"
+          select
+          required
+          value={outcomeCode}
+          error={Boolean(outcomeError)}
+          helperText={outcomeError ?? outcomeHint}
+          onChange={(e) => {
+            setOutcomeCode(e.target.value as VisitOutcomeCode);
+            setOutcomeError(null);
+          }}
+          sx={{ gridColumn: { sm: "1 / -1" } }}
+        >
+          {VISIT_OUTCOMES.map((o) => (
+            <MenuItem key={o.code} value={o.code}>
+              {o.label}
+            </MenuItem>
+          ))}
+        </TextField>
+        <TextField name="outcome" label="Outcome note (optional)" value={outcomeNote} onChange={(e) => setOutcomeNote(e.target.value)} />
         <TextField name="peopleMet" label="People met" value={peopleMet} onChange={(e) => setPeopleMet(e.target.value)} />
         <TextField name="productsDiscussed" label="Products discussed" value={productsDiscussed} onChange={(e) => setProductsDiscussed(e.target.value)} />
         <TextField
@@ -120,7 +155,14 @@ export function VisitRecordForm({
                 setMsg(r.message);
                 return;
               }
-              if (r.structured.outcome) setOutcome(r.structured.outcome);
+              if (r.structured.outcome) {
+                setOutcomeNote(r.structured.outcome);
+                const inferred = inferVisitOutcomeCode(r.structured.outcome);
+                if (inferred && !outcomeCode) {
+                  setOutcomeCode(inferred);
+                  setOutcomeError(null);
+                }
+              }
               if (r.structured.peopleMet) setPeopleMet(r.structured.peopleMet);
               if (r.structured.productsDiscussed) {
                 setProductsDiscussed(r.structured.productsDiscussed);
