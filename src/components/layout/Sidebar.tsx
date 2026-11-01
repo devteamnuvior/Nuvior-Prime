@@ -26,14 +26,14 @@ export function Sidebar({ groups }: { groups: NavGroup[] }) {
         display: "flex",
         alignItems: "center",
         justifyContent: collapsed ? "center" : "flex-start",
-        gap: 2.5,
-        px: collapsed ? 0 : 4,
+        gap: 1.5,
+        px: collapsed ? 0 : 3,
         borderBottom: 1,
         borderColor: "sidebar.border",
         flexShrink: 0,
       }}
     >
-      <Box component={Link} href="/" aria-label="NUVIOR Prime home" sx={{ display: "flex", alignItems: "center", gap: 2.5, color: "inherit", textDecoration: "none", borderRadius: 1 }}>
+      <Box component={Link} href="/" aria-label="NUVIOR Prime home" sx={{ display: "flex", alignItems: "center", gap: 1.5, color: "inherit", textDecoration: "none", borderRadius: 1 }}>
         <BrandMark />
         {!collapsed && <BrandWordmark />}
       </Box>
@@ -114,7 +114,7 @@ export function Sidebar({ groups }: { groups: NavGroup[] }) {
         ModalProps={{ keepMounted: true }}
         sx={{ display: { xs: "block", md: "none" }, "& .MuiDrawer-paper": { width: 288, boxSizing: "border-box", bgcolor: "sidebar.bg" } }}
       >
-        <Box sx={{ height: LAYOUT.headerHeight, display: "flex", alignItems: "center", gap: 2.5, px: 4, borderBottom: 1, borderColor: "sidebar.border" }}>
+        <Box sx={{ height: LAYOUT.headerHeight, display: "flex", alignItems: "center", gap: 1.5, px: 3, borderBottom: 1, borderColor: "sidebar.border" }}>
           <BrandMark />
           <BrandWordmark />
         </Box>

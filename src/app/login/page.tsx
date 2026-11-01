@@ -47,8 +47,8 @@ export default function LoginPage() {
           },
         }}
       >
-        <Box sx={{ position: "relative", display: "flex", alignItems: "center", gap: 3 }}>
-          <BrandMark size={40} />
+        <Box sx={{ position: "relative", display: "flex", alignItems: "center", gap: 2 }}>
+          <BrandMark size={52} />
           <Box>
             <BrandWordmark />
             <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>

@@ -89,7 +89,6 @@ export function LoginForm() {
           onChange={(e) => setEmail(e.target.value)}
           autoComplete="username"
           placeholder="you@nuvior.ca"
-          required
           fullWidth
           size="medium"
           sx={{ "& .MuiInputBase-input": { paddingBlock: "12px" } }}
@@ -101,7 +100,6 @@ export function LoginForm() {
           onChange={(e) => setPassword(e.target.value)}
           autoComplete="current-password"
           placeholder="Your password"
-          required
           fullWidth
           size="medium"
           sx={{ "& .MuiInputBase-input": { paddingBlock: "12px" } }}
@@ -121,7 +119,7 @@ export function LoginForm() {
         <FormControlLabel
           control={<Checkbox size="medium" color="primary" checked={remember} onChange={(e) => setRemember(e.target.checked)} />}
           label="Remember Me"
-          sx={{ mt: -2 }}
+          sx={{ mt: -3, "& .MuiCheckbox-root": { pr: 0.5 } }}
         />
 
         <Button
@@ -132,8 +130,8 @@ export function LoginForm() {
           loadingPosition="center"
           loadingIndicator={<CircularProgress size={20} sx={{ color: "primary.contrastText" }} />}
           fullWidth
-          endIcon={<ArrowForwardOutlined sx={{ fontSize: 16 }} />}
-          sx={{ height: 50, borderRadius: 3, letterSpacing: "0.1em", textTransform: "uppercase", fontSize: "0.8125rem", fontWeight: 600 }}
+          endIcon={<ArrowForwardOutlined />}
+          sx={{ height: 50, borderRadius: 3, letterSpacing: "0.1em", textTransform: "uppercase", fontSize: "0.8125rem", fontWeight: 600, "& .MuiButton-endIcon > *:nth-of-type(1)": { fontSize: 16 } }}
         >
           Sign in
         </Button>

@@ -39,7 +39,7 @@ export function Header({
           <MenuOutlined fontSize="small" />
         </IconButton>
         <Box component={Link} href="/" aria-label="NUVIOR Prime home" sx={{ display: { xs: "flex", md: "none" } }}>
-          <BrandMark size={24} />
+          <BrandMark size={32} />
         </Box>
 
         <Breadcrumbs
