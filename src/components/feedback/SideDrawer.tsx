@@ -61,7 +61,7 @@ export function SideDrawer({
           <CloseOutlined fontSize="small" />
         </IconButton>
       </Box>
-      <Box className="nv-scroll" sx={{ flex: 1, overflowY: "auto", px: 5, py: 5 }}>
+      <Box sx={{ flex: 1, overflowY: "auto", px: 5, py: 5 }}>
         {children}
       </Box>
       {footer ? (

@@ -1,7 +1,7 @@
 # NUVIOR Prime — Design System
 
 Status: v2 (MUI dashboard). Implemented in `src/theme/tokens.ts` (design tokens),
-`src/theme/theme.ts` (MUI theme: light/dark colour schemes, spacing, radius, shadows,
+`src/theme/theme.ts` (MUI theme: light palette, spacing, radius, shadows,
 typography, component defaults), `src/theme/ThemeRegistry.tsx` (Emotion cache + providers),
 `src/components/layout/*` (dashboard shell), `src/components/data-table/DataTable.tsx`
 (MUI X DataGrid wrapper) and `src/components/feedback/*` (KPI cards, chips, empty states,
@@ -24,9 +24,11 @@ colour. The route and the day are the product; chrome stays quiet.
   hardcode values. The theme emits CSS variables prefixed `--nv-` (e.g.
   `--nv-palette-primary-main`); `src/app/globals.css` only aliases the v1 names onto them for the
   Tailwind-based map workspace (`src/components/today/*`), which is unchanged in v2.
-- **Dark mode:** `colorSchemes.light/dark` with `colorSchemeSelector: "class"`; the user picks
-  Light / Dark / System from the header (`useColorScheme`), persisted by MUI, no flash on load
-  (`InitColorSchemeScript`).
+- **Light mode only.** There is no dark scheme and no theme switcher; never add
+  `theme.applyStyles("dark")` or `.dark &` styles.
+- **No custom CSS.** Styling goes through MUI components, `sx` and the theme. The only
+  stylesheet left is the v1-token bridge + map marker CSS in `src/app/globals.css`, which is
+  removed when the Today workspace finishes its MUI migration (markers move to `GlobalStyles`).
 - **Spacing:** 4px grid (`theme.spacing(1) === 4px`). **Radius:** 6 / 8 / 12 / 16 (sm / md / lg / xl),
   8px default. **Elevation:** three levels only — `shadows[1]` resting card, `[2]` floating
   menu/popover, `[3]` dialog/drawer. Borders do most of the separation work.
@@ -47,7 +49,7 @@ colour. The route and the day are the product; chrome stays quiet.
   `nv-sidebar` cookie, `[` toggles), active route highlighted with a 2px primary bar, nested
   Admin links, temporary drawer below `md`.
 - `Header`: breadcrumbs from `ROUTE_LABELS`, territory chip, `CommandSearch` (⌘K page palette),
-  `ThemeToggle`, `UserMenu` (role, territory, sign out).
+  `UserMenu` (role, territory, sign out).
 - Pages render `PageContainer` + `PageHeader`; `loading.tsx` files render `PageSkeleton` /
   `TableSkeleton`. The Today route is full-bleed and bypasses `PageContainer`.
 

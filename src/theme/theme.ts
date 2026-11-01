@@ -2,7 +2,6 @@
 
 import { createTheme, type Shadows } from "@mui/material/styles";
 import {
-  darkPalette,
   EASE,
   FONT_MONO,
   FONT_SANS,
@@ -23,11 +22,8 @@ const shadows: Shadows = [
 ] as Shadows;
 
 export const theme = createTheme({
-  cssVariables: { colorSchemeSelector: "class", cssVarPrefix: "nv" },
-  colorSchemes: {
-    light: { palette: lightPalette },
-    dark: { palette: darkPalette },
-  },
+  cssVariables: { cssVarPrefix: "nv" },
+  palette: lightPalette,
   spacing: SPACING_UNIT,
   shape: { borderRadius: RADIUS.md },
   shadows,

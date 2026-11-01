@@ -14,7 +14,6 @@ import MenuOutlined from "@mui/icons-material/MenuOutlined";
 import { LAYOUT } from "@/theme/tokens";
 import { BrandMark } from "./BrandMark";
 import { CommandSearch } from "./CommandSearch";
-import { ThemeToggle } from "./ThemeToggle";
 import { UserMenu } from "./UserMenu";
 import { breadcrumbsFor, type NavGroup } from "./nav";
 import { useShell } from "./shell-context";
@@ -76,7 +75,6 @@ export function Header({
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <CommandSearch groups={groups} />
-          <ThemeToggle />
           {user && <UserMenu user={user} signOutAction={signOutAction} />}
         </Box>
       </Toolbar>

@@ -2,8 +2,6 @@
 @layer theme, base, mui, components, utilities;
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *));
-
 /*
   NUVIOR Prime — global styles.
 
@@ -52,12 +50,6 @@
   --nv-motion-start: 3400ms;
 }
 
-.dark {
-  --rule-soft: #222928;
-  --accent-tint: #16302b;
-  --signal-tint: #2c2416;
-  --danger-tint: #311c19;
-}
 
 /* Tailwind utilities used by the legacy map workspace (bg-paper, text-ink, border-rule …) */
 @theme inline {

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Fraunces, IBM_Plex_Mono, Inter } from "next/font/google";
-import InitColorSchemeScript from "@mui/material/InitColorSchemeScript";
 import NextTopLoader from "nextjs-toploader";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
@@ -31,9 +30,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${sans.variable} ${serif.variable} ${mono.variable}`}>
+    <html lang="en" className={`${sans.variable} ${serif.variable} ${mono.variable}`}>
       <body>
-        <InitColorSchemeScript attribute="class" defaultMode="system" />
         <NextTopLoader color="var(--nv-palette-primary-main)" height={2} shadow={false} showSpinner={false} speed={200} crawlSpeed={150} zIndex={1400} />
         <Providers>{children}</Providers>
       </body>

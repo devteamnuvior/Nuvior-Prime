@@ -11,7 +11,7 @@ import { theme } from "./theme";
 export function ThemeRegistry({ children }: { children: React.ReactNode }) {
   return (
     <AppRouterCacheProvider options={{ key: "mui", enableCssLayer: true }}>
-      <ThemeProvider theme={theme} defaultMode="system" disableTransitionOnChange>
+      <ThemeProvider theme={theme}>
         <CssBaseline enableColorScheme />
         <SnackbarProvider
           maxSnack={3}

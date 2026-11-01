@@ -26,7 +26,7 @@ export function SidebarNav({
 }) {
   const pathname = usePathname();
   return (
-    <Box component="nav" aria-label="Main" className="nv-scroll" sx={{ flex: 1, overflowY: "auto", px: 2, py: 2 }}>
+    <Box component="nav" aria-label="Main" sx={{ flex: 1, overflowY: "auto", px: 2, py: 2 }}>
       {groups.map((g, gi) => (
         <Box key={g.label ?? gi} sx={{ mt: gi > 0 ? 4 : 0 }}>
           {g.label ? (

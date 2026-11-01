@@ -26,10 +26,8 @@ export function UserAvatar({
         width: px,
         height: px,
         fontSize: px * 0.33,
-        // Light: pastel wash + deep ink; dark: deep wash + pastel ink (same hue).
         bgcolor: `hsl(${hue} 30% 90%)`,
         color: `hsl(${hue} 45% 28%)`,
-        ".dark &": { bgcolor: `hsl(${hue} 25% 22%)`, color: `hsl(${hue} 40% 78%)` },
         opacity: dimmed ? 0.5 : 1,
         filter: dimmed ? "grayscale(1)" : "none",
         boxShadow: "0 0 0 2px var(--nv-palette-background-paper)",

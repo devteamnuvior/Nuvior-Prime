@@ -125,7 +125,7 @@ export function CommandSearch({ groups }: { groups: NavGroup[] }) {
             sx={{ height: 48, fontSize: "0.875rem" }}
           />
         </Box>
-        <List id="nv-command-list" role="listbox" className="nv-scroll" sx={{ maxHeight: 288, overflowY: "auto", p: 1 }}>
+        <List id="nv-command-list" role="listbox" sx={{ maxHeight: 288, overflowY: "auto", p: 1 }}>
           {items.length === 0 && (
             <Typography variant="body2" sx={{ px: 3, py: 6, textAlign: "center", color: "text.secondary" }}>
               No pages match “{query}”.
