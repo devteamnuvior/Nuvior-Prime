@@ -20,7 +20,7 @@ export default async function TeamPage() {
   const runs = await prisma.visitListRun.findMany({
     orderBy: { createdAt: "desc" },
     take: 100,
-    include: { createdByUser: { select: { email: true, displayName: true, provinces: true } } },
+    include: { createdByUser: { select: { id: true, email: true, displayName: true, provinces: true } } },
   });
 
   const visible = runs.filter((r) => canAccessProvince(user, r.provinceCode));
@@ -31,6 +31,7 @@ export default async function TeamPage() {
     provinceCode: r.provinceCode,
     rep: r.createdByUser?.email ?? r.repIdPlaceholder ?? "unknown",
     repName: r.createdByUser?.displayName ?? null,
+    repId: r.createdByUser?.id ?? null,
   }));
 
   return (

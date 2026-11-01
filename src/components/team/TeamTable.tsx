@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import Typography from "@mui/material/Typography";
 import { DataTable, type GridColDef } from "@/components/data-table/DataTable";
 import { CodeChip } from "@/components/feedback/StatusChip";
@@ -11,6 +12,7 @@ export type TeamRunRow = {
   provinceCode: string;
   rep: string;
   repName: string | null;
+  repId: string | null;
 };
 
 const fmt = new Intl.DateTimeFormat("en-CA", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
@@ -33,11 +35,21 @@ export function TeamTable({ rows }: { rows: TeamRunRow[] }) {
         minWidth: 240,
         renderCell: ({ row }) => (
           <span>
-            {row.repName && (
-              <Typography component="span" variant="body2" sx={{ fontWeight: 600, mr: 1.5 }}>
-                {row.repName}
-              </Typography>
-            )}
+            {row.repName &&
+              (row.repId ? (
+                <Typography
+                  component={Link}
+                  href={`/admin/users/${row.repId}`}
+                  variant="body2"
+                  sx={{ fontWeight: 600, mr: 1.5, color: "text.primary", textDecoration: "none", "&:hover": { color: "primary.main", textDecoration: "underline" } }}
+                >
+                  {row.repName}
+                </Typography>
+              ) : (
+                <Typography component="span" variant="body2" sx={{ fontWeight: 600, mr: 1.5 }}>
+                  {row.repName}
+                </Typography>
+              ))}
             <Typography component="span" variant="caption" sx={{ color: "text.secondary", fontFamily: "var(--mono)" }}>
               {row.rep}
             </Typography>

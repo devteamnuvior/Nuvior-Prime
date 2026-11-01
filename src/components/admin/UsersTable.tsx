@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import Tooltip from "@mui/material/Tooltip";
@@ -8,6 +10,7 @@ import Typography from "@mui/material/Typography";
 import BlockOutlined from "@mui/icons-material/BlockOutlined";
 import CheckCircleOutlineOutlined from "@mui/icons-material/CheckCircleOutlineOutlined";
 import ManageAccountsOutlined from "@mui/icons-material/ManageAccountsOutlined";
+import InsightsOutlined from "@mui/icons-material/InsightsOutlined";
 import type { AppRoleName } from "@/domain/auth/permissions";
 import type { AdminUserRow } from "@/domain/auth/userAdmin";
 import { actionsColumn, DataTable, GridActionsCellItem, type GridColDef } from "@/components/data-table/DataTable";
@@ -75,6 +78,7 @@ export function UsersTable({
   filters?: React.ReactNode;
   actions?: React.ReactNode;
 }) {
+  const router = useRouter();
   const columns = React.useMemo<GridColDef<AdminUserRow>[]>(
     () => [
       {
@@ -89,7 +93,13 @@ export function UsersTable({
             <UserAvatar name={row.displayName} email={row.email} status={row.status} />
             <Box sx={{ minWidth: 0 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                <Typography variant="body2" noWrap sx={{ fontWeight: 600 }}>
+                <Typography
+                  component={Link}
+                  href={`/admin/users/${row.id}`}
+                  variant="body2"
+                  noWrap
+                  sx={{ fontWeight: 600, color: "text.primary", textDecoration: "none", "&:hover": { color: "primary.main", textDecoration: "underline" } }}
+                >
                   {row.displayName}
                 </Typography>
                 {row.id === currentUserId && <CodeChip label="You" />}
@@ -168,6 +178,13 @@ export function UsersTable({
           />
         ));
         return [
+          <GridActionsCellItem
+            key="profile"
+            showInMenu
+            icon={<InsightsOutlined fontSize="small" />}
+            label="View performance"
+            onClick={() => router.push(`/admin/users/${row.id}`)}
+          />,
           ...roleItems,
           <GridActionsCellItem
             key="status"
@@ -181,7 +198,7 @@ export function UsersTable({
         ];
       }),
     ],
-    [currentUserId, busyUserId, now, onChangeRole, onToggleStatus],
+    [currentUserId, busyUserId, now, onChangeRole, onToggleStatus, router],
   );
 
   return (

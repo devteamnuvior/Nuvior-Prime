@@ -58,6 +58,7 @@ export const ROUTE_LABELS: Record<string, string> = {
   "/matching": "Matching",
   "/admin": "Admin",
   "/admin/users": "Users",
+  "/admin/users/*": "Performance",
   "/admin/crm": "CRM Diagnostics",
   "/admin/audit": "Audit Log",
 };
@@ -79,8 +80,10 @@ export function breadcrumbsFor(pathname: string): Crumb[] {
   const crumbs: Crumb[] = [];
   let acc = "";
   for (const seg of segments) {
+    const parent = acc;
     acc += `/${seg}`;
-    crumbs.push({ href: acc, label: ROUTE_LABELS[acc] ?? seg.replace(/-/g, " ") });
+    // Dynamic segments (e.g. /admin/users/<id>) resolve through a "<parent>/*" label.
+    crumbs.push({ href: acc, label: ROUTE_LABELS[acc] ?? ROUTE_LABELS[`${parent}/*`] ?? seg.replace(/-/g, " ") });
   }
   return crumbs;
 }
