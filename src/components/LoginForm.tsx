@@ -134,12 +134,12 @@ export function LoginForm() {
           variant="contained"
           size="large"
           loading={pending}
-          loadingPosition="end"
+          loadingPosition="center"
           fullWidth
           endIcon={<ArrowForwardOutlined />}
           sx={{ height: 50, borderRadius: 3, letterSpacing: "0.1em", textTransform: "uppercase", fontSize: "0.8125rem", fontWeight: 600 }}
         >
-          {pending ? "Signing in…" : "Sign in"}
+          Sign in
         </Button>
       </Box>
 
