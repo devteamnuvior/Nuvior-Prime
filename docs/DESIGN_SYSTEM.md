@@ -1,15 +1,72 @@
 # NUVIOR Prime — Design System
 
-Status: v1 (UI redesign). Implemented in `src/app/globals.css` (tokens), `src/app/layout.tsx`
-(typefaces), `src/components/AppShell.tsx` (shell), and `src/components/today/*` (route surface).
+Status: v2 (MUI dashboard). Implemented in `src/theme/tokens.ts` (design tokens),
+`src/theme/theme.ts` (MUI theme: light/dark colour schemes, spacing, radius, shadows,
+typography, component defaults), `src/theme/ThemeRegistry.tsx` (Emotion cache + providers),
+`src/components/layout/*` (dashboard shell), `src/components/data-table/DataTable.tsx`
+(MUI X DataGrid wrapper) and `src/components/feedback/*` (KPI cards, chips, empty states,
+dialogs, drawers, toasts).
 
 Personality: premium, clinical, calm, precise. European-medical rather than Silicon Valley SaaS.
-No gradients, no glassmorphism, no illustration, minimal color. The route and the day are the
-product; chrome stays quiet.
+No gradients, no glassmorphism, no illustration beyond the quiet empty-state marks, minimal
+colour. The route and the day are the product; chrome stays quiet.
 
 ---
 
-## 1. Foundations
+## 0. Stack and rules (v2)
+
+- **Framework:** Material UI v9 (`@mui/material`) with Emotion, MUI X DataGrid (community),
+  `@mui/icons-material` (Outlined set), `notistack` for toasts, `react-hook-form` + `zod` for
+  forms, `nextjs-toploader` for the route progress bar.
+- **Single source of truth:** every colour, radius, shadow, duration and font comes from
+  `src/theme/tokens.ts` through the MUI theme. Components read `theme` / `sx` tokens
+  (`primary.main`, `background.sunken`, `text.faint`, `divider`, `theme.shadows[1..3]`) and never
+  hardcode values. The theme emits CSS variables prefixed `--nv-` (e.g.
+  `--nv-palette-primary-main`); `src/app/globals.css` only aliases the v1 names onto them for the
+  Tailwind-based map workspace (`src/components/today/*`), which is unchanged in v2.
+- **Dark mode:** `colorSchemes.light/dark` with `colorSchemeSelector: "class"`; the user picks
+  Light / Dark / System from the header (`useColorScheme`), persisted by MUI, no flash on load
+  (`InitColorSchemeScript`).
+- **Spacing:** 4px grid (`theme.spacing(1) === 4px`). **Radius:** 6 / 8 / 12 / 16 (sm / md / lg / xl),
+  8px default. **Elevation:** three levels only — `shadows[1]` resting card, `[2]` floating
+  menu/popover, `[3]` dialog/drawer. Borders do most of the separation work.
+- **Typography:** Inter. Exactly four headings: h1 24/600, h2 20/600, h3 16/600, h4 14/600.
+  body1 14, body2 13, caption 12, `eyebrow` (custom variant) 11/600 uppercase tracked. h5/h6 are
+  disabled. Serif (Fraunces italic) is reserved for the "N" monogram and the login greeting.
+  Mono (IBM Plex Mono) for ids, emails in tables and diagnostics only.
+- **Motion:** 150 / 200 / 250 ms (`transitions.duration`), one ease curve. Respect
+  `prefers-reduced-motion` for the map (see §1.6).
+- **Accessibility:** every icon-only control has `aria-label`; focus-visible rings use
+  `primary.main`; status is never colour-only (chips carry text); tables expose `aria-label`,
+  sortable headers and keyboard navigation via DataGrid.
+
+### Dashboard shell (`src/components/layout`)
+
+- `AppShell` (server) resolves the session, filters `nav.ts` by permission and renders
+  `DashboardShell` (client): collapsible mini-variant `Drawer` (240 → 64 px, state in the
+  `nv-sidebar` cookie, `[` toggles), active route highlighted with a 2px primary bar, nested
+  Admin links, temporary drawer below `md`.
+- `Header`: breadcrumbs from `ROUTE_LABELS`, territory chip, `CommandSearch` (⌘K page palette),
+  `ThemeToggle`, `UserMenu` (role, territory, sign out).
+- Pages render `PageContainer` + `PageHeader`; `loading.tsx` files render `PageSkeleton` /
+  `TableSkeleton`. The Today route is full-bleed and bypasses `PageContainer`.
+
+### Reusable components
+
+| Component | File | Notes |
+| --- | --- | --- |
+| `DataTable` | `components/data-table/DataTable.tsx` | DataGrid wrapper: quick search, column filters/visibility, sorting, pagination (10/25/50/100), optional checkbox selection + bulk actions, sticky header, loading / empty / error overlays, `actionsColumn()` helper for per-row menus. |
+| `KpiCard`, `KpiGrid` | `components/feedback/KpiCard.tsx` | Label, value, optional % delta with trend icon, tone, icon. |
+| `StatusChip`, `CodeChip` | `components/feedback/StatusChip.tsx` | Soft tonal status pill with dot; mono code chip. |
+| `EmptyState` | `components/feedback/EmptyState.tsx` | Token-coloured illustration, title, hint, action. |
+| `ConfirmDialog` | `components/feedback/ConfirmDialog.tsx` | Destructive confirmations. |
+| `SideDrawer` | `components/feedback/SideDrawer.tsx` | Right panel with header / scroll body / sticky footer. |
+| `toast` | `components/feedback/toast.ts` | `toast.success/error/info/warning/result()` via notistack. |
+| `FormTextField`, `FormSelect`, `FormCheckbox`, `FormSwitch` | `components/form/fields.tsx` | react-hook-form bindings; errors render as helper text under the field. |
+
+---
+
+## 1. Foundations (v1 tokens — still the palette behind v2)
 
 ### 1.1 Color tokens
 

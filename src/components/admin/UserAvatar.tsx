@@ -1,44 +1,61 @@
-import { avatarColors, initialsOf } from "./userPresentation";
+import Avatar from "@mui/material/Avatar";
+import Badge from "@mui/material/Badge";
+import { avatarHue, initialsOf } from "./userPresentation";
 
-const SIZES = {
-  sm: "h-8 w-8 text-[11px]",
-  md: "h-9 w-9 text-xs",
-  lg: "h-14 w-14 text-lg",
-} as const;
+const SIZES = { sm: 32, md: 36, lg: 56 } as const;
 
+/** Initials avatar with a deterministic muted hue and an optional status dot. */
 export function UserAvatar({
   name,
   email,
   size = "md",
   status,
-  className = "",
 }: {
   name: string;
   email: string;
   size?: keyof typeof SIZES;
   status?: "ACTIVE" | "DISABLED";
-  className?: string;
 }) {
-  const { bg, fg } = avatarColors(email || name);
-  const initials = initialsOf(name, email);
+  const hue = avatarHue(email || name);
+  const px = SIZES[size];
   const dimmed = status === "DISABLED";
+  const avatar = (
+    <Avatar
+      aria-hidden
+      sx={{
+        width: px,
+        height: px,
+        fontSize: px * 0.33,
+        // Light: pastel wash + deep ink; dark: deep wash + pastel ink (same hue).
+        bgcolor: `hsl(${hue} 30% 90%)`,
+        color: `hsl(${hue} 45% 28%)`,
+        ".dark &": { bgcolor: `hsl(${hue} 25% 22%)`, color: `hsl(${hue} 40% 78%)` },
+        opacity: dimmed ? 0.5 : 1,
+        filter: dimmed ? "grayscale(1)" : "none",
+        boxShadow: "0 0 0 2px var(--nv-palette-background-paper)",
+      }}
+    >
+      {initialsOf(name, email)}
+    </Avatar>
+  );
+  if (!status) return avatar;
   return (
-    <span className={`relative inline-flex shrink-0 ${className}`}>
-      <span
-        aria-hidden
-        className={`flex items-center justify-center rounded-full font-semibold tracking-wide select-none ring-2 ring-panel ${SIZES[size]} ${dimmed ? "opacity-50 grayscale" : ""}`}
-        style={{ background: bg, color: fg, fontFamily: "var(--display)" }}
-      >
-        {initials}
-      </span>
-      {status && (
-        <span
-          aria-hidden
-          className={`absolute -right-0.5 -bottom-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-panel ${
-            status === "ACTIVE" ? "bg-accent" : "bg-faint"
-          }`}
-        />
-      )}
-    </span>
+    <Badge
+      overlap="circular"
+      anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      variant="dot"
+      aria-hidden
+      sx={{
+        "& .MuiBadge-badge": {
+          bgcolor: status === "ACTIVE" ? "success.main" : "text.disabled",
+          boxShadow: "0 0 0 2px var(--nv-palette-background-paper)",
+          width: 10,
+          height: 10,
+          borderRadius: "50%",
+        },
+      }}
+    >
+      {avatar}
+    </Badge>
   );
 }

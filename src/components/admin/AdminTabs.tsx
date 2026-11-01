@@ -2,6 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Box from "@mui/material/Box";
+import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
 
 const TABS = [
   { href: "/admin/users", label: "Users" },
@@ -11,25 +14,14 @@ const TABS = [
 
 export function AdminTabs() {
   const pathname = usePathname();
+  const value = TABS.find((t) => pathname === t.href || pathname.startsWith(t.href + "/"))?.href ?? false;
   return (
-    <nav aria-label="Admin sections" className="mb-6 flex gap-1 border-b border-rule">
-      {TABS.map((t) => {
-        const active = pathname === t.href || pathname.startsWith(t.href + "/");
-        return (
-          <Link
-            key={t.href}
-            href={t.href}
-            aria-current={active ? "page" : undefined}
-            className={`-mb-px border-b-2 px-3 py-2 text-[13px] font-medium transition-colors ${
-              active
-                ? "border-accent text-ink"
-                : "border-transparent text-muted hover:border-rule hover:text-ink"
-            }`}
-          >
-            {t.label}
-          </Link>
-        );
-      })}
-    </nav>
+    <Box sx={{ mb: 6, borderBottom: 1, borderColor: "divider" }}>
+      <Tabs value={value} aria-label="Admin sections" variant="scrollable" allowScrollButtonsMobile>
+        {TABS.map((t) => (
+          <Tab key={t.href} value={t.href} label={t.label} component={Link} href={t.href} />
+        ))}
+      </Tabs>
+    </Box>
   );
 }

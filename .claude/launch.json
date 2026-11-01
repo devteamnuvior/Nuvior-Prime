@@ -7,6 +7,13 @@
       "runtimeArgs": ["-c", "AUTH_URL=http://localhost:3100 npx next dev -p 3100"],
       "port": 3100,
       "autoPort": false
+    },
+    {
+      "name": "nuvior-prime-dev-3101",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "NEXT_DIST_DIR=.next-3101 AUTH_URL=http://localhost:3101 npx next dev -p 3101"],
+      "port": 3101,
+      "autoPort": false
     }
   ]
 }

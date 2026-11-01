@@ -1,6 +1,7 @@
 .github/
 node_modules
 /.next/
+/.next-*/
 /out/
 /build
 .DS_Store

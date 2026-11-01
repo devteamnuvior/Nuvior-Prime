@@ -3,25 +3,25 @@ import { CANADIAN_PROVINCES } from "@/domain/scopeOfPractice";
 
 export const ROLE_META: Record<
   AppRoleName,
-  { label: string; short: string; description: string; pillClass: string }
+  { label: string; short: string; description: string; tone: "neutral" | "primary" | "inverse" }
 > = {
   REP: {
     label: "Representative",
     short: "Rep",
     description: "Runs prospecting, builds briefs and records their own visits.",
-    pillClass: "border-rule bg-canvas text-ink",
+    tone: "neutral",
   },
   MANAGER: {
     label: "Manager",
     short: "Manager",
     description: "Everything a rep can do, plus team visibility, CRM matching and assignments.",
-    pillClass: "border-accent/30 bg-accent-tint text-accent",
+    tone: "primary",
   },
   ADMIN: {
     label: "Administrator",
     short: "Admin",
     description: "Full access including user management, audit log and system settings.",
-    pillClass: "border-inkwell bg-inkwell text-paper",
+    tone: "inverse",
   },
 };
 
@@ -46,26 +46,12 @@ export function initialsOf(name: string, fallback: string): string {
   return (fb.slice(0, 2) || "?").toUpperCase();
 }
 
-/**
- * Muted avatar palette tuned to the warm NUVIOR surfaces. Pairs are
- * (background, foreground); each is deterministic for a given seed.
- */
-const AVATAR_PALETTE: ReadonlyArray<readonly [string, string]> = [
-  ["#dfe9e5", "#14594f"], // teal
-  ["#f3e7d3", "#8a5a1c"], // amber
-  ["#e4e4ec", "#4a4f6a"], // slate
-  ["#ece2ea", "#6c3f63"], // plum
-  ["#e3ead9", "#4f6b2e"], // moss
-  ["#f0e2de", "#8c4a3c"], // clay
-  ["#e0e8ee", "#355a73"], // harbour
-  ["#ebe6d8", "#6b5b2a"], // ochre
-];
-
-export function avatarColors(seed: string): { bg: string; fg: string } {
+/** Deterministic hue (0–360) for a seed; the avatar derives its colours from the theme + this hue. */
+export function avatarHue(seed: string): number {
   let h = 0;
   for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
-  const [bg, fg] = AVATAR_PALETTE[h % AVATAR_PALETTE.length];
-  return { bg, fg };
+  // Eight muted hues spread around the wheel, biased away from pure red.
+  return [168, 36, 232, 310, 96, 14, 204, 48][h % 8];
 }
 
 export function formatRelative(iso: string | null, now = Date.now()): string {

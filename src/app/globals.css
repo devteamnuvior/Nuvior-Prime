@@ -1,42 +1,45 @@
+/* Layer order: MUI (layer "mui") must beat Tailwind preflight ("base"). */
+@layer theme, base, mui, components, utilities;
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 /*
-  NUVIOR Prime design tokens.
-  Direction: warm off-white surfaces, deep near-black ink, subtle neutral
-  borders, muted medical teal accent, restrained warm amber for signals.
+  NUVIOR Prime — global styles.
+
+  The design system lives in the MUI theme (src/theme/tokens.ts + theme.ts), which emits
+  CSS variables prefixed `--nv-` (e.g. --nv-palette-primary-main). This file only:
+    1. bridges the v1 token names (--paper, --ink, --accent …) onto the MUI variables so the
+       Tailwind-based map workspace (src/components/today/*) keeps rendering unchanged;
+    2. holds the route-map marker styles (Google Advanced Markers + Leaflet divIcons).
+  New UI is built with MUI components and reads tokens from `theme`, never from here.
 */
+
 :root {
-  /* Surfaces */
-  --paper: #faf9f6; /* app background — warm white */
-  --canvas: #f1efe9; /* recessed areas (map backdrop, wells) */
-  --panel: #ffffff; /* raised cards / panels */
-  --ink-surface: #16211f; /* inverse surface (primary buttons, start marker) */
+  /* ---- v1 aliases → MUI theme variables ---- */
+  --paper: var(--nv-palette-background-default);
+  --canvas: var(--nv-palette-background-sunken);
+  --panel: var(--nv-palette-background-paper);
+  --ink-surface: var(--nv-palette-background-inverse);
+  --ink: var(--nv-palette-text-primary);
+  --muted: var(--nv-palette-text-secondary);
+  --faint: var(--nv-palette-text-faint);
+  --rule: var(--nv-palette-divider);
+  --accent: var(--nv-palette-primary-main);
+  --accent-hover: var(--nv-palette-primary-dark);
+  --signal: var(--nv-palette-warning-main);
+  --danger: var(--nv-palette-error-main);
+  --marker-ring: var(--nv-palette-background-paper);
 
-  /* Ink */
-  --ink: #191c1c; /* primary text */
-  --muted: #6b7273; /* secondary text */
-  --faint: #9aa1a0; /* tertiary / placeholder */
-
-  /* Borders */
-  --rule: #e2dfd6; /* standard border */
-  --rule-soft: #edebe3; /* hairline divider */
-
-  /* Accent — muted medical teal / deep green */
-  --accent: #14594f;
-  --accent-hover: #0f4a42;
+  /* Tints have no MUI counterpart — values mirror src/theme/tokens.ts */
+  --rule-soft: #edebe3;
   --accent-tint: #e9efec;
-
-  /* Signal — warm amber for verify / revisit / caution */
-  --signal: #8a5a1c;
   --signal-tint: #f6efe1;
-
-  /* Danger — muted clinical red, used sparingly */
-  --danger: #9c3a2c;
   --danger-tint: #f7eae7;
 
   /* Type */
   --display: var(--font-sans-loaded), "Inter", ui-sans-serif, system-ui, sans-serif;
-  --body: var(--font-sans-loaded), "Inter", ui-sans-serif, system-ui, sans-serif;
+  --body: var(--display);
   --brand-serif: var(--font-serif-loaded), "Fraunces", Georgia, serif;
   --mono: var(--font-mono-loaded), "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
@@ -49,6 +52,14 @@
   --nv-motion-start: 3400ms;
 }
 
+.dark {
+  --rule-soft: #222928;
+  --accent-tint: #16302b;
+  --signal-tint: #2c2416;
+  --danger-tint: #311c19;
+}
+
+/* Tailwind utilities used by the legacy map workspace (bg-paper, text-ink, border-rule …) */
 @theme inline {
   --color-ink: var(--ink);
   --color-paper: var(--paper);
@@ -69,26 +80,9 @@
   --font-display: var(--display);
   --font-body: var(--body);
   --font-mono: var(--mono);
-  --shadow-card: 0 1px 2px rgb(22 28 27 / 0.06);
-  --shadow-float: 0 2px 6px rgb(22 28 27 / 0.07), 0 12px 32px rgb(22 28 27 / 0.14);
+  --shadow-card: var(--nv-shadows-1);
+  --shadow-float: var(--nv-shadows-3);
   --shadow-sheet: 0 -8px 32px rgb(22 28 27 / 0.16);
-}
-
-body {
-  background: var(--paper);
-  color: var(--ink);
-  font-family: var(--body);
-  font-feature-settings: "cv11", "ss01";
-  -webkit-font-smoothing: antialiased;
-}
-
-::selection {
-  background: var(--accent-tint);
-}
-
-:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
 }
 
 /* ---------- Route map markers (Google Advanced Markers + Leaflet divIcons) ---------- */
@@ -101,11 +95,11 @@ body {
   height: 28px;
   border-radius: 9999px;
   background: var(--accent);
-  color: #fff;
+  color: var(--marker-ring);
   font-family: var(--body);
   font-size: 12px;
   font-weight: 600;
-  border: 2px solid #fff;
+  border: 2px solid var(--marker-ring);
   box-shadow:
     0 1px 3px rgb(20 32 28 / 0.4),
     0 4px 10px rgb(20 32 28 / 0.18);
@@ -135,7 +129,7 @@ body {
   height: 10px;
   border-radius: 9999px;
   background: var(--signal);
-  border: 2px solid #fff;
+  border: 2px solid var(--marker-ring);
 }
 .nv-pin--selected {
   transform: scale(1.32);
@@ -160,7 +154,7 @@ body {
   height: 10px;
   background: var(--accent);
   opacity: 0.42;
-  border: 1.5px solid #fff;
+  border: 1.5px solid var(--marker-ring);
   box-shadow: none;
   font-size: 0;
   cursor: default;
@@ -219,7 +213,7 @@ body {
   height: 12px;
   border-radius: 9999px;
   background: var(--accent);
-  border: 2px solid #fff;
+  border: 2px solid var(--marker-ring);
   box-shadow: 0 1px 3px rgb(20 32 28 / 0.35);
   cursor: pointer;
   transition: transform 140ms ease;
@@ -230,7 +224,7 @@ body {
 .nv-vertex--first {
   width: 16px;
   height: 16px;
-  background: #fff;
+  background: var(--marker-ring);
   border: 3px solid var(--accent);
 }
 
@@ -345,7 +339,7 @@ body {
 }
 .leaflet-control-attribution {
   font-size: 9px !important;
-  background: rgb(250 249 246 / 0.75) !important;
+  background: color-mix(in srgb, var(--background) 75%, transparent) !important;
   color: var(--faint) !important;
 }
 .leaflet-control-attribution a {
