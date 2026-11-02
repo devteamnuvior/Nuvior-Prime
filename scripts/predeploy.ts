@@ -1,0 +1,209 @@
+/**
+ * Production pre-deploy step, run by `npm run build` before `next build`.
+ *
+ * Only acts on Vercel production builds (VERCEL_ENV=production), where the database
+ * credentials are available; every other build (local, preview) returns immediately.
+ *
+ * For the 2026-11-02 release it:
+ *   1. checks the database is the expected one and works out whether the release schema is
+ *      already there (all of it: nothing to do; none of it: apply; some of it: stop),
+ *   2. backs up every public table into a new `predeploy_backup_<timestamp>` schema in the
+ *      same database and checks the row counts match (and logs the time and WAL position
+ *      for a Neon point-in-time restore),
+ *   3. applies prisma/releases/2026-11-02_performance_live_map.sql in one transaction,
+ *   4. verifies every new enum, table and column exists and existing row counts are unchanged,
+ *   5. runs the XP backfill once (daily summaries, visit points, bonuses, badges),
+ *   6. runs read-only smoke queries through the Prisma models the new pages use.
+ *
+ * Any failure exits non-zero, which fails the build so the current deployment stays live.
+ * Logs carry only object names and counts, never row data.
+ */
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { PrismaClient } from "@prisma/client";
+
+const RELEASE_SQL = join(process.cwd(), "prisma/releases/2026-11-02_performance_live_map.sql");
+const BASELINE_TABLES = ["User", "Account", "VisitRecord", "VisitListRun", "AuditEvent"];
+const NEW_TABLES = ["SalesTarget", "RepDailySummary", "PointEvent", "UserBadge", "Challenge", "RepPosition", "ClinicWebProfile"];
+const NEW_ENUMS = ["VisitOutcome", "TargetPeriod", "TargetMetric", "PointReason"];
+const NEW_COLUMNS: [string, string][] = [
+  ["VisitRecord", "fitScoreSnapshot"],
+  ["VisitRecord", "outcomeCode"],
+];
+
+const log = (msg: string) => console.log(`[predeploy] ${msg}`);
+const q = (ident: string) => `"${ident.replace(/"/g, '""')}"`;
+
+async function tablesIn(db: PrismaClient, schema: string): Promise<string[]> {
+  const rows = await db.$queryRaw<{ table_name: string }[]>`
+    select table_name from information_schema.tables where table_schema = ${schema} and table_type = 'BASE TABLE' order by table_name`;
+  return rows.map((r) => r.table_name);
+}
+
+async function enumsInPublic(db: PrismaClient): Promise<string[]> {
+  const rows = await db.$queryRaw<{ typname: string }[]>`
+    select t.typname from pg_type t join pg_namespace n on n.oid = t.typnamespace where n.nspname = 'public' and t.typtype = 'e'`;
+  return rows.map((r) => r.typname);
+}
+
+async function hasColumn(db: PrismaClient, table: string, column: string): Promise<boolean> {
+  const rows = await db.$queryRaw<{ n: bigint }[]>`
+    select count(*)::bigint as n from information_schema.columns where table_schema = 'public' and table_name = ${table} and column_name = ${column}`;
+  return Number(rows[0]?.n ?? 0) > 0;
+}
+
+async function rowCounts(db: PrismaClient, schema: string, tables: string[]): Promise<Map<string, number>> {
+  const out = new Map<string, number>();
+  for (const t of tables) {
+    const rows = await db.$queryRawUnsafe<{ n: bigint }[]>(`select count(*)::bigint as n from ${q(schema)}.${q(t)}`);
+    out.set(t, Number(rows[0]?.n ?? 0));
+  }
+  return out;
+}
+
+function splitStatements(sql: string): string[] {
+  return sql
+    .split(/;\s*\n/)
+    .map((s) =>
+      s
+        .split("\n")
+        .filter((line) => !line.trim().startsWith("--"))
+        .join("\n")
+        .trim(),
+    )
+    .filter(Boolean);
+}
+
+async function releaseState(db: PrismaClient): Promise<"applied" | "absent" | "partial"> {
+  const tables = new Set(await tablesIn(db, "public"));
+  const enums = new Set(await enumsInPublic(db));
+  const checks = [
+    ...NEW_TABLES.map((t) => tables.has(t)),
+    ...NEW_ENUMS.map((e) => enums.has(e)),
+    ...(await Promise.all(NEW_COLUMNS.map(([t, c]) => hasColumn(db, t, c)))),
+  ];
+  const present = checks.filter(Boolean).length;
+  log(`release objects present: ${present} of ${checks.length}`);
+  return present === checks.length ? "applied" : present === 0 ? "absent" : "partial";
+}
+
+async function main() {
+  if (process.env.VERCEL_ENV !== "production") {
+    log(`skipped (VERCEL_ENV=${process.env.VERCEL_ENV ?? "unset"})`);
+    return;
+  }
+  const url = process.env.DATABASE_URL_UNPOOLED || process.env.POSTGRES_URL_NON_POOLING || process.env.DATABASE_URL;
+  if (!url) throw new Error("No database URL in the build environment");
+  const db = new PrismaClient({ datasourceUrl: url });
+
+  try {
+    // 1. Right database, and what state is it in?
+    const publicTables = await tablesIn(db, "public");
+    const missingBaseline = BASELINE_TABLES.filter((t) => !publicTables.includes(t));
+    if (missingBaseline.length) throw new Error(`Baseline tables missing (${missingBaseline.join(", ")}); refusing to touch this database`);
+    log(`connected; ${publicTables.length} tables in public`);
+
+    const state = await releaseState(db);
+    if (state === "partial") throw new Error("Release schema is partly present; stopping so nothing is guessed. Inspect the database before redeploying.");
+
+    if (state === "absent") {
+      // 2. Backup.
+      const stamp = new Date().toISOString().replace(/[-:]/g, "").replace("T", "_").slice(0, 15);
+      const backupSchema = `predeploy_backup_${stamp}`;
+      const marker = await db.$queryRaw<{ at: Date }[]>`select now() as at`;
+      log(`restore point (Neon PITR): ${marker[0]!.at.toISOString()}`);
+      try {
+        const lsn = await db.$queryRaw<{ lsn: string }[]>`select pg_current_wal_lsn()::text as lsn`;
+        log(`restore point WAL LSN: ${lsn[0]!.lsn}`);
+      } catch {
+        log("WAL LSN not readable with this role; the timestamp above is the restore point");
+      }
+      const before = await rowCounts(db, "public", publicTables);
+      await db.$transaction(
+        async (tx) => {
+          await tx.$executeRawUnsafe(`create schema ${q(backupSchema)}`);
+          for (const t of publicTables) await tx.$executeRawUnsafe(`create table ${q(backupSchema)}.${q(t)} as table public.${q(t)}`);
+        },
+        { timeout: 600_000, maxWait: 60_000 },
+      );
+      const copied = await rowCounts(db, backupSchema, publicTables);
+      const mismatched = publicTables.filter((t) => copied.get(t) !== before.get(t));
+      if (mismatched.length) throw new Error(`Backup row counts differ for ${mismatched.join(", ")}`);
+      const totalRows = [...before.values()].reduce((a, b) => a + b, 0);
+      log(`backup ${backupSchema}: ${publicTables.length} tables, ${totalRows} rows, counts verified`);
+
+      // 3. Apply the release in one transaction.
+      const statements = splitStatements(readFileSync(RELEASE_SQL, "utf8"));
+      await db.$transaction(
+        async (tx) => {
+          for (const s of statements) await tx.$executeRawUnsafe(s);
+        },
+        { timeout: 600_000, maxWait: 60_000 },
+      );
+      log(`applied ${statements.length} statements`);
+
+      // 4. Verify.
+      if ((await releaseState(db)) !== "applied") throw new Error("Release objects missing after apply");
+      const after = await rowCounts(db, "public", publicTables);
+      const changed = publicTables.filter((t) => after.get(t) !== before.get(t));
+      log(changed.length ? `existing tables with new writes during deploy: ${changed.join(", ")}` : "existing row counts unchanged");
+    } else {
+      log("release schema already applied; nothing to migrate");
+    }
+
+    // 5. XP backfill, once: only while the ledger is still empty.
+    const ledger = await db.pointEvent.count();
+    const visits = await db.visitRecord.count({ where: { createdByUserId: { not: null }, accountId: { not: null } } });
+    if (ledger === 0 && visits > 0) {
+      log(`backfilling XP from ${visits} visits`);
+      const { recomputeRepDailySummary } = await import("../src/lib/performance");
+      const { awardDailyBonuses, awardPointsForVisit, syncBadges } = await import("../src/lib/xp");
+      const { dayKey } = await import("../src/domain/performance");
+      const rows = await db.visitRecord.findMany({
+        where: { createdByUserId: { not: null }, accountId: { not: null } },
+        orderBy: [{ visitDate: "asc" }, { createdAt: "asc" }],
+        select: { id: true, createdByUserId: true, visitDate: true },
+      });
+      const days = new Map<string, Set<string>>();
+      for (const v of rows) {
+        const set = days.get(v.createdByUserId!) ?? new Set<string>();
+        set.add(dayKey(v.visitDate));
+        days.set(v.createdByUserId!, set);
+      }
+      let summaries = 0;
+      for (const [uid, set] of days) for (const d of set) if (await recomputeRepDailySummary(uid, d)) summaries += 1;
+      let awards = 0;
+      for (const v of rows) awards += await awardPointsForVisit(v.id);
+      let bonuses = 0;
+      for (const [uid, set] of days) for (const d of [...set].sort()) bonuses += await awardDailyBonuses(uid, d);
+      let badges = 0;
+      for (const uid of days.keys()) badges += (await syncBadges(uid)).length;
+      log(`backfill: ${summaries} daily summaries, ${awards} visit awards, ${bonuses} daily bonuses, ${badges} badges for ${days.size} reps`);
+    } else {
+      log(`XP backfill not needed (ledger rows ${ledger}, visits ${visits})`);
+    }
+
+    // 6. Smoke queries through the models the new pages read.
+    const smoke = {
+      users: await db.user.count(),
+      visitsWithOutcome: await db.visitRecord.count({ where: { outcomeCode: { not: null } } }),
+      visitsSample: (await db.visitRecord.findMany({ take: 1, select: { id: true, outcomeCode: true, fitScoreSnapshot: true } })).length,
+      targets: await db.salesTarget.count(),
+      summaries: await db.repDailySummary.count(),
+      xpByUser: (await db.pointEvent.groupBy({ by: ["userId"], _sum: { points: true } })).length,
+      badges: await db.userBadge.count(),
+      challenges: await db.challenge.count(),
+      positions: await db.repPosition.count(),
+      clinicWebProfiles: await db.clinicWebProfile.count(),
+    };
+    log(`smoke: ${Object.entries(smoke).map(([k, v]) => `${k}=${v}`).join(" ")}`);
+    log("done");
+  } finally {
+    await db.$disconnect();
+  }
+}
+
+main().catch((e) => {
+  console.error(`[predeploy] FAILED: ${e instanceof Error ? e.message : String(e)}`);
+  process.exit(1);
+});
