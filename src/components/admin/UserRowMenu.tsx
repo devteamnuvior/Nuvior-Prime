@@ -26,7 +26,6 @@ function Item({
   icon,
   tone,
   label,
-  caption,
   disabled,
   danger,
   onClick,
@@ -34,7 +33,6 @@ function Item({
   icon: React.ReactNode;
   tone?: "neutral" | "primary" | "danger" | "success";
   label: string;
-  caption: string;
   disabled?: boolean;
   danger?: boolean;
   onClick: () => void;
@@ -46,7 +44,7 @@ function Item({
       sx={{
         mx: 2,
         px: 2,
-        py: 1.5,
+        py: 1.25,
         gap: 3,
         borderRadius: 2,
         alignItems: "center",
@@ -56,14 +54,9 @@ function Item({
       }}
     >
       <IconTile tone={tone}>{icon}</IconTile>
-      <Box sx={{ minWidth: 0 }}>
-        <Typography variant="body2" noWrap sx={{ fontWeight: 600, color: "inherit", lineHeight: 1.3 }}>
-          {label}
-        </Typography>
-        <Typography variant="caption" noWrap sx={{ display: "block", color: "text.secondary" }}>
-          {caption}
-        </Typography>
-      </Box>
+      <Typography variant="body2" noWrap sx={{ fontWeight: 600, color: "inherit" }}>
+        {label}
+      </Typography>
     </MenuItem>
   );
 }
@@ -140,21 +133,15 @@ export function UserRowMenu({
           }}
         >
           <RingedAvatar initials={initialsOf(user.displayName)} size={32} dot={10} present={active} hue={avatarHue(user.email)} />
-          <Box sx={{ minWidth: 0 }}>
-            <Typography variant="body2" noWrap sx={{ fontWeight: 600, lineHeight: 1.3 }}>
-              {user.displayName}
-            </Typography>
-            <Typography variant="caption" noWrap sx={{ display: "block", color: "text.secondary" }}>
-              {ROLE_META[user.role].label} · {user.email}
-            </Typography>
-          </Box>
+          <Typography variant="body2" noWrap sx={{ fontWeight: 600 }}>
+            {user.displayName}
+          </Typography>
         </Box>
 
         <Item
           icon={<InsightsOutlined />}
           tone="primary"
           label="View performance"
-          caption="KPIs, charts, targets and XP"
           onClick={() => {
             close();
             router.push(`/admin/users/${user.id}`);
@@ -165,7 +152,6 @@ export function UserRowMenu({
             key={r}
             icon={<ManageAccountsOutlined />}
             label={`Make ${ROLE_META[r].short}`}
-            caption={isSelf ? "You cannot change your own role" : ROLE_META[r].description}
             disabled={isSelf || busy}
             onClick={() => {
               close();
@@ -179,7 +165,6 @@ export function UserRowMenu({
           tone={active ? "danger" : "success"}
           danger={active}
           label={active ? "Disable account" : "Enable account"}
-          caption={isSelf ? "You cannot disable yourself" : active ? "Signs them out until enabled again" : "Lets them sign in again"}
           disabled={isSelf || busy}
           onClick={() => {
             close();
