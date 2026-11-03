@@ -108,7 +108,7 @@ export function UserMenu({ user, signOutAction }: { user: ShellUser; signOutActi
                 px: 2,
                 py: 1.5,
                 gap: 3,
-                borderRadius: 2,
+                borderRadius: 999,
                 color: "error.main",
                 transition: (t) => t.transitions.create("background-color", { duration: t.transitions.duration.short }),
                 "&:hover, &.Mui-focusVisible": { bgcolor: "error.tint" },

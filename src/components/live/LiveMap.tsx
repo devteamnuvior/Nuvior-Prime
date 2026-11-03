@@ -152,10 +152,10 @@ export function LiveMap({
             </Box>
           </Tooltip>
           <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
-            <StatusChip tone="success" label={`${counts.at_clinic} at clinic`} />
-            <StatusChip tone="primary" label={`${counts.travelling} travelling`} />
-            <StatusChip tone="warning" label={`${counts.idle} idle`} />
-            {counts.offline > 0 && <StatusChip tone="neutral" label={`${counts.offline} offline`} />}
+            <StatusChip tone="success" label={`${counts.at_clinic} At Clinic`} />
+            <StatusChip tone="primary" label={`${counts.travelling} Travelling`} />
+            <StatusChip tone="warning" label={`${counts.idle} Idle`} />
+            {counts.offline > 0 && <StatusChip tone="neutral" label={`${counts.offline} Offline`} />}
           </Box>
         </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexShrink: 0 }}>

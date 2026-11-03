@@ -23,7 +23,7 @@ export const POLL_INTERVAL_MS = 4_000;
 export type RepLiveStatus = "at_clinic" | "travelling" | "idle" | "offline";
 
 export const REP_LIVE_STATUS_LABELS: Record<RepLiveStatus, string> = {
-  at_clinic: "At clinic",
+  at_clinic: "At Clinic",
   travelling: "Travelling",
   idle: "Idle",
   offline: "Offline",

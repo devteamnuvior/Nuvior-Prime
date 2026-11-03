@@ -68,7 +68,7 @@ export function Header({
 
         {/* Keyed on the route so the entrance replays on every navigation. */}
         <Box component="nav" aria-label="breadcrumb" key={pathname} sx={{ minWidth: 0, flex: 1 }}>
-          <Box component="ol" sx={{ display: "flex", alignItems: "center", gap: 0.5, m: 0, mx: { md: -1.5 }, p: 0, listStyle: "none", minWidth: 0 }}>
+          <Box component="ol" sx={{ display: "flex", alignItems: "center", m: 0, mx: { md: -1 }, p: 0, listStyle: "none", minWidth: 0 }}>
             {all.map((c, i) => {
               const last = i === all.length - 1;
               return (
@@ -78,7 +78,6 @@ export function Header({
                   sx={{
                     display: last ? "flex" : { xs: "none", sm: "flex" },
                     alignItems: "center",
-                    gap: 0.5,
                     minWidth: 0,
                     animation: `${crumbIn} 360ms ${EASE} both`,
                     animationDelay: `${i * 70}ms`,
@@ -94,15 +93,15 @@ export function Header({
                       aria-current="page"
                       sx={{
                         position: "relative",
-                        px: 1.5,
+                        px: 1,
                         py: 0.5,
                         fontWeight: 600,
                         color: "text.primary",
                         "&::after": {
                           content: '""',
                           position: "absolute",
-                          left: 6,
-                          right: 6,
+                          left: 4,
+                          right: 4,
                           bottom: -2,
                           height: 2,
                           borderRadius: 1,
@@ -123,7 +122,7 @@ export function Header({
                       variant="body2"
                       noWrap
                       sx={{
-                        px: 1.5,
+                        px: 1,
                         py: 0.5,
                         borderRadius: 1,
                         color: "text.secondary",
