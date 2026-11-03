@@ -8,6 +8,7 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { DataTable, type GridColDef } from "@/components/data-table/DataTable";
 import { CodeChip, StatusChip } from "@/components/feedback/StatusChip";
+import { AuditTableSkeleton } from "@/components/admin/AuditLogSkeleton";
 
 export type AuditRow = {
   id: string;
@@ -79,6 +80,7 @@ export function AuditTable({ rows, actionFilter, userFilter }: { rows: AuditRow[
         </Box>
       }
       initialSort={[{ field: "timestamp", sort: "desc" }]}
+      skeleton={<AuditTableSkeleton rows={Math.min(Math.max(rows.length, 3), 10)} />}
       emptyState={{ illustration: "inbox", title: "No audit events", description: actionFilter || userFilter ? "No events match the current filter." : "Events are appended as users act in the app." }}
       density="compact"
     />

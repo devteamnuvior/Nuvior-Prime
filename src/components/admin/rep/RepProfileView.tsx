@@ -189,7 +189,8 @@ export function RepProfileView({
 
         <Section title="Targets" hint={canManageTargets ? "Active targets drive the rep's progress bars. Changes are audited." : "Set by a manager or admin."}>
           {profile.progress.length > 0 && (
-            <Box sx={{ display: "grid", gap: 3, gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))", lg: "repeat(4, minmax(0, 1fr))" } }}>
+            /* One column per target on wide screens (capped at six) so a fifth card never sits alone on a second row. */
+            <Box sx={{ display: "grid", gap: 3, gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(0, 1fr))", lg: `repeat(${Math.min(profile.progress.length, 6)}, minmax(0, 1fr))` } }}>
               {profile.progress.map((p) => (
                 <Box key={`${p.period}-${p.metric}`} sx={{ p: 3, borderRadius: 1.5, bgcolor: "background.sunken", display: "grid", gap: 1 }}>
                   <Typography variant="caption" sx={{ color: "text.secondary" }}>

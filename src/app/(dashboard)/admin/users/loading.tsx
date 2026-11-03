@@ -1,5 +1,5 @@
-import { PageSkeleton } from "@/components/layout/PageSkeleton";
+import { TeamMembersSkeleton } from "@/components/admin/TeamMembersSkeleton";
 
 export default function Loading() {
-  return <PageSkeleton kpis={4} columns={6} />;
+  return <TeamMembersSkeleton />;
 }

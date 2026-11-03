@@ -78,6 +78,8 @@ export type DataTableProps<R extends GridValidRowModel> = {
   gridProps?: Partial<DataGridProps<R>>;
   /** Visually hidden label for assistive technology. */
   label?: string;
+  /** Exact-shape skeleton to show before the grid mounts, instead of the generic table shell. */
+  skeleton?: React.ReactNode;
 };
 
 type ToolbarContext = {
@@ -245,6 +247,7 @@ export function DataTable<R extends GridValidRowModel>({
   density = "standard",
   gridProps,
   label,
+  skeleton,
 }: DataTableProps<R>) {
   const [selection, setSelection] = React.useState<GridRowSelectionModel>({ type: "include", ids: new Set() });
   // DataGrid measures its container on the client; show a skeleton until it has mounted so SSR never paints an empty card.
@@ -286,7 +289,7 @@ export function DataTable<R extends GridValidRowModel>({
   const showToolbar = searchable || !!filters || !!actions || columnTools || !!bulkActions;
 
   if (!mounted) {
-    return <TableSkeleton rows={Math.min(Math.max(rows.length, 3), 8)} columns={Math.min(columns.length, 6)} toolbar={showToolbar} />;
+    return <>{skeleton ?? <TableSkeleton rows={Math.min(Math.max(rows.length, 3), 8)} columns={Math.min(columns.length, 6)} toolbar={showToolbar} />}</>;
   }
 
   // Merge caller overrides without letting them replace the base sx / slots / initialState wholesale.

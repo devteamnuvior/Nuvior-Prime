@@ -3,6 +3,7 @@
 import * as React from "react";
 import Typography from "@mui/material/Typography";
 import { DataTable, type GridColDef } from "@/components/data-table/DataTable";
+import { ConflictsTableSkeleton } from "@/components/admin/CrmDiagnosticsSkeleton";
 
 export type ConflictRow = {
   id: string;
@@ -49,6 +50,7 @@ export function ConflictsTable({ rows }: { rows: ConflictRow[] }) {
       searchPlaceholder="Search conflicts"
       columnTools={false}
       maxHeight={480}
+      skeleton={<ConflictsTableSkeleton rows={Math.min(Math.max(rows.length, 3), 8)} />}
       emptyState={{ illustration: "shield", title: "No ownership conflicts", description: "CRM rep assignments agree with app assignments." }}
     />
   );

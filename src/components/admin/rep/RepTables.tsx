@@ -7,6 +7,7 @@ import { DataTable, type GridColDef } from "@/components/data-table/DataTable";
 import { CodeChip, StatusChip } from "@/components/feedback/StatusChip";
 import { duration } from "@/lib/format";
 import type { RepAuditRow, RepRecentRoute, RepRecentVisit } from "@/lib/repProfile";
+import { RecentRoutesTableSkeleton, RecentVisitsTableSkeleton } from "./RepProfileSkeleton";
 
 const OUTCOME_TONE: Record<string, "neutral" | "primary" | "success" | "warning" | "danger"> = {
   INTERESTED: "success",
@@ -80,6 +81,7 @@ export function RecentVisitsTable({ rows, today }: { rows: RepRecentVisit[]; tod
       searchable={false}
       columnTools={false}
       initialSort={[{ field: "day", sort: "desc" }]}
+      skeleton={<RecentVisitsTableSkeleton rows={Math.min(Math.max(rows.length, 3), 8)} />}
       emptyState={{ illustration: "inbox", title: "No visits logged", description: "Visits this rep records from the clinic drawer appear here." }}
     />
   );
@@ -105,6 +107,7 @@ export function RecentRoutesTable({ rows }: { rows: RepRecentRoute[] }) {
       searchable={false}
       columnTools={false}
       initialSort={[{ field: "createdAt", sort: "desc" }]}
+      skeleton={<RecentRoutesTableSkeleton rows={Math.min(Math.max(rows.length, 3), 8)} />}
       emptyState={{ illustration: "map", title: "No routes built", description: "Routes this rep builds on Today's Route appear here." }}
     />
   );

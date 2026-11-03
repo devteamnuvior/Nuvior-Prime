@@ -16,6 +16,7 @@ import { TerritoryBadges } from "./ProvinceBadge";
 import { UserAvatar } from "./UserAvatar";
 import { UserRowMenu } from "./UserRowMenu";
 import { ROLE_META, ROLE_ORDER, formatDate, formatRelative } from "./userPresentation";
+import { UsersTableSkeleton } from "./TeamMembersSkeleton";
 
 const ROLE_PILL_WIDTH = 124;
 const ROLE_PILL_HEIGHT = 28;
@@ -292,6 +293,7 @@ export function UsersTable({
       filters={filters}
       actions={actions}
       initialSort={[{ field: "displayName", sort: "asc" }]}
+      skeleton={<UsersTableSkeleton rows={Math.min(Math.max(users.length, 3), 8)} />}
       emptyState={{
         illustration: "search",
         title: "No users match",
