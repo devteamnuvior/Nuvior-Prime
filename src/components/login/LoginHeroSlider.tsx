@@ -5,7 +5,8 @@ import Box from "@mui/material/Box";
 import { keyframes } from "@mui/material/styles";
 
 /**
- * Login cover: three Unsplash photos cross-fade, each drifting gently back and forth
+ * Login cover: three golden-hour aerial Unsplash photos of Toronto, Montreal and Vancouver
+ * cross-fade, each drifting gently back and forth
  * (a slow pan + light zoom). All photos are free to use under the Unsplash License and
  * served from the Unsplash CDN, so nothing is stored in the repo.
  */
@@ -17,16 +18,16 @@ const SLIDES = [
     position: "50% 40%",
   },
   {
-    // Montreal skyline from the belvedere — Grant Van Cleemput
-    // https://unsplash.com/photos/a-city-with-many-tall-buildings-CL9Pl-5fXBU
-    src: "https://images.unsplash.com/photo-1659482513037-950fea76794c?auto=format&fit=crop&w=1800&q=80",
-    position: "50% 45%",
+    // Montreal towers lit by the setting sun, from the Mount Royal belvedere — Fenil Patel
+    // https://unsplash.com/photos/a-view-of-a-city-at-sunset-from-the-top-of-a-hill-18V-hfapRcE
+    src: "https://images.unsplash.com/photo-1723921027116-c6bb4914a0fb?auto=format&fit=crop&w=1800&q=80",
+    position: "50% 50%",
   },
   {
-    // False Creek waterfront and Vancouver skyline at golden hour — Adrian Yu
-    // https://unsplash.com/photos/an-aerial-view-of-a-city-and-a-harbor-Wc45W-dQFlA
-    src: "https://images.unsplash.com/photo-1647655806923-e8202f4f2b8c?auto=format&fit=crop&w=1800&q=80",
-    position: "50% 50%",
+    // Vancouver downtown and Stanley Park from the air at golden hour — Adrian Yu
+    // https://unsplash.com/photos/an-aerial-view-of-a-city-and-a-body-of-water-qkN4D3Rf1gw
+    src: "https://images.unsplash.com/photo-1644460124859-fed7a554bd3d?auto=format&fit=crop&w=1800&q=80",
+    position: "50% 28%",
   },
 ] as const;
 
