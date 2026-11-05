@@ -11,6 +11,7 @@ import Typography from "@mui/material/Typography";
 import { recordVisitAction, structureVisitNotesAction } from "@/app/actions";
 import { VISIT_DURATION_OPTIONS, type VisitDurationMinutes } from "@/domain/performance/visitSlots";
 import { toast } from "@/components/feedback/toast";
+import { SHOW_AI_NOTE_STRUCTURING } from "@/lib/featureFlags";
 import {
   VISIT_OUTCOMES,
   inferVisitOutcomeCode,
@@ -51,7 +52,8 @@ export function VisitRecordForm({
         Record visit
       </Typography>
       <Typography variant="caption" sx={{ display: "block", mb: 3, color: "text.secondary" }}>
-        {businessName} — AI note structuring is a suggestion only (no autonomous CRM write).
+        {businessName}
+        {SHOW_AI_NOTE_STRUCTURING ? " — AI note structuring is a suggestion only (no autonomous CRM write)." : ""}
       </Typography>
       <Box
         component="form"
@@ -166,42 +168,44 @@ export function VisitRecordForm({
           onChange={(e) => setNotes(e.target.value)}
           sx={{ gridColumn: { sm: "1 / -1" } }}
         />
-        <Button
-          type="button"
-          variant="outlined"
-          disabled={pending || !notes.trim()}
-          sx={{ gridColumn: "1 / -1" }}
-          onClick={() =>
-            start(async () => {
-              const r = await structureVisitNotesAction(notes, placeId);
-              if (!r.ok) {
-                setMsg(r.message);
-                return;
-              }
-              if (r.structured.outcome) {
-                setOutcomeNote(r.structured.outcome);
-                const inferred = inferVisitOutcomeCode(r.structured.outcome);
-                if (inferred && !outcomeCode) {
-                  setOutcomeCode(inferred);
-                  setOutcomeError(null);
+        {SHOW_AI_NOTE_STRUCTURING && (
+          <Button
+            type="button"
+            variant="outlined"
+            disabled={pending || !notes.trim()}
+            sx={{ gridColumn: "1 / -1" }}
+            onClick={() =>
+              start(async () => {
+                const r = await structureVisitNotesAction(notes, placeId);
+                if (!r.ok) {
+                  setMsg(r.message);
+                  return;
                 }
-              }
-              if (r.structured.peopleMet) setPeopleMet(r.structured.peopleMet);
-              if (r.structured.productsDiscussed) {
-                setProductsDiscussed(r.structured.productsDiscussed);
-              }
-              if (r.structured.nextAction) setNextAction(r.structured.nextAction);
-              if (r.structured.followUpDate) setFollowUpDate(r.structured.followUpDate);
-              if (r.structured.visitType) setVisitType(r.structured.visitType);
-              if (r.structured.notes) setNotes(r.structured.notes);
-              setMsg(
-                `Structured via ${r.provider}/${r.model}${r.cacheHit ? " (cache)" : ""} — review before save`,
-              );
-            })
-          }
-        >
-          Structure notes with AI
-        </Button>
+                if (r.structured.outcome) {
+                  setOutcomeNote(r.structured.outcome);
+                  const inferred = inferVisitOutcomeCode(r.structured.outcome);
+                  if (inferred && !outcomeCode) {
+                    setOutcomeCode(inferred);
+                    setOutcomeError(null);
+                  }
+                }
+                if (r.structured.peopleMet) setPeopleMet(r.structured.peopleMet);
+                if (r.structured.productsDiscussed) {
+                  setProductsDiscussed(r.structured.productsDiscussed);
+                }
+                if (r.structured.nextAction) setNextAction(r.structured.nextAction);
+                if (r.structured.followUpDate) setFollowUpDate(r.structured.followUpDate);
+                if (r.structured.visitType) setVisitType(r.structured.visitType);
+                if (r.structured.notes) setNotes(r.structured.notes);
+                setMsg(
+                  `Structured via ${r.provider}/${r.model}${r.cacheHit ? " (cache)" : ""} — review before save`,
+                );
+              })
+            }
+          >
+            Structure notes with AI
+          </Button>
+        )}
         <Button type="submit" variant="contained" disabled={pending} sx={{ gridColumn: "1 / -1", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>
           {pending ? "Saving…" : "Save visit record"}
         </Button>
