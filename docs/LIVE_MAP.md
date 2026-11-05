@@ -6,7 +6,7 @@ Status: v1. Replaces Today's Route for administrators.
 
 `/live` is a full-bleed map of every active rep the viewer may see, with a side
 panel (status, current clinic, last update, click-to-focus) and a province filter
-that mirrors the leaderboard's "All provinces" control. Positions refresh in the
+with an "All provinces" option for national admins. Positions refresh in the
 browser every few seconds (`POLL_INTERVAL_MS`) without a reload; markers glide to
 their new position and pulse while a fix is fresh.
 

@@ -9,7 +9,6 @@ import Typography from "@mui/material/Typography";
 import type { AppRoleName } from "@/domain/auth/permissions";
 import type { AdminUserRow } from "@/domain/auth/userAdmin";
 import { DataTable, type GridColDef } from "@/components/data-table/DataTable";
-import { levelFor } from "@/domain/performance/xp";
 import { EASE } from "@/theme/tokens";
 import { CodeChip, StatusChip } from "@/components/feedback/StatusChip";
 import { TerritoryBadges } from "./ProvinceBadge";
@@ -28,7 +27,6 @@ const ROLE_PILL: Record<AppRoleName, { bg: string; fg: string }> = {
 };
 
 const REDUCED = "@media (prefers-reduced-motion: reduce)";
-const nf = new Intl.NumberFormat("en-CA");
 
 /**
  * Name link with a text roll on hover: the label slides up out of view while a tinted copy
@@ -63,32 +61,6 @@ function RollingName({ href, children }: { href: string; children: string }) {
       </Box>
       <Box component="span" className="nv-roll nv-roll--copy" aria-hidden>
         {children}
-      </Box>
-    </Box>
-  );
-}
-
-/** Level pill, lifetime XP and a sliver of progress to the next level. */
-function LevelCell({ xp }: { xp: number }) {
-  const level = levelFor(xp);
-  const ratio = level.next == null ? 1 : Math.max(0, Math.min(1, (xp - level.min) / Math.max(1, level.next - level.min)));
-  return (
-    <Box sx={{ display: "grid", gap: 1, minWidth: 0, py: 1 }}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, minWidth: 0 }}>
-        <Box component="span" sx={{ display: "inline-flex", alignItems: "center", height: 20, px: 1.5, borderRadius: 999, bgcolor: "primary.tint", color: "primary.main", fontSize: "0.6875rem", fontWeight: 700, letterSpacing: "0.04em", flexShrink: 0 }}>
-          L{level.index + 1}
-        </Box>
-        <Typography variant="body2" noWrap sx={{ fontWeight: 500 }}>
-          {level.name}
-        </Typography>
-      </Box>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-        <Box aria-hidden sx={{ width: 64, height: 4, borderRadius: 2, bgcolor: "grey.200", overflow: "hidden", flexShrink: 0 }}>
-          <Box sx={{ height: 1, width: `${ratio * 100}%`, borderRadius: 2, bgcolor: "primary.main" }} />
-        </Box>
-        <Typography variant="caption" noWrap sx={{ color: "text.secondary", fontVariantNumeric: "tabular-nums" }}>
-          {nf.format(xp)} XP{level.toNext != null ? ` · ${nf.format(level.toNext)} to go` : ""}
-        </Typography>
       </Box>
     </Box>
   );
@@ -225,16 +197,6 @@ export function UsersTable({
         sortable: false,
         valueGetter: (_v, row) => (row.provinces.includes("*") ? "All provinces" : row.provinces.join(", ")),
         renderCell: ({ row }) => <TerritoryBadges codes={row.provinces} />,
-      },
-      {
-        field: "xpTotal",
-        headerName: "Level",
-        width: 190,
-        type: "number",
-        align: "left",
-        headerAlign: "left",
-        valueGetter: (v) => (v as number | undefined) ?? 0,
-        renderCell: ({ row }) => <LevelCell xp={row.xpTotal ?? 0} />,
       },
       {
         field: "activity",

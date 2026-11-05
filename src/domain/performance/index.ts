@@ -4,5 +4,4 @@ export * from "./visitSlots";
 export * from "./dailySummary";
 export * from "./repMetrics";
 export * from "./motivation";
-export * from "./xp";
 export * from "./teamTargets";

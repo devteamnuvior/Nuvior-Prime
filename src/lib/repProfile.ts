@@ -30,7 +30,6 @@ import {
   type WeekPoint,
 } from "@/domain/performance";
 import { getTargetProgress, listSalesTargets, type SalesTargetRow } from "@/lib/performance";
-import { getUserXp, listPointEvents, type PointEventRow, type UserXp } from "@/lib/xp";
 
 export type RepProfileUser = {
   id: string;
@@ -85,8 +84,6 @@ export type RepProfileDto = {
   recentVisits: RepRecentVisit[];
   recentRoutes: RepRecentRoute[];
   audit: RepAuditRow[];
-  xp: UserXp;
-  pointEvents: PointEventRow[];
 };
 
 export async function loadRepProfile(userId: string, rangeKey: RangeKey): Promise<RepProfileDto | null> {
@@ -99,7 +96,7 @@ export async function loadRepProfile(userId: string, rangeKey: RangeKey): Promis
   const start = parseDayKey(range.start);
   const endExclusive = new Date(parseDayKey(range.end).getTime() + 86_400_000);
 
-  const [summaryRows, targets, progress, visitRows, stops, recentVisitRows, recentRunRows, auditRows, xp, pointEvents] = await Promise.all([
+  const [summaryRows, targets, progress, visitRows, stops, recentVisitRows, recentRunRows, auditRows] = await Promise.all([
     prisma.repDailySummary.findMany({
       where: { userId, day: { gte: start, lt: endExclusive } },
       orderBy: { day: "asc" },
@@ -132,8 +129,6 @@ export async function loadRepProfile(userId: string, rangeKey: RangeKey): Promis
       take: 30,
       include: { actorUser: { select: { email: true } } },
     }),
-    getUserXp(userId, today),
-    listPointEvents(userId, 30),
   ]);
 
   const summaries: DailySummaryRow[] = summaryRows.map((s) => ({
@@ -211,7 +206,5 @@ export async function loadRepProfile(userId: string, rangeKey: RangeKey): Promis
       resource: `${e.resourceType}${e.resourceId ? `:${e.resourceId.slice(0, 12)}` : ""}`,
       actor: e.actorUser?.email ?? null,
     })),
-    xp,
-    pointEvents,
   };
 }

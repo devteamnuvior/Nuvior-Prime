@@ -37,7 +37,6 @@ import { getClinicProfileProvider } from "@/providers/clinicProfile";
 import { getClinicProfileConfig } from "@/lib/clinicProfileConfig";
 import { recomputeRepDailySummary, upsertSalesTarget, deleteSalesTarget, type SalesTargetRow } from "@/lib/performance";
 import { DAILY_CLINIC_SLOTS, TARGET_METRICS, TARGET_PERIODS, VISIT_OUTCOME_CODES, VISIT_DURATIONS, isVisitDuration } from "@/domain/performance";
-import { awardAfterVisit } from "@/lib/xp";
 
 const provinceCodes = CANADIAN_PROVINCES.map((p) => p.code) as [string, ...string[]];
 
@@ -265,10 +264,8 @@ export async function recordVisitAction(input: {
     });
 
     await recomputeRepDailySummary(user.id, visitDate);
-    await awardAfterVisit(result.id, user.id, visitDate);
     revalidatePath("/visits");
     revalidatePath("/");
-    revalidatePath("/leaderboard");
 
     return { ok: true, message: `Visit saved ${result.id}` };
   } catch (e) {

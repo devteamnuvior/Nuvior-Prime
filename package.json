@@ -28,7 +28,6 @@
     "crm:import": "tsx scripts/crm-import.ts",
     "crm:backfill": "tsx scripts/crm-backfill.ts",
     "postinstall": "prisma generate",
-    "xp:backfill": "tsx scripts/xp-backfill.ts",
     "live:simulate": "tsx scripts/live-simulate.ts"
   },
   "dependencies": {

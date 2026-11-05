@@ -32,7 +32,6 @@ export const PRIMARY_NAV: NavItem[] = [
   { href: "/live", label: "Live Map", icon: "live", permission: "position.view.team" },
   { href: "/accounts", label: "Prospecting", icon: "search" },
   { href: "/visits", label: "Visit History", icon: "history", permission: "visit.view.own" },
-  { href: "/leaderboard", label: "Leaderboard", icon: "trophy", permission: "performance.view.own" },
 ];
 
 export const SECONDARY_NAV: NavItem[] = [
@@ -58,7 +57,6 @@ export const ROUTE_LABELS: Record<string, string> = {
   "/live": "Live Map",
   "/accounts": "Prospecting",
   "/visits": "Visit History",
-  "/leaderboard": "Leaderboard",
   "/team": "Team",
   "/verification": "Verification",
   "/matching": "Matching",

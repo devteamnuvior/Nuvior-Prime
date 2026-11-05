@@ -13,8 +13,7 @@
  *   3. applies the release's prisma/releases/*.sql in one transaction,
  *   4. verifies every expected object exists (and every retired one is gone) and existing
  *      row counts are unchanged.
- * Then it runs the XP backfill once (daily summaries, visit points, bonuses, badges) and
- * read-only smoke queries through the Prisma models the new pages use.
+ * Then it runs read-only smoke queries through the Prisma models the new pages use.
  *
  * Any failure exits non-zero, which fails the build so the current deployment stays live.
  * Logs carry only object names and counts, never row data.
@@ -41,8 +40,8 @@ const RELEASES: Release[] = [
     name: "2026-11-02 performance + live map",
     file: "prisma/releases/2026-11-02_performance_live_map.sql",
     present: {
-      tables: ["SalesTarget", "RepDailySummary", "PointEvent", "UserBadge", "RepPosition", "ClinicWebProfile"],
-      enums: ["VisitOutcome", "TargetPeriod", "TargetMetric", "PointReason"],
+      tables: ["SalesTarget", "RepDailySummary", "RepPosition", "ClinicWebProfile"],
+      enums: ["VisitOutcome", "TargetPeriod", "TargetMetric"],
       columns: [["VisitRecord", "outcomeCode"]],
     },
   },
@@ -57,10 +56,6 @@ const RELEASES: Release[] = [
     },
     absent: {
       tables: ["Challenge"],
-      columns: [
-        ["PointEvent", "challengeId"],
-        ["PointEvent", "multiplier"],
-      ],
     },
   },
   {
@@ -83,6 +78,14 @@ const RELEASES: Release[] = [
         ["VisitRecord", "fitScoreSnapshot"],
         ["RepDailySummary", "avgFitScore"],
       ],
+    },
+  },
+  {
+    name: "2026-11-05 XP, badges and leaderboard removed",
+    file: "prisma/releases/2026-11-05_xp_removed.sql",
+    present: {},
+    absent: {
+      tables: ["PointEvent", "UserBadge"],
     },
   },
 ];
@@ -220,47 +223,13 @@ async function main() {
       log(changed.length ? `existing tables with new writes during deploy: ${changed.join(", ")}` : "existing row counts unchanged");
     }
 
-    // 5. XP backfill, once: only while the ledger is still empty.
-    const ledger = await db.pointEvent.count();
-    const visits = await db.visitRecord.count({ where: { createdByUserId: { not: null }, accountId: { not: null } } });
-    if (ledger === 0 && visits > 0) {
-      log(`backfilling XP from ${visits} visits`);
-      const { recomputeRepDailySummary } = await import("../src/lib/performance");
-      const { awardDailyBonuses, awardPointsForVisit, syncBadges } = await import("../src/lib/xp");
-      const { dayKey } = await import("../src/domain/performance");
-      const rows = await db.visitRecord.findMany({
-        where: { createdByUserId: { not: null }, accountId: { not: null } },
-        orderBy: [{ visitDate: "asc" }, { createdAt: "asc" }],
-        select: { id: true, createdByUserId: true, visitDate: true },
-      });
-      const days = new Map<string, Set<string>>();
-      for (const v of rows) {
-        const set = days.get(v.createdByUserId!) ?? new Set<string>();
-        set.add(dayKey(v.visitDate));
-        days.set(v.createdByUserId!, set);
-      }
-      let summaries = 0;
-      for (const [uid, set] of days) for (const d of set) if (await recomputeRepDailySummary(uid, d)) summaries += 1;
-      let awards = 0;
-      for (const v of rows) awards += await awardPointsForVisit(v.id);
-      let bonuses = 0;
-      for (const [uid, set] of days) for (const d of [...set].sort()) bonuses += await awardDailyBonuses(uid, d);
-      let badges = 0;
-      for (const uid of days.keys()) badges += (await syncBadges(uid)).length;
-      log(`backfill: ${summaries} daily summaries, ${awards} visit awards, ${bonuses} daily bonuses, ${badges} badges for ${days.size} reps`);
-    } else {
-      log(`XP backfill not needed (ledger rows ${ledger}, visits ${visits})`);
-    }
-
-    // 6. Smoke queries through the models the new pages read.
+    // 5. Smoke queries through the models the new pages read.
     const smoke = {
       users: await db.user.count(),
       visitsWithOutcome: await db.visitRecord.count({ where: { outcomeCode: { not: null } } }),
       visitsSample: (await db.visitRecord.findMany({ take: 1, select: { id: true, outcomeCode: true, durationMinutes: true } })).length,
       targets: await db.salesTarget.count(),
       summaries: await db.repDailySummary.count(),
-      xpByUser: (await db.pointEvent.groupBy({ by: ["userId"], _sum: { points: true } })).length,
-      badges: await db.userBadge.count(),
       visitsExtended: await db.visitRecord.count({ where: { durationMinutes: { gt: 45 } } }),
       positions: await db.repPosition.count(),
       clinicWebProfiles: await db.clinicWebProfile.count(),

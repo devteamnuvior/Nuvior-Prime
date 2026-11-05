@@ -5,10 +5,10 @@ import { StatCardSkeleton } from "@/components/feedback/StatCardSkeleton";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { AdminTabsSkeleton } from "./AdminPageSkeletons";
 
-/** Same track as the UsersTable columns: User, Role, Status, Territory, Level, Visits · 30d, Last Active, Added, row menu. */
-const COLUMNS = "minmax(240px, 1.4fr) 150px 120px minmax(160px, 1fr) 190px 130px 140px 130px 56px";
+/** Same track as the UsersTable columns: User, Role, Status, Territory, Visits · 30d, Last Active, Added, row menu. */
+const COLUMNS = "minmax(240px, 1.4fr) 150px 120px minmax(160px, 1fr) 130px 140px 130px 56px";
 /** Header label widths, in column order (the menu column has no label). */
-const HEADER_WIDTHS = [34, 32, 46, 68, 40, 78, 76, 42, 0];
+const HEADER_WIDTHS = [34, 32, 46, 68, 78, 76, 42, 0];
 /** DataGrid cells carry 10px of horizontal padding; the toolbar sits at 52px, headers at 56px, rows at 60px. */
 const CELL_PX = "10px";
 
@@ -30,7 +30,7 @@ function Cell({ children, justify = "flex-start" }: { children: React.ReactNode;
   );
 }
 
-/** One table row with the shapes of the users columns: avatar + name/email, role pill, status chip, province badges, level, activity bars, two dates, row menu. */
+/** One table row with the shapes of the users columns: avatar + name/email, role pill, status chip, province badges, activity bars, two dates, row menu. */
 function UserRowSkeleton({ index, last }: { index: number; last: boolean }) {
   const badges = (index % 3) + 1;
   const bars = [8, 14, 6, 18, 10, 22].map((h, i) => Math.max(3, ((h + index * 5 + i * 3) % 20) + 3));
@@ -64,18 +64,6 @@ function UserRowSkeleton({ index, last }: { index: number; last: boolean }) {
           {Array.from({ length: badges }).map((_, i) => (
             <Skeleton key={i} variant="rounded" width={40} height={32} sx={{ borderRadius: 1 }} />
           ))}
-        </Box>
-      </Cell>
-      <Cell>
-        <Box sx={{ display: "grid", gap: 1 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Skeleton variant="rounded" width={30} height={20} sx={{ borderRadius: 999 }} />
-            <Skeleton variant="rounded" width={56 + ((index * 17) % 30)} height={13} />
-          </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <Skeleton variant="rounded" width={64} height={4} sx={{ borderRadius: 2 }} />
-            <Skeleton variant="rounded" width={72} height={11} />
-          </Box>
         </Box>
       </Cell>
       <Cell>

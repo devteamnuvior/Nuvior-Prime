@@ -323,7 +323,7 @@ export function VisitsView({
     <>
       <PageHeader
         title="Visit History"
-        description="Routes you planned and visits you logged, most recent first. Outcomes and written next actions are what move the leaderboard."
+        description="Routes you planned and visits you logged, most recent first. Outcomes and written next actions are what count."
         actions={
           canPlan ? (
             <HeroButton component={Link} href="/" startIcon={<RouteOutlined />}>

@@ -513,43 +513,6 @@ export function RepProfileSkeleton() {
           </SectionSkeleton>
         </Box>
 
-        <SectionSkeleton title={104} hint={560}>
-          {/* Level bar */}
-          <Box sx={{ display: "grid", gap: 1 }}>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 2,
-              }}
-            >
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Skeleton variant="rounded" width={140} height={20} sx={{ borderRadius: 999 }} />
-                <Skeleton variant="rounded" width={44} height={13} />
-              </Box>
-              <Skeleton variant="rounded" width={120} height={12} />
-            </Box>
-            <Skeleton variant="rounded" height={6} sx={{ borderRadius: 3 }} />
-          </Box>
-          <Box
-            sx={{
-              display: "grid",
-              gap: 3,
-              gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-            }}
-          >
-            <StatSkeleton label={60} value={28} />
-            <StatSkeleton label={68} value={28} />
-            <StatSkeleton label={46} value={52} />
-          </Box>
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5 }}>
-            {Array.from({ length: 10 }).map((_, i) => (
-              <Skeleton key={i} variant="circular" width={36} height={36} sx={{ opacity: i < 3 ? 1 : 0.5 }} />
-            ))}
-          </Box>
-        </SectionSkeleton>
-
         <SectionSkeleton title={56} hint={330}>
           {/* Progress cards, one per active target */}
           <Box

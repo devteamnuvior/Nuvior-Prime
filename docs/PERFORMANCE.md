@@ -1,49 +1,17 @@
 # Rep performance — phases 1 to 4
 
-**Status:** Phase 1 complete (structured outcomes, targets, daily summaries) · Phase 2 complete (admin per-rep page) · Phase 3 complete (rep "My day" panel) · Phase 4 complete (XP, levels, badges, leaderboard) · Phase 5 complete (clinic slots; challenges and the MANAGER role removed 2026-11-05)  
+**Status:** Phase 1 complete (structured outcomes, targets, daily summaries) · Phase 2 complete (admin per-rep page) · Phase 3 complete (rep "My day" panel) · Phase 4 (XP, levels, badges, leaderboard) removed 2026-11-05 · Phase 5 complete (clinic slots; challenges and the MANAGER role removed 2026-11-05)  
 **Next:** Phase 5 Odoo orders (deferred until Odoo access exists)
 
-## Phase 4 — competition layer
+## Competition layer removed (2026-11-05)
 
-Rules are pure in `src/domain/performance/xp.ts` (tested in `xp.test.ts`);
-persistence in `src/lib/xp.ts`; page at `/leaderboard` (nav item for everyone
-with `performance.view.own`).
-
-### XP ledger
-
-`PointEvent` is append-only and unique per (user, reason, sourceType,
-sourceId), so re-running the awarder never double-counts. Totals are sums over
-the ledger. `npm run xp:backfill` awards points for visits logged before the
-ledger existed (idempotent).
-
-| Reason | Base | When |
-| --- | --- | --- |
-| `VISIT` | 10 | Logged visit (one per clinic per day) |
-| `OUTCOME_SAME_DAY` | 5 | Structured outcome recorded on the visit day |
-| `FOLLOW_UP_ON_TIME` | 10 | Visit on or before a follow-up date set by an earlier visit to that account |
-| `ACADEMY_SIGNUP` | 40 | Outcome `ACADEMY_SIGNUP` |
-| `FIRST_ORDER` | 60 | Outcome `ORDER_PLACED` on an account with no earlier order |
-| `DAILY_TARGET_MET` | 15 | `RepDailySummary.visits` ≥ the DAY/VISITS target |
-| `STREAK_MILESTONE` | 25 | Streak reaches 5, 10, 20 or 50 working days |
-
-Anti-gaming: a second visit to the same clinic on the same day earns nothing;
-visits without an account earn nothing; DNC accounts never reach the awarder
-because they never reach a route.
-
-### Levels and badges
-
-Levels by total XP: Associate 0 · Specialist 500 · Senior 1 500 · Elite 3 500 ·
-Master 7 000. Levels never go down. Badges are code-defined (`BADGES`) and
-stored in `UserBadge` when earned: First steps, Century, Route master, On a roll (5-day streak), Unstoppable (20), Academy builder, Opener,
-Closer, Follow-through.
-
-### Leaderboard
-
-`getLeaderboard` ranks active reps by period points (week Mon–Sun or calendar
-month) within one province, or nationally for admins. Ties share a rank.
-Reps see the top 3 plus the two reps on either side of themselves; admins see
-the full list. Admins are never ranked.
-"My day" shows the rep's level, this week's rank and distance to first place.
+XP, levels (Associate … Master), badges and the `/leaderboard` page were removed
+end to end: `src/domain/performance/xp.ts`, `src/lib/xp.ts`, the
+`PointEvent` / `UserBadge` tables and the `PointReason` enum
+(`prisma/releases/2026-11-05_xp_removed.sql`), the `xp:backfill` script and the
+XP column on the admin users list. Streaks stay (they are computed from
+`RepDailySummary`, not from points). What a rep sees is counts only: clinics
+today, visits this month, follow-ups, new accounts and Academy sign-ups.
 
 ## Phase 3 — rep "My day" panel
 
@@ -162,7 +130,6 @@ how the visit form submits `visitDate`.
 ## Not in this phase
 
 - Revenue and order values (needs Odoo order import, phase 5).
-- XP, levels, badges, leaderboards (phase 4) — `RepDailySummary` is their input.
 - Backfill of `outcomeCode` for visits logged before this phase: they keep the
   free-text `outcome` and show it as-is in Visit History.
 
@@ -174,8 +141,8 @@ visit the rep records as **Extended · 90 min** counts as two, so a long demo or
 does not cost the rep their day. The rep picks the duration on the visit form
 ("Time at clinic"); `VisitRecord.durationMinutes` stores it and
 `RepDailySummary.visitSlots` sums it per day. `metricValue("VISITS")` reads `visitSlots`,
-so target progress, the daily-target bonus, streaks and the admin KPIs all count slots.
-Raw `visits` stays for display and the leaderboard.
+so target progress, streaks and the admin KPIs all count slots.
+Raw `visits` stays for display.
 
 Every rep has the ten-slot DAY/VISITS target by default
 (`DEFAULT_DAILY_VISITS_TARGET`, via `resolveDailyVisitsTarget`); an admin-set

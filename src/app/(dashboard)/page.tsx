@@ -10,7 +10,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   // Today's Route belongs to the field. Admins land on the live map instead and
   // cannot open the planner by URL.
   if (user && !hasPermission(user.role, "route.plan")) {
-    redirect(hasPermission(user.role, "position.view.team") ? "/live" : "/leaderboard");
+    redirect(hasPermission(user.role, "position.view.team") ? "/live" : "/visits");
   }
   // Performance phase 3 — the rep's own day at a glance. Never blocks the map:
   // a failed load just hides the panel.
