@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -52,7 +51,6 @@ export function ClinicWebProfileSection({
   isRunning: boolean;
   onRun: () => void;
 }) {
-  const [sourcesOpen, setSourcesOpen] = useState(false);
   const state = dto?.state ?? "NOT_RESEARCHED";
   const profile = dto?.profile ?? null;
   // While Claude works the button itself carries the loader; nothing else changes.
@@ -196,27 +194,23 @@ export function ClinicWebProfileSection({
         </Row>
       )}
 
-      <Box sx={{ mt: 3, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2 }}>
-        <Button size="small" variant="text" onClick={() => setSourcesOpen((v) => !v)} aria-expanded={sourcesOpen} sx={{ px: 1, mx: -1, minHeight: 28, fontSize: "0.75rem", color: "text.secondary", "&:hover": { color: "text.primary" } }}>
-          {sourcesOpen ? "Hide sources" : `Sources (${profile.sources.length})`}
-        </Button>
+      {profile.sources.length > 0 && (
+        <Row label="Sources">
+          <PlainList gap={0.5}>
+            {profile.sources.map((s) => (
+              <Box component="li" key={s.url} sx={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                <ExternalLink url={s.url} label={s.title ?? undefined} />
+              </Box>
+            ))}
+          </PlainList>
+        </Row>
+      )}
+
+      <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end" }}>
         <Button size="small" variant="text" color="primary" onClick={onRun} disabled={isRunning} startIcon={isRunning ? spinner : undefined} aria-busy={isRunning} sx={{ px: 1, mx: -1, minHeight: 28, fontSize: "0.75rem" }}>
           {isRunning ? "Refreshing…" : "Refresh"}
         </Button>
       </Box>
-      {sourcesOpen && (
-        <PlainList gap={0.5} sx={{ mt: 1.5, typography: "caption" }}>
-          {profile.sources.map((s) => (
-            <Box component="li" key={s.url} sx={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              <ExternalLink url={s.url} label={s.title ?? undefined} />
-            </Box>
-          ))}
-        </PlainList>
-      )}
-      <Typography variant="caption" sx={{ display: "block", mt: 2, color: "text.faint" }}>
-        {dto?.provider === "claude" ? `Claude${dto.model ? ` · ${dto.model}` : ""}` : dto?.provider}
-        {dto?.researchedAt ? ` · ${new Date(dto.researchedAt).toLocaleDateString()}` : ""} · Verify before relying on it.
-      </Typography>
     </Shell>
   );
 }
