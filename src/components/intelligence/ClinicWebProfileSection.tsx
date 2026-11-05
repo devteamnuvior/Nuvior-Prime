@@ -9,6 +9,7 @@ import Facebook from "@mui/icons-material/Facebook";
 import Instagram from "@mui/icons-material/Instagram";
 import LinkedIn from "@mui/icons-material/LinkedIn";
 import MusicNote from "@mui/icons-material/MusicNote";
+import OpenInNewOutlined from "@mui/icons-material/OpenInNewOutlined";
 import PublicOutlined from "@mui/icons-material/PublicOutlined";
 import X from "@mui/icons-material/X";
 import YouTube from "@mui/icons-material/YouTube";
@@ -118,7 +119,7 @@ export function ClinicWebProfileSection({
       )}
 
       {profile.socialProfiles.length > 0 && (
-        <Row label="Social" prominent>
+        <Row label="Social">
           <PlainList gap={1}>
             {profile.socialProfiles.map((s) => (
               <Box component="li" key={s.url} sx={{ display: "flex", alignItems: "center", gap: 2, minWidth: 0 }}>
@@ -139,7 +140,7 @@ export function ClinicWebProfileSection({
       )}
 
       {profile.people.length > 0 && (
-        <Row label="People" prominent>
+        <Row label="People">
           <PlainList gap={0.5}>
             {profile.people.map((p) => (
               <li key={`${p.name}-${p.role}`}>
@@ -155,7 +156,7 @@ export function ClinicWebProfileSection({
       )}
 
       {profile.services.length > 0 && (
-        <Row label="Services" prominent>
+        <Row label="Services">
           <PlainList gap={0.5}>
             {profile.services.map((svc) => (
               <li key={svc}>{svc}</li>
@@ -165,7 +166,7 @@ export function ClinicWebProfileSection({
       )}
 
       {profile.products.length > 0 && (
-        <Row label="Products & devices they publish">
+        <Row label="Products & Devices">
           <PlainList gap={0.5}>
             {profile.products.map((p) => (
               <li key={`${p.kind}-${p.name}`}>
@@ -182,13 +183,13 @@ export function ClinicWebProfileSection({
       )}
 
       {profile.websiteSummary && (
-        <Row label="Website Summary" prominent>
+        <Row label="Website Summary">
           <p>{profile.websiteSummary}</p>
         </Row>
       )}
 
       {profile.notes.length > 0 && (
-        <Row label="Notes" prominent>
+        <Row label="Notes">
           <PlainList gap={0.5} sx={{ color: "text.secondary" }}>
             {profile.notes.map((n) => (
               <li key={n}>{n}</li>
@@ -198,7 +199,7 @@ export function ClinicWebProfileSection({
       )}
 
       {profile.sources.length > 0 && (
-        <Row label="Sources" prominent>
+        <Row label="Sources">
           <PlainList gap={0.5}>
             {profile.sources.map((s) => (
               <Box component="li" key={s.url} sx={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -210,7 +211,7 @@ export function ClinicWebProfileSection({
       )}
 
       {profile.unknowns.length > 0 && (
-        <Row label="Not Found" prominent>
+        <Row label="Not Found">
           <Muted>{profile.unknowns.join(", ")}</Muted>
         </Row>
       )}
@@ -235,14 +236,22 @@ function Shell({ title, children }: { title: string; children: React.ReactNode }
   );
 }
 
-/** `prominent`: a slightly larger title with more room before the content (used for Sources). */
-function Row({ label, children, prominent = false }: { label: string; children: React.ReactNode; prominent?: boolean }) {
+/** Section title: bold, with a short green rule underneath so it stands apart from the content. */
+function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <Box sx={{ mt: prominent ? 3 : 2 }}>
+    <Box sx={{ mt: 3 }}>
       <Typography
-        variant={prominent ? "body2" : "caption"}
+        variant="body2"
         component="div"
-        sx={{ fontWeight: prominent ? 600 : 500, color: prominent ? "text.primary" : "text.secondary", mb: prominent ? 1.5 : 0 }}
+        sx={{
+          display: "inline-block",
+          fontWeight: 600,
+          color: "text.primary",
+          pb: 0.5,
+          mb: 1.5,
+          borderBottom: 2,
+          borderColor: "primary.main",
+        }}
       >
         {label}
       </Typography>
@@ -276,11 +285,9 @@ function SourceLink({ url }: { url: string | null }) {
       rel="noreferrer"
       title={url}
       aria-label={`Source: ${hostOf(url)}`}
-      variant="caption"
-      underline="hover"
-      sx={{ ml: 1, verticalAlign: "baseline", fontSize: "0.625rem", color: "text.faint", "&:hover": { color: "primary.main" } }}
+      sx={{ ml: 1, display: "inline-flex", verticalAlign: "middle", fontSize: 14, color: "text.faint", "&:hover": { color: "primary.main" } }}
     >
-      [{hostOf(url)}]
+      <OpenInNewOutlined fontSize="inherit" />
     </Link>
   );
 }
