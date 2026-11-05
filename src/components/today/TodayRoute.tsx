@@ -724,7 +724,7 @@ export function TodayRoute({
 
       <Box sx={{ display: "flex", minHeight: 0, flex: 1, flexDirection: { xs: "column", md: "row" } }}>
         {/* Map — the canvas; everything else floats over it */}
-        <Box sx={{ position: "relative", minHeight: 280, height: { xs: "46dvh", md: "auto" }, flex: { xs: "1 1 0%", md: "1.85 1 0%" } }}>
+        <Box sx={{ position: "relative", minHeight: 280, height: { xs: "46dvh", md: "auto" }, flex: { xs: "1 1 0%", md: "1 1 0%" } }}>
           <MapCanvas
             start={startGeo}
             stops={mapStops}
@@ -870,8 +870,10 @@ export function TodayRoute({
             display: { xs: sheetExpanded ? "flex" : "none", md: "flex" },
             flexDirection: "column",
             overflow: "hidden",
-            width: { xs: 1, md: "38%", lg: "34%" },
+            // Narrow enough that the map is the page; the itinerary still fits its cards.
+            width: { xs: 1, md: "32%", lg: "28%" },
             minWidth: { md: 300 },
+            maxWidth: { md: 380 },
             maxHeight: { xs: "52dvh", md: "none" },
             borderTop: { xs: 1, md: 0 },
             borderLeft: { md: 1 },

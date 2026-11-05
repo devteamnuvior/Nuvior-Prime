@@ -13,18 +13,11 @@ import LocalFireDepartmentOutlined from "@mui/icons-material/LocalFireDepartment
 import type { RepDashboardDto } from "@/lib/repDashboard";
 import { TARGET_METRIC_LABELS, type TargetProgress } from "@/domain/performance/targets";
 import { BADGES, badgeDefinition } from "@/domain/performance/xp";
-import { StatusChip, type StatusTone } from "@/components/feedback/StatusChip";
+import { StatusChip } from "@/components/feedback/StatusChip";
 import { BadgeIcon } from "@/components/performance/BadgeIcon";
 import { LevelBar } from "@/components/performance/LevelBar";
 
 const STORAGE_KEY = "nuvior.today.myday.collapsed";
-
-const TONE: Record<RepDashboardDto["message"]["tone"], { bg: string; fg: string; chip: StatusTone }> = {
-  neutral: { bg: "background.sunken", fg: "text.primary", chip: "neutral" },
-  primary: { bg: "action.selected", fg: "primary.main", chip: "primary" },
-  success: { bg: "rgba(var(--nv-palette-success-mainChannel) / 0.12)", fg: "success.main", chip: "success" },
-  warning: { bg: "rgba(var(--nv-palette-warning-mainChannel) / 0.14)", fg: "warning.main", chip: "warning" },
-};
 
 const dayFmt = new Intl.DateTimeFormat("en-CA", { weekday: "long", month: "short", day: "numeric", timeZone: "UTC" });
 
@@ -75,7 +68,6 @@ export function MyDayPanel({ data }: { data: RepDashboardDto }) {
   };
 
   const daily = data.progress.filter((p) => p.period === "DAY");
-  const tone = TONE[data.message.tone];
   const dailyVisits = daily.find((p) => p.metric === "VISITS");
 
   return (
@@ -104,17 +96,6 @@ export function MyDayPanel({ data }: { data: RepDashboardDto }) {
 
       <Collapse in={open}>
         <Box id="nv-myday" sx={{ px: 4, pb: 4, display: "grid", gap: 4 }}>
-          <Box sx={{ borderRadius: 1.5, bgcolor: tone.bg, px: 3, py: 2.5, display: "grid", gap: 0.5 }}>
-            <Typography variant="body2" sx={{ fontWeight: 600, color: tone.fg }}>
-              {data.message.headline}
-            </Typography>
-            {data.message.detail && (
-              <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                {data.message.detail}
-              </Typography>
-            )}
-          </Box>
-
           {daily.length > 0 && (
             <Box sx={{ display: "grid", gap: 2.5 }}>
               {daily.map((p) => (

@@ -1,9 +1,7 @@
 "use client";
 
-import Typography from "@mui/material/Typography";
-import CalendarMonthOutlined from "@mui/icons-material/CalendarMonthOutlined";
 import StorefrontOutlined from "@mui/icons-material/StorefrontOutlined";
-import { MiniStatCard, StatStrip, StripEyebrow, useStatMotion } from "@/components/feedback/MiniStatCard";
+import { MiniStatCard, StatStrip, useStatMotion } from "@/components/feedback/MiniStatCard";
 import { METRIC_ICON, METRIC_SHORT, PERIOD_SHORT, TARGET_STATUS } from "@/components/performance/targetPresentation";
 import type { RepDashboardDto } from "@/lib/repDashboard";
 import { TARGET_METRIC_LABELS, TARGET_PERIOD_LABELS } from "@/domain/performance/targets";
@@ -11,7 +9,8 @@ import { TARGET_METRIC_LABELS, TARGET_PERIOD_LABELS } from "@/domain/performance
 /**
  * The rep's month at a glance, above the map on Today's Route: visits so far
  * this month, then every weekly and monthly target with its pace. Same cards
- * and motion as the admin live map.
+ * and motion as the admin live map, in the dense variant with no header row
+ * so the map keeps its height.
  */
 export function MonthStrip({ dashboard }: { dashboard: RepDashboardDto }) {
   const animate = useStatMotion();
@@ -20,21 +19,7 @@ export function MonthStrip({ dashboard }: { dashboard: RepDashboardDto }) {
   const delta = month.visitsDelta;
 
   return (
-    <StatStrip
-      ariaLabel="This month"
-      header={
-        <>
-          <StripEyebrow>This month</StripEyebrow>
-          <CalendarMonthOutlined sx={{ fontSize: 16, color: "text.secondary" }} aria-hidden />
-          <Typography variant="body2" noWrap sx={{ fontWeight: 600 }}>
-            {month.label}
-          </Typography>
-          <Typography variant="body2" noWrap sx={{ color: "text.secondary", fontVariantNumeric: "tabular-nums" }}>
-            · day {month.dayIndex}
-          </Typography>
-        </>
-      }
-    >
+    <StatStrip ariaLabel="This month" dense>
       <MiniStatCard
         index={0}
         label={`Visits in ${month.label}`}
@@ -46,6 +31,7 @@ export function MonthStrip({ dashboard }: { dashboard: RepDashboardDto }) {
         footerTone={delta == null ? "neutral" : delta >= 0 ? "success" : "danger"}
         tooltip={`Visits logged in ${month.label} so far`}
         animate={animate}
+        dense
       />
       {targets.map((p, i) => {
         const status = TARGET_STATUS[p.status];
@@ -70,6 +56,7 @@ export function MonthStrip({ dashboard }: { dashboard: RepDashboardDto }) {
             tooltip={`${TARGET_PERIOD_LABELS[p.period]} · ${TARGET_METRIC_LABELS[p.metric]}`}
             animate={animate}
             valueColor={p.status === "behind" ? "warning.main" : p.status === "met" ? "success.main" : undefined}
+            dense
           />
         );
       })}

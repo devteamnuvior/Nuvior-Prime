@@ -21,6 +21,7 @@ export function useStatMotion(): boolean {
  * A compact stat card for a horizontal strip above a map: eyebrow label, icon tile, a number that
  * counts up (and tweens on later changes), an optional "/ target", bar and status chip, and a
  * one-line footer. Rises into place with a per-index delay; re-key it to replay.
+ * `dense` is the compact variant for strips that must leave room for a map.
  */
 export function MiniStatCard({
   index,
@@ -36,6 +37,7 @@ export function MiniStatCard({
   tooltip,
   animate,
   valueColor,
+  dense = false,
 }: {
   index: number;
   label: string;
@@ -52,6 +54,7 @@ export function MiniStatCard({
   animate: boolean;
   /** Theme colour for the headline number (defaults to text.primary). */
   valueColor?: string;
+  dense?: boolean;
 }) {
   const t = STAT_TONE[tone];
   // Each card owns its mount flag: re-keying replays the fill.
@@ -64,10 +67,10 @@ export function MiniStatCard({
       sx={{
         position: "relative",
         overflow: "hidden",
-        px: 3.5,
-        py: 3,
+        px: dense ? 3 : 3.5,
+        py: dense ? 2 : 3,
         display: "grid",
-        gap: 2,
+        gap: dense ? 1.25 : 2,
         alignContent: "start",
         minWidth: 0,
         animation: animate ? `${statRise} 520ms ${STAT_EASE} both` : "none",
@@ -88,19 +91,19 @@ export function MiniStatCard({
       }}
     >
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, minWidth: 0 }}>
-        <Typography variant="eyebrow" noWrap sx={{ minWidth: 0, fontSize: "0.625rem", letterSpacing: "0.1em" }}>
+        <Typography variant="eyebrow" noWrap sx={{ minWidth: 0, fontSize: dense ? "0.5625rem" : "0.625rem", letterSpacing: "0.1em" }}>
           {label}
         </Typography>
-        <Box aria-hidden sx={{ width: 26, height: 26, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 1.5, bgcolor: t.bg, color: t.fg }}>
-          <Icon sx={{ fontSize: 15 }} />
+        <Box aria-hidden sx={{ width: dense ? 20 : 26, height: dense ? 20 : 26, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 1.5, bgcolor: t.bg, color: t.fg }}>
+          <Icon sx={{ fontSize: dense ? 12 : 15 }} />
         </Box>
       </Box>
 
       <Box sx={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 2 }}>
-        <Typography component="span" sx={{ fontSize: "1.375rem", lineHeight: 1, fontWeight: 600, letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums", color: valueColor ?? "text.primary" }}>
+        <Typography component="span" sx={{ fontSize: dense ? "1.125rem" : "1.375rem", lineHeight: 1, fontWeight: 600, letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums", color: valueColor ?? "text.primary" }}>
           {shown}
           {target != null && (
-            <Box component="span" sx={{ ml: 1, fontSize: "0.8125rem", fontWeight: 500, letterSpacing: 0, color: "text.secondary" }}>
+            <Box component="span" sx={{ ml: 1, fontSize: dense ? "0.75rem" : "0.8125rem", fontWeight: 500, letterSpacing: 0, color: "text.secondary" }}>
               / {target}
             </Box>
           )}
@@ -109,16 +112,16 @@ export function MiniStatCard({
             {target != null ? `${value} of ${target}` : value}
           </Box>
         </Typography>
-        {chip && <StatusChip tone={chip.tone} label={chip.label} uppercase sx={{ height: 18, "& .MuiChip-label": { px: 1.5 } }} />}
+        {chip && <StatusChip tone={chip.tone} label={chip.label} uppercase sx={{ height: dense ? 16 : 18, "& .MuiChip-label": { px: 1.5 } }} />}
       </Box>
 
       {fill != null && (
-        <Box aria-hidden sx={{ height: 5, borderRadius: 999, bgcolor: "grey.200", overflow: "hidden" }}>
+        <Box aria-hidden sx={{ height: dense ? 4 : 5, borderRadius: 999, bgcolor: "grey.200", overflow: "hidden" }}>
           <Box sx={{ height: 1, width: mounted ? `${fill * 100}%` : 0, borderRadius: 999, bgcolor: t.fg, transition: `width ${STAT_FILL_MS}ms ${STAT_EASE}`, transitionDelay: animate ? `${index * 80 + 120}ms` : "0ms" }} />
         </Box>
       )}
 
-      <Typography variant="caption" noWrap sx={{ color: footerTone === "success" ? "success.main" : footerTone === "danger" ? "error.main" : "text.secondary", fontVariantNumeric: "tabular-nums" }}>
+      <Typography variant="caption" noWrap sx={{ fontSize: dense ? "0.6875rem" : undefined, color: footerTone === "success" ? "success.main" : footerTone === "danger" ? "error.main" : "text.secondary", fontVariantNumeric: "tabular-nums" }}>
         {footer}
       </Typography>
     </Card>
@@ -133,22 +136,22 @@ export function MiniStatCard({
   );
 }
 
-/** The strip itself: a header row and a horizontally scrolling row of equal cards. */
-export function StatStrip({ ariaLabel, header, children }: { ariaLabel: string; header: React.ReactNode; children: React.ReactNode }) {
+/** The strip itself: an optional header row and a horizontally scrolling row of equal cards. */
+export function StatStrip({ ariaLabel, header, children, dense = false }: { ariaLabel: string; header?: React.ReactNode; children: React.ReactNode; dense?: boolean }) {
   return (
     <Box
       component="section"
       aria-label={ariaLabel}
-      sx={{ borderBottom: 1, borderColor: "divider", bgcolor: "background.default", px: { xs: 4, md: 6 }, pt: 3, pb: 3.5, display: "grid", gap: 2.5 }}
+      sx={{ borderBottom: 1, borderColor: "divider", bgcolor: "background.default", px: { xs: 4, md: 6 }, pt: dense ? 2 : 3, pb: dense ? 2 : 3.5, display: "grid", gap: dense ? 1.5 : 2.5 }}
     >
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2, minWidth: 0, minHeight: 24 }}>{header}</Box>
+      {header && <Box sx={{ display: "flex", alignItems: "center", gap: 2, minWidth: 0, minHeight: 24 }}>{header}</Box>}
       <Box
         className="nv-scroll"
         sx={{
           display: "grid",
           gridAutoFlow: "column",
-          gridAutoColumns: { xs: "minmax(184px, 1fr)", md: "minmax(168px, 1fr)" },
-          gap: 3,
+          gridAutoColumns: dense ? { xs: "minmax(160px, 1fr)", md: "minmax(140px, 1fr)" } : { xs: "minmax(184px, 1fr)", md: "minmax(168px, 1fr)" },
+          gap: dense ? 2 : 3,
           overflowX: "auto",
           overscrollBehaviorX: "contain",
           // Room for the rise animation and the hover lift without clipping.
