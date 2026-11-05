@@ -43,7 +43,8 @@ export function Itinerary({
   startLabel: string;
   selectedId: string | null;
   onSelect: (id: string | null) => void;
-  onViewBrief: (id: string) => void;
+  /** Omit to hide the brief button. */
+  onViewBrief?: (id: string) => void;
   hoveredId: string | null;
   onHover: (id: string | null) => void;
   /** True when the rep reordered/removed stops — optimized times no longer apply. */
@@ -179,14 +180,15 @@ export function Itinerary({
                     px: 3.5,
                     py: 3,
                     textAlign: "left",
-                    borderColor: selected ? "primary.main" : hovered ? "text.disabled" : "divider",
+                    // Selection shows as the tinted background only; no accent border around the card.
+                    borderColor: hovered && !selected ? "text.disabled" : "divider",
                     bgcolor: selected ? "action.selected" : hovered ? "background.sunken" : "background.paper",
                     boxShadow: hovered && !selected ? 1 : 0,
                     transition: (t) =>
                       t.transitions.create(["border-color", "background-color", "box-shadow"], {
                         duration: t.transitions.duration.shortest,
                       }),
-                    "&:hover": { borderColor: selected ? "primary.main" : "text.disabled", boxShadow: selected ? 0 : 1 },
+                    "&:hover": { borderColor: selected ? "divider" : "text.disabled", boxShadow: selected ? 0 : 1 },
                     "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: 1 },
                   }}
                 >
@@ -211,17 +213,19 @@ export function Itinerary({
 
                   {selected && (
                     <Box className="nv-fade-in" sx={{ mt: 3, pt: 3, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 2, borderTop: 1, borderColor: "divider" }}>
-                      <Button
-                        variant="contained"
-                        size="small"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onViewBrief(s.accountId);
-                        }}
-                        sx={{ fontWeight: 600, whiteSpace: "nowrap" }}
-                      >
-                        View brief
-                      </Button>
+                      {onViewBrief && (
+                        <Button
+                          variant="contained"
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onViewBrief(s.accountId);
+                          }}
+                          sx={{ fontWeight: 600, whiteSpace: "nowrap" }}
+                        >
+                          View brief
+                        </Button>
+                      )}
                       {s.googleMapsUrl && (
                         <Button
                           variant="outlined"

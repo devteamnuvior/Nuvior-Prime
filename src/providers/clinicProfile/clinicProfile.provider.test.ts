@@ -106,6 +106,25 @@ describe("clinic profile schema", () => {
     }
   });
 
+  it("trims over-long labels and caps lists instead of rejecting the whole profile", () => {
+    const base = { clinicName: "X", matchConfidence: "HIGH" };
+    const long = "Bookings, general enquiries and everything else you might want to ask the front desk about";
+    const r = validateClinicWebProfile({
+      ...base,
+      emails: [{ address: "info@clinic.example", label: long, sourceUrl: "https://clinic.example" }],
+      phones: Array.from({ length: 14 }, (_, i) => ({ number: `+1 416 555 01${String(i).padStart(2, "0")}` })),
+      services: ["Injectables", "", "   ", "Laser"],
+    });
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.value.emails[0]?.label).toHaveLength(60);
+      expect(r.value.phones).toHaveLength(10);
+      expect(r.value.services).toEqual(["Injectables", "Laser"]);
+    }
+    // Shape errors still reject.
+    expect(validateClinicWebProfile({ ...base, phones: [{ number: "1" }] }).ok).toBe(false);
+  });
+
   it("accepts published products with a kind and a source, rejects unknown kinds", () => {
     const base = { clinicName: "X", matchConfidence: "HIGH" };
     const ok = validateClinicWebProfile({ ...base, products: [{ name: "Sculptra", kind: "injectable", context: "Injectables page", sourceUrl: "https://clinic.example/injectables" }] });

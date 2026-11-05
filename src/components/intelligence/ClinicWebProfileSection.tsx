@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import LinearProgress from "@mui/material/LinearProgress";
+import CircularProgress from "@mui/material/CircularProgress";
 import Link from "@mui/material/Link";
 import Typography from "@mui/material/Typography";
 import type { ClinicWebProfileDto } from "@/domain/clinicProfile/runClinicProfile";
@@ -34,17 +34,10 @@ export function ClinicWebProfileSection({
   onRun: () => void;
 }) {
   const [sourcesOpen, setSourcesOpen] = useState(false);
-  const state = isRunning ? "RUNNING" : (dto?.state ?? "NOT_RESEARCHED");
+  const state = dto?.state ?? "NOT_RESEARCHED";
   const profile = dto?.profile ?? null;
-
-  if (state === "RUNNING") {
-    return (
-      <Shell title="Clinic contact research">
-        <Muted>Claude is searching the web and reading the clinic&apos;s site…</Muted>
-        <LinearProgress aria-label="Researching clinic contact details" sx={{ mt: 2, height: 6, borderRadius: 999 }} />
-      </Shell>
-    );
-  }
+  // While Claude works the button itself carries the loader; nothing else changes.
+  const spinner = <CircularProgress size={16} color="inherit" aria-hidden />;
 
   if (state === "NOT_RESEARCHED" || !profile) {
     const failure = state === "FAILED" || state === "UNAVAILABLE" ? dto?.failureMessage : null;
@@ -60,8 +53,17 @@ export function ClinicWebProfileSection({
             products and devices it publishes, from public sources.
           </Muted>
         )}
-        <Button variant="contained" size="large" fullWidth onClick={onRun} disabled={state === "UNAVAILABLE"} sx={{ mt: 3, fontWeight: 600 }}>
-          {failure ? "Retry with Claude" : "Find clinic info with Claude"}
+        <Button
+          variant="contained"
+          size="large"
+          fullWidth
+          onClick={onRun}
+          disabled={state === "UNAVAILABLE" || isRunning}
+          startIcon={isRunning ? spinner : undefined}
+          aria-busy={isRunning}
+          sx={{ mt: 3, fontWeight: 600 }}
+        >
+          {isRunning ? "Researching…" : failure ? "Retry with Claude" : "Find clinic info with Claude"}
         </Button>
       </Shell>
     );
@@ -222,8 +224,8 @@ export function ClinicWebProfileSection({
         <Button size="small" variant="text" onClick={() => setSourcesOpen((v) => !v)} aria-expanded={sourcesOpen} sx={{ px: 1, mx: -1, minHeight: 28, fontSize: "0.75rem", color: "text.secondary", "&:hover": { color: "text.primary" } }}>
           {sourcesOpen ? "Hide sources" : `Sources (${profile.sources.length})`}
         </Button>
-        <Button size="small" variant="text" color="primary" onClick={onRun} sx={{ px: 1, mx: -1, minHeight: 28, fontSize: "0.75rem" }}>
-          Refresh
+        <Button size="small" variant="text" color="primary" onClick={onRun} disabled={isRunning} startIcon={isRunning ? spinner : undefined} aria-busy={isRunning} sx={{ px: 1, mx: -1, minHeight: 28, fontSize: "0.75rem" }}>
+          {isRunning ? "Refreshing…" : "Refresh"}
         </Button>
       </Box>
       {sourcesOpen && (

@@ -23,6 +23,7 @@ import { ClinicIntelligenceSection } from "@/components/intelligence/ClinicIntel
 import { ClinicWebProfileSection } from "@/components/intelligence/ClinicWebProfileSection";
 import type { ClinicIntelligenceDto } from "@/domain/intelligence/clinicIntelligenceDto";
 import type { ClinicWebProfileDto } from "@/domain/clinicProfile/runClinicProfile";
+import { SHOW_TAXONOMY_VERIFICATION, TAXONOMY_VERIFY_FIELD_LABEL } from "@/domain/taxonomy";
 
 const SWIPE_CLOSE_PX = 90;
 const DRAWER_WIDTH = 370;
@@ -59,14 +60,17 @@ export function ClinicDrawer({
   isProfiling?: boolean;
   onProfile?: () => void;
   onClose: () => void;
-  onViewBrief: () => void;
+  /** Omit to hide the pre-visit brief button. */
+  onViewBrief?: () => void;
 }) {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const crm = data.crmByAccountId[stop.accountId];
   const origins = data.fieldOriginsByAccountId[stop.accountId];
 
   const verified = (origins?.enrichedFields ?? []).slice(0, 3);
-  const toVerify = (origins?.verifyFields ?? []).slice(0, 3);
+  const toVerify = (origins?.verifyFields ?? [])
+    .filter((f) => SHOW_TAXONOMY_VERIFICATION || f !== TAXONOMY_VERIFY_FIELD_LABEL)
+    .slice(0, 3);
 
   // Mobile bottom sheet: drag the handle down to dismiss.
   const sheetRef = useRef<HTMLDivElement | null>(null);
@@ -275,11 +279,13 @@ export function ClinicDrawer({
         />
 
         <Box sx={{ mt: 4, display: "flex", gap: 2 }}>
-          <Button variant="contained" size="large" onClick={onViewBrief} sx={{ flex: 1, fontWeight: 600 }}>
-            View pre-visit brief
-          </Button>
+          {onViewBrief && (
+            <Button variant="contained" size="large" onClick={onViewBrief} sx={{ flex: 1, fontWeight: 600 }}>
+              View pre-visit brief
+            </Button>
+          )}
           {stop.googleMapsUrl && (
-            <Button variant="outlined" size="large" component="a" href={stop.googleMapsUrl} target="_blank" rel="noreferrer" sx={{ flexShrink: 0 }}>
+            <Button variant="outlined" size="large" component="a" href={stop.googleMapsUrl} target="_blank" rel="noreferrer" sx={{ flex: 1, fontWeight: 600 }}>
               Open in Google Maps
             </Button>
           )}

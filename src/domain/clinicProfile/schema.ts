@@ -13,8 +13,22 @@ import { z } from "zod";
 /** v2 adds `products` (brands, devices, skincare lines the clinic publishes). Older rows show as stale. */
 export const CLINIC_PROFILE_PROMPT_VERSION = "clinic-profile-v2";
 
-const url = z.string().min(1).max(2000);
-const shortText = z.string().min(1).max(300);
+/**
+ * Claude occasionally overshoots a length ("Bookings & general enquiries (front desk)…")
+ * or a list size. A long value is still a true fact, so it is trimmed to fit rather than
+ * failing the whole profile after a minute of research. Only shape and type errors reject.
+ */
+const trimTo = (max: number) => (v: unknown) => (typeof v === "string" ? v.trim().slice(0, max) : v);
+/** Optional text: trimmed to `max`; empty stays empty (callers make it nullable). */
+const clamp = (max: number) => z.preprocess(trimTo(max), z.string().max(max));
+/** Required text: trimmed to `max`, must not be empty. */
+const text = (max: number, min = 1) => z.preprocess(trimTo(max), z.string().min(min).max(max));
+/** A list capped at `max` items, with empty strings dropped. */
+const limit = <T extends z.ZodTypeAny>(item: T, max: number) =>
+  z.preprocess((v) => (Array.isArray(v) ? v.filter((x) => !(typeof x === "string" && !x.trim())).slice(0, max) : v), z.array(item).max(max));
+
+const url = text(2000);
+const shortText = text(300);
 
 const sourced = {
   sourceUrl: url.nullable().default(null),
@@ -35,41 +49,41 @@ export const MATCH_CONFIDENCE = ["HIGH", "MEDIUM", "LOW"] as const;
 export const clinicAddressSchema = z.object({
   street: shortText.nullable().default(null),
   city: shortText.nullable().default(null),
-  province: z.string().max(60).nullable().default(null),
-  postalCode: z.string().max(20).nullable().default(null),
-  formatted: z.string().max(400).nullable().default(null),
+  province: clamp(60).nullable().default(null),
+  postalCode: clamp(20).nullable().default(null),
+  formatted: clamp(400).nullable().default(null),
   ...sourced,
 });
 
 export const clinicPhoneSchema = z.object({
-  number: z.string().min(3).max(40),
-  label: z.string().max(60).nullable().default(null),
+  number: text(40, 3),
+  label: clamp(60).nullable().default(null),
   ...sourced,
 });
 
 export const clinicEmailSchema = z.object({
-  address: z.string().min(3).max(200),
-  label: z.string().max(60).nullable().default(null),
+  address: text(200, 3),
+  label: clamp(60).nullable().default(null),
   ...sourced,
 });
 
 export const clinicSocialSchema = z.object({
   platform: z.enum(SOCIAL_PLATFORMS),
   url: url,
-  handle: z.string().max(100).nullable().default(null),
+  handle: clamp(100).nullable().default(null),
   ...sourced,
 });
 
 export const clinicPersonSchema = z.object({
   name: shortText,
   role: shortText,
-  snippet: z.string().max(400).nullable().default(null),
+  snippet: clamp(400).nullable().default(null),
   ...sourced,
 });
 
 export const clinicHoursSchema = z.object({
-  label: z.string().min(1).max(80),
-  hours: z.string().min(1).max(120),
+  label: text(80),
+  hours: text(120),
   ...sourced,
 });
 
@@ -80,36 +94,36 @@ export const clinicProductSchema = z.object({
   name: shortText,
   kind: z.enum(PRODUCT_KINDS).default("other"),
   /** Where it was mentioned, e.g. "listed under Injectables", "Botox page". */
-  context: z.string().max(300).nullable().default(null),
+  context: clamp(300).nullable().default(null),
   ...sourced,
 });
 
 export const clinicSourceSchema = z.object({
   url: url,
-  title: z.string().max(300).nullable().default(null),
+  title: clamp(300).nullable().default(null),
 });
 
 export const clinicWebProfileSchema = z
   .object({
     clinicName: shortText,
     matchConfidence: z.enum(MATCH_CONFIDENCE),
-    matchReason: z.string().max(400).nullable().default(null),
+    matchReason: clamp(400).nullable().default(null),
     address: clinicAddressSchema.nullable().default(null),
-    phones: z.array(clinicPhoneSchema).max(10).default([]),
-    emails: z.array(clinicEmailSchema).max(10).default([]),
+    phones: limit(clinicPhoneSchema, 10).default([]),
+    emails: limit(clinicEmailSchema, 10).default([]),
     website: z
       .object({ url: url, ...sourced })
       .nullable()
       .default(null),
-    socialProfiles: z.array(clinicSocialSchema).max(12).default([]),
-    people: z.array(clinicPersonSchema).max(12).default([]),
-    openingHours: z.array(clinicHoursSchema).max(10).default([]),
-    services: z.array(z.string().min(1).max(120)).max(30).default([]),
-    products: z.array(clinicProductSchema).max(40).default([]),
-    websiteSummary: z.string().max(1500).nullable().default(null),
-    notes: z.array(z.string().min(1).max(300)).max(10).default([]),
-    unknowns: z.array(z.string().min(1).max(200)).max(20).default([]),
-    sources: z.array(clinicSourceSchema).max(20).default([]),
+    socialProfiles: limit(clinicSocialSchema, 12).default([]),
+    people: limit(clinicPersonSchema, 12).default([]),
+    openingHours: limit(clinicHoursSchema, 10).default([]),
+    services: limit(text(120), 30).default([]),
+    products: limit(clinicProductSchema, 40).default([]),
+    websiteSummary: clamp(1500).nullable().default(null),
+    notes: limit(text(300), 10).default([]),
+    unknowns: limit(text(200), 20).default([]),
+    sources: limit(clinicSourceSchema, 20).default([]),
   })
   .strict();
 
