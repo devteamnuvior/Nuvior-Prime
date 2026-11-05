@@ -354,7 +354,7 @@ export function ClinicDrawer({
           )}
         </Box>
 
-        <Button variant="contained" fullWidth onClick={() => setVisitOpen(true)} sx={{ mt: 2, minHeight: 40, fontWeight: 600 }}>
+        <Button variant="outlined" fullWidth onClick={() => setVisitOpen(true)} sx={{ mt: 2, minHeight: 40, fontWeight: 600 }}>
           Record Visit
         </Button>
 
