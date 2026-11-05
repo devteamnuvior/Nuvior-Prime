@@ -36,7 +36,7 @@ import {
 import { getClinicProfileProvider } from "@/providers/clinicProfile";
 import { getClinicProfileConfig } from "@/lib/clinicProfileConfig";
 import { recomputeRepDailySummary, upsertSalesTarget, deleteSalesTarget, type SalesTargetRow } from "@/lib/performance";
-import { TARGET_METRICS, TARGET_PERIODS, VISIT_OUTCOME_CODES, VISIT_DURATIONS, isVisitDuration } from "@/domain/performance";
+import { DAILY_CLINIC_SLOTS, TARGET_METRICS, TARGET_PERIODS, VISIT_OUTCOME_CODES, VISIT_DURATIONS, isVisitDuration } from "@/domain/performance";
 import { awardAfterVisit } from "@/lib/xp";
 
 const provinceCodes = CANADIAN_PROVINCES.map((p) => p.code) as [string, ...string[]];
@@ -56,14 +56,7 @@ const schema = z.object({
   startLabel: z.string().optional().nullable(),
   // Phase 8.6 — drawn working area (JSON array of {lat,lng}); validated below
   workingAreaJson: z.string().optional().nullable(),
-  dailyVisitTarget: z.coerce.number().int().min(1).max(50).default(10),
   maxRadiusKm: z.coerce.number().min(1).max(500).default(40),
-  maxDriveMinutes: z.preprocess(
-    (v) => (v === "" || v == null ? null : v),
-    z.coerce.number().int().min(1).max(300).nullable().optional(),
-  ),
-  dayStartClock: z.string().optional().nullable(),
-  dayEndClock: z.string().optional().nullable(),
   alreadyVisitedRaw: z.string().default("none"),
   revisitsDueRaw: z.string().default("none"),
 });
@@ -96,11 +89,7 @@ export async function generateVisitListAction(
       startPlaceId: formData.get("startPlaceId") || null,
       startLabel: formData.get("startLabel") || null,
       workingAreaJson: formData.get("workingAreaJson") || null,
-      dailyVisitTarget: formData.get("dailyVisitTarget"),
       maxRadiusKm: formData.get("maxRadiusKm"),
-      maxDriveMinutes: formData.get("maxDriveMinutes"),
-      dayStartClock: formData.get("dayStartClock") || null,
-      dayEndClock: formData.get("dayEndClock") || null,
       alreadyVisitedRaw: formData.get("alreadyVisitedRaw") || "none",
       revisitsDueRaw: formData.get("revisitsDueRaw") || "none",
     });
@@ -129,8 +118,11 @@ export async function generateVisitListAction(
         ? { lat: parsed.data.startLat, lng: parsed.data.startLng }
         : null;
 
+    // Every rep's day has the same shape: ten 45-minute clinic slots, no drive-time
+    // limit, and the routing defaults for day hours. Nothing in the form changes that.
     const result = await runProspectSearch({
       ...parsed.data,
+      dailyVisitTarget: DAILY_CLINIC_SLOTS,
       startCoords,
       workingArea,
       actorUserId: user.id,
@@ -147,7 +139,7 @@ export async function generateVisitListAction(
       resourceId: result.visitRunId,
       metadata: {
         provinceCode: parsed.data.provinceCode,
-        target: parsed.data.dailyVisitTarget,
+        target: DAILY_CLINIC_SLOTS,
         qualified: result.qualifiedCount,
       },
     });

@@ -3,9 +3,8 @@
  *
  * User-facing name: "Today's area". Not GIS terminology.
  *
- *   DRIVE_TIME  → travel-reach presets (30 / 45 / 60) → maxDriveMinutes
+ *   RADIUS      → km envelope around the start (the default) → maxRadiusKm
  *   DRAWN_AREA  → polygon → workingAreaJson / pointInWorkingArea
- *   RADIUS      → advanced km envelope → maxRadiusKm
  *
  * Drawn-area + due revisits
  * -------------------------
@@ -20,21 +19,16 @@
  */
 
 import type { GeoPoint } from "@/domain/geo";
-import type { AreaStrategy, TravelReachMinutes } from "./travelReach";
+import type { AreaStrategy } from "./area";
 
-export type PlanningAreaKind = "drive-time" | "drawn" | "radius";
+export type PlanningAreaKind = "drawn" | "radius";
 
 export type PlanningArea = AreaStrategy;
 
 export function planningAreaKind(area: AreaStrategy): PlanningAreaKind | null {
-  if (area.kind === "travel-reach") return "drive-time";
   if (area.kind === "drawn") return "drawn";
   if (area.kind === "radius") return "radius";
   return null;
-}
-
-export function driveTimeArea(minutes: TravelReachMinutes): AreaStrategy {
-  return { kind: "travel-reach", minutes };
 }
 
 export function drawnArea(points: GeoPoint[]): AreaStrategy {

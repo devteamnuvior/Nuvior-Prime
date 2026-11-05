@@ -82,7 +82,7 @@ mode: planner sheet closes, each map click adds a vertex (Undo/Cancel/Finish
 banner). Live fill preview appears at 3 points; tapping the first vertex
 (larger ring) or Finish closes the polygon. Escape cancels; Enter finishes
 when closable. Approximate area (km²) is shown on the banner and in the planner.
-A non-drawing fallback is **Travel reach** (30 / 45 / 60 min).
+Without an outline the search covers a 40 km radius around the start.
 - On Google Maps the finished polygon stays editable by dragging vertices;
   Clear removes it. The Leaflet fallback supports draw/clear, not vertex
   drag-edit.

@@ -76,7 +76,6 @@ colour. The route and the day are the product; chrome stays quiet.
 | `Disclosure` | `components/feedback/Disclosure.tsx` | Chevron toggle + `Collapse`; `inline` text button or full-width `row` with trailing count. Content unmounts while closed. |
 | `DotList`, `PlainList` | `components/feedback/DotList.tsx` | Quiet bulleted list with a 4px primary dot; marker-less list. |
 | `Badge` | `components/today/Itinerary.tsx` | 20px, 4px-radius chip for fit / lead product / revisit / verify (tones: accent, signal, neutral, outline, danger). |
-| `Segmented` | `components/today/Segmented.tsx` | Equal-width `ToggleButtonGroup` (travel reach); selected cell primary-filled. |
 | `MapControls`, `MapCaption`, `MapBadge` | `components/today/mapChrome.tsx` | Zoom / fit / centre / external stack, schematic honesty pill, non-production renderer badge; `MAP_Z` stacking constants. |
 | `toast` | `components/feedback/toast.ts` | `toast.success/error/info/warning/result()` via notistack. |
 | `FormTextField`, `FormSelect`, `FormCheckbox`, `FormSwitch` | `components/form/fields.tsx` | react-hook-form bindings; errors render as helper text under the field. |
@@ -144,7 +143,7 @@ tracking `0.16em`, `--faint`; metrics 13px with 600 value + 400 muted label.
 - Primary button: `Button variant="contained"`, 600 weight; hero CTA ("Build My Day") is 48px
   tall, uppercase, letterspaced.
 - Secondary button: `Button variant="outlined"` (`divider` border, paper fill, sunken hover).
-- Segmented control (travel reach, min fit): `Segmented` — equal cells, 40–44px tall, selected
+- Segmented control: removed with travel reach and minimum fit (2026-11-05); nothing left used it. Previously equal cells, 40–44px tall, selected
   cell `primary.main` with contrast text.
 - Touch targets ≥ 40px everywhere; ≥ 44px for field-critical actions (drawer CTAs are 44px).
 
@@ -230,9 +229,9 @@ location, Drop pin. No giant empty form.
 ### 3.3 Route planning controls
 
 Side panel (~34%) on desktop; bottom sheet on mobile. Grouped: **Start** →
-**Today’s area** (travel reach 30/45/60 or draw) → **Day** (12-hour start/end,
-target visits, min fit). Advanced (radius, max drive, visited / revisits)
-collapsed by default. CTA: full-width 48px **BUILD MY DAY**. Pending state
+**Today’s area** (40 km search radius, or draw) → **Day** (a fixed note: ten
+clinics, 45 minutes each — no hours, count or fit to set). Advanced (radius,
+visited / revisits) collapsed by default. CTA: full-width 48px **BUILD MY DAY**. Pending state
 stays on the map (staged overlay); errors render inside the panel.
 
 ### 3.4 Selected clinic drawer

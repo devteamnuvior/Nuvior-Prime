@@ -20,25 +20,18 @@ import {
   type StartSelection,
 } from "@/lib/placeSelection";
 import { requestBrowserLocation } from "@/lib/browserGeolocation";
-import { clockOptions } from "@/lib/format";
-import {
-  TRAVEL_REACH_PRESETS,
-  travelReachLabel,
-  type AreaStrategy,
-  type TravelReachMinutes,
-} from "@/domain/planning/travelReach";
+import { DEFAULT_SEARCH_RADIUS_KM, type AreaStrategy } from "@/domain/planning/area";
+import { DAILY_CLINIC_SLOTS, SLOT_MINUTES } from "@/domain/performance/visitSlots";
 import type { PlannerPhase } from "@/domain/planning/plannerState";
 import type { OpportunitySummary } from "@/domain/planning/opportunity";
-import { Segmented } from "./Segmented";
 
 type ProvinceOption = (typeof CANADIAN_PROVINCES)[number];
 
-const TIMES = clockOptions();
-
 /**
  * Location-first planning panel. The rep shares where they are and the day is
- * built around it: ten clinics within the default travel reach, skipping any the
- * team visited recently. Day hours, reach and the rest live under "Edit plan".
+ * built around it: the ten nearest qualified clinics, skipping any the team
+ * visited recently. The count and the hours are not theirs to set; the search
+ * radius and the pasted lists live under "Edit plan".
  */
 export function PlanningWorkspace({
   phase,
@@ -58,18 +51,7 @@ export function PlanningWorkspace({
   onResolvedStart,
   onRequestDropPin,
   area,
-  onSelectReach,
-  driveHonest,
-  dayStart,
-  dayEnd,
-  onDayStart,
-  onDayEnd,
-  target,
-  onTarget,
-  radiusOverride,
-  onRadiusOverride,
-  driveOverride,
-  onDriveOverride,
+  onSearchRadiusKm,
   alreadyVisited,
   onAlreadyVisited,
   revisitsDue,
@@ -82,7 +64,6 @@ export function PlanningWorkspace({
   changingStart,
   buildEnabled,
   submitRadiusKm,
-  submitDriveMinutes,
   hasStart,
   onPlanSomewhereElse,
   canPlanSomewhereElse,
@@ -104,18 +85,8 @@ export function PlanningWorkspace({
   onResolvedStart: (selection: StartSelection | null) => void;
   onRequestDropPin: () => void;
   area: AreaStrategy;
-  onSelectReach: (minutes: TravelReachMinutes) => void;
-  driveHonest: boolean;
-  dayStart: string;
-  dayEnd: string;
-  onDayStart: (v: string) => void;
-  onDayEnd: (v: string) => void;
-  target: number;
-  onTarget: (n: number) => void;
-  radiusOverride: number | null;
-  onRadiusOverride: (n: number | null) => void;
-  driveOverride: number | null;
-  onDriveOverride: (n: number | null) => void;
+  /** Radius mode only: a new km value, or null to go back to the default. */
+  onSearchRadiusKm: (km: number | null) => void;
   alreadyVisited: string;
   onAlreadyVisited: (v: string) => void;
   revisitsDue: string;
@@ -128,7 +99,6 @@ export function PlanningWorkspace({
   changingStart: boolean;
   buildEnabled: boolean;
   submitRadiusKm: number;
-  submitDriveMinutes: number | null;
   hasStart: boolean;
   onPlanSomewhereElse?: () => void;
   canPlanSomewhereElse?: boolean;
@@ -209,10 +179,6 @@ export function PlanningWorkspace({
       <input type="hidden" name="startLabel" value={start?.label ?? ""} />
       <input type="hidden" name="provinceCode" value={province} />
       <input type="hidden" name="workingAreaJson" value={workingAreaJson} />
-      <input type="hidden" name="dailyVisitTarget" value={target} />
-      <input type="hidden" name="dayStartClock" value={dayStart} />
-      <input type="hidden" name="dayEndClock" value={dayEnd} />
-      <input type="hidden" name="maxDriveMinutes" value={submitDriveMinutes ?? ""} />
       <input type="hidden" name="maxRadiusKm" value={submitRadiusKm} />
       <input type="hidden" name="alreadyVisitedRaw" value={alreadyVisited} />
       <input type="hidden" name="revisitsDueRaw" value={revisitsDue} />
@@ -225,7 +191,7 @@ export function PlanningWorkspace({
               Where are you right now?
             </Typography>
             <Typography variant="body2" sx={{ mt: 1, color: "text.secondary", lineHeight: 1.6 }}>
-              Share your location and we&rsquo;ll line up today&rsquo;s {target} clinics around you — skipping any the team has visited recently.
+              Share your location and we&rsquo;ll line up today&rsquo;s {DAILY_CLINIC_SLOTS} clinics around you — skipping any the team has visited recently.
             </Typography>
             <Stack spacing={2} sx={{ mt: 4 }}>
               <Button variant="contained" size="large" fullWidth onClick={useMyLocation} disabled={geoPending}>
@@ -283,29 +249,9 @@ export function PlanningWorkspace({
             <Typography variant="eyebrow" component="h2" sx={{ display: "block" }}>
               Day
             </Typography>
-            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 3 }}>
-              <TextField select label="Day start" value={dayStart} onChange={(e) => onDayStart(e.target.value)} slotProps={TIME_MENU}>
-                {TIMES.map((t) => (
-                  <MenuItem key={t.value} value={t.value}>
-                    {t.label}
-                  </MenuItem>
-                ))}
-              </TextField>
-              <TextField select label="Day end" value={dayEnd} onChange={(e) => onDayEnd(e.target.value)} slotProps={TIME_MENU}>
-                {TIMES.map((t) => (
-                  <MenuItem key={t.value} value={t.value}>
-                    {t.label}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Box>
-            <TextField
-              label="Clinics today"
-              type="number"
-              value={target}
-              onChange={(e) => onTarget(Number(e.target.value))}
-              slotProps={{ htmlInput: { min: 1, max: 50 } }}
-            />
+            <Typography variant="body2" sx={{ color: "text.secondary", lineHeight: 1.6 }}>
+              {DAILY_CLINIC_SLOTS} clinics, {SLOT_MINUTES} minutes each — the same day for every rep. The hours work themselves out around the route.
+            </Typography>
           </Box>
         )}
 
@@ -323,40 +269,21 @@ export function PlanningWorkspace({
         {hasStart && (
           <Disclosure label="Advanced planning" open={advancedOpen} onToggle={setAdvancedOpen} contentSx={{ pt: 3 }}>
             <Stack spacing={3}>
-              <Box>
-                <FieldLabel>Travel reach</FieldLabel>
-                <Segmented
-                  ariaLabel="Travel reach"
-                  height={44}
-                  value={area.kind === "travel-reach" ? area.minutes : null}
-                  options={TRAVEL_REACH_PRESETS.map((m) => ({ value: m, label: `${m} min` }))}
-                  onChange={(m) => onSelectReach(m)}
+              {area.kind === "drawn" ? (
+                <Typography variant="caption" sx={{ color: "text.secondary", lineHeight: 1.6 }}>
+                  Today&rsquo;s area is drawn on the map and the search covers that outline. Clear it to plan around your start instead.
+                </Typography>
+              ) : (
+                <TextField
+                  label="Search radius (km)"
+                  type="number"
+                  value={area.kind === "radius" ? area.km : ""}
+                  placeholder={String(DEFAULT_SEARCH_RADIUS_KM)}
+                  helperText={`Clinics are picked from this far around your start (default ${DEFAULT_SEARCH_RADIUS_KM} km).`}
+                  onChange={(e) => onSearchRadiusKm(e.target.value === "" ? null : Number(e.target.value))}
+                  slotProps={{ htmlInput: { min: 1, max: 500 }, inputLabel: { shrink: true } }}
                 />
-                {area.kind === "travel-reach" && (
-                  <Typography variant="caption" sx={{ display: "block", mt: 2, color: "text.secondary", lineHeight: 1.6 }}>
-                    {travelReachLabel(area.minutes)}
-                    {driveHonest
-                      ? " — a drive-time limit for today’s route, not a drawn road boundary."
-                      : " — drive times are estimated in this mode; a true road-time boundary is not shown."}
-                  </Typography>
-                )}
-              </Box>
-              <TextField
-                label="Search radius (km)"
-                type="number"
-                value={radiusOverride ?? ""}
-                placeholder="Auto"
-                onChange={(e) => onRadiusOverride(e.target.value === "" ? null : Number(e.target.value))}
-                slotProps={{ htmlInput: { min: 1, max: 500 }, inputLabel: { shrink: true } }}
-              />
-              <TextField
-                label="Max one-way drive (min)"
-                type="number"
-                value={driveOverride ?? ""}
-                placeholder={area.kind === "travel-reach" ? String(area.minutes) : "None"}
-                onChange={(e) => onDriveOverride(e.target.value === "" ? null : Number(e.target.value))}
-                slotProps={{ htmlInput: { min: 1, max: 300 }, inputLabel: { shrink: true } }}
-              />
+              )}
               <TextField
                 label="Already visited / not due"
                 multiline
@@ -372,7 +299,7 @@ export function PlanningWorkspace({
                 onChange={(e) => onRevisitsDue(e.target.value)}
               />
               <Typography variant="caption" sx={{ color: "text.faint", lineHeight: 1.6 }}>
-                Each clinic is planned as a 45-minute slot; lunch uses the routing default (12:00–2:00 PM).
+                Each clinic is planned as a {SLOT_MINUTES}-minute slot.
               </Typography>
             </Stack>
           </Disclosure>
@@ -416,18 +343,6 @@ export function PlanningWorkspace({
     </Box>
   );
 }
-
-/** Caption-weight label above a control that has no MUI label of its own (segmented groups). */
-function FieldLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <Typography variant="caption" component="p" sx={{ mb: 1.5, fontWeight: 500, color: "text.primary" }}>
-      {children}
-    </Typography>
-  );
-}
-
-/** Tall option lists (15-minute clock) scroll inside the menu instead of covering the panel. */
-const TIME_MENU = { select: { MenuProps: { slotProps: { paper: { sx: { maxHeight: 320 } } } } } } as const;
 
 /** Placeholder for future saved working-area presets — not a completion requirement. */
 export const SAVED_AREA_PRESETS: { id: string; name: string; points: GeoPoint[] }[] = [];

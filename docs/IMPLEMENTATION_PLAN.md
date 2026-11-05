@@ -315,7 +315,7 @@ Live Google validation remains **`PENDING_GOOGLE_CREDENTIALS`**.
 - [x] Today opens as a map-first workspace (no giant prospecting form)
 - [x] Start: Use my location / Search / Drop pin → canonical `StartSelection`
 - [x] Province inferred from place / postal / coords; territory rejection without silent switch
-- [x] Auto travel reach 30/45/60 wired to `maxDriveMinutes` (no fake isochrone)
+- [x] ~~Auto travel reach 30/45/60 wired to `maxDriveMinutes`~~ — removed 2026-11-05; the day is a 40 km search radius
 - [x] Draw Today’s area as first-class constraint + validation
 - [x] Compact day controls (12-hour clocks) + BUILD MY DAY
 - [x] Same-map pipeline overlay → itinerary; Edit plan / stale / rebuild preserves prior route
@@ -384,8 +384,8 @@ Clamp to 1–5. Lead product selection:
 8. Live Google Maps validation when credentials exist — **`PENDING_GOOGLE_CREDENTIALS`**.
    Run the checklist in `GOOGLE_MAPS_SETUP.md`; no architecture change expected.
 9. Saved working-area presets (Downtown Toronto / North York / …) — placeholder only in 8.8.
-10. True drive-time isochrone polygons when a provider exists (travel reach is a
-    `maxDriveMinutes` constraint today, not a drawn road boundary).
+10. True drive-time isochrone polygons when a provider exists (the engine still
+    accepts `maxDriveMinutes`, but the planner no longer sends one).
 
 ---
 

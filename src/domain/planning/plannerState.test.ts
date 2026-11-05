@@ -12,7 +12,7 @@ import {
   type PlannerInputs,
 } from "./plannerState";
 import { pinSelection } from "@/lib/placeSelection";
-import { travelReachLabel, travelReachRadiusKm, effectiveDriveMinutes } from "./travelReach";
+import { DEFAULT_SEARCH_RADIUS_KM, areaLabel, defaultArea, effectiveRadiusKm, radiusKmForDrawnArea } from "./area";
 import { opportunitySummary, candidateDots } from "./opportunity";
 import type { VisitListEntry } from "@/domain/visitList";
 
@@ -24,11 +24,6 @@ const base: PlannerInputs = {
   provinceCode: "ON",
   provinceError: null,
   area: { kind: "none" },
-  dayStart: "09:00",
-  dayEnd: "17:00",
-  target: 20,
-  radiusOverride: null,
-  driveOverride: null,
   alreadyVisited: "none",
   revisitsDue: "none",
   allowedProvinces: ["ON"],
@@ -63,8 +58,8 @@ describe("Phase 8.8 — planner state machine", () => {
     expect(buildBlockedReason(base)).toMatch(/today's area/i);
   });
 
-  it("enables BUILD MY DAY once travel reach is selected", () => {
-    const inputs = { ...base, area: { kind: "travel-reach" as const, minutes: 45 as const } };
+  it("enables BUILD MY DAY with the default radius area", () => {
+    const inputs = { ...base, area: defaultArea() };
     expect(areaIsReady(inputs.area)).toBe(true);
     expect(canBuildDay(inputs)).toBe(true);
     expect(buildBlockedReason(inputs)).toBeNull();
@@ -112,7 +107,7 @@ describe("Phase 8.8 — planner state machine", () => {
   });
 
   it("shows building, then route-ready, then stale after a material change", () => {
-    const inputs = { ...base, area: { kind: "travel-reach" as const, minutes: 45 as const } };
+    const inputs = { ...base, area: defaultArea() };
     expect(
       derivePhase(inputs, {
         pending: true,
@@ -144,7 +139,7 @@ describe("Phase 8.8 — planner state machine", () => {
       }),
     ).toBe("edit-plan");
 
-    const changed = { ...inputs, target: 12 };
+    const changed = { ...inputs, area: { kind: "radius" as const, km: 60 } };
     expect(
       derivePhase(changed, {
         pending: false,
@@ -172,7 +167,7 @@ describe("Phase 8.8 — planner state machine", () => {
       start: null,
       startText: "M5V 2T6",
       textCommitted: true,
-      area: { kind: "travel-reach", minutes: 45 },
+      area: defaultArea(),
     };
     expect(canBuildDay(inputs)).toBe(true);
     expect(
@@ -189,7 +184,7 @@ describe("Phase 8.8 — planner state machine", () => {
   it("blocks BUILD MY DAY when the start is outside authorized territory", () => {
     const inputs = {
       ...base,
-      area: { kind: "travel-reach" as const, minutes: 30 as const },
+      area: defaultArea(),
       provinceCode: null,
       provinceError: "That location is outside your assigned territory.",
     };
@@ -197,10 +192,10 @@ describe("Phase 8.8 — planner state machine", () => {
     expect(buildBlockedReason(inputs)).toMatch(/outside/i);
   });
 
-  it("marks the route stale when advanced radius override changes", () => {
-    const inputs = { ...base, area: { kind: "travel-reach" as const, minutes: 45 as const } };
+  it("marks the route stale when the search radius changes", () => {
+    const inputs = { ...base, area: defaultArea() };
     const fp = materialFingerprint(inputs);
-    const changed = { ...inputs, radiusOverride: 80 };
+    const changed = { ...inputs, area: { kind: "radius" as const, km: 80 } };
     expect(materialFingerprint(changed)).not.toBe(fp);
     expect(
       derivePhase(changed, {
@@ -214,21 +209,30 @@ describe("Phase 8.8 — planner state machine", () => {
   });
 
   it("does not treat brief/drawer UI as a material planning change", () => {
-    const inputs = { ...base, area: { kind: "travel-reach" as const, minutes: 45 as const } };
+    const inputs = { ...base, area: defaultArea() };
     expect(materialFingerprint(inputs)).toBe(materialFingerprint({ ...inputs }));
-    expect(sessionMemoryIsPlanningState(["start", "area", "dayStart", "dayEnd", "target", "briefId"])).toBe(
+    expect(sessionMemoryIsPlanningState(["start", "area", "briefId"])).toBe(
       true,
     );
   });
 });
 
-describe("Phase 8.8 — travel reach", () => {
-  it("is a real drive-time constraint, not an isochrone polygon", () => {
-    expect(travelReachLabel(45)).toBe("Travel reach: 45 min");
-    expect(travelReachRadiusKm(45)).toBe(55);
-    expect(effectiveDriveMinutes({ kind: "travel-reach", minutes: 45 }, null)).toBe(45);
-    expect(effectiveDriveMinutes({ kind: "drawn", points: [] }, null)).toBeNull();
-    expect(effectiveDriveMinutes({ kind: "travel-reach", minutes: 30 }, 60)).toBe(60);
+describe("Today's area — search radius, no drive-time preset", () => {
+  it("defaults to a radius around the start and submits it as maxRadiusKm", () => {
+    expect(defaultArea()).toEqual({ kind: "radius", km: DEFAULT_SEARCH_RADIUS_KM });
+    expect(effectiveRadiusKm(defaultArea(), null)).toBe(DEFAULT_SEARCH_RADIUS_KM);
+    expect(effectiveRadiusKm({ kind: "radius", km: 25 }, null)).toBe(25);
+    expect(effectiveRadiusKm({ kind: "none" }, null)).toBe(DEFAULT_SEARCH_RADIUS_KM);
+    expect(areaLabel(defaultArea())).toBe(`Within ${DEFAULT_SEARCH_RADIUS_KM} km of your start`);
+  });
+
+  it("covers a drawn outline with a radius that reaches its farthest vertex", () => {
+    const origin = { lat: 43.65, lng: -79.38 };
+    const far = [{ lat: 43.65, lng: -79.38 }, { lat: 43.9, lng: -79.38 }, { lat: 43.9, lng: -79.0 }];
+    const km = radiusKmForDrawnArea(origin, far);
+    expect(km).toBeGreaterThan(30);
+    expect(effectiveRadiusKm({ kind: "drawn", points: far }, origin)).toBe(km);
+    expect(radiusKmForDrawnArea(origin, [])).toBe(DEFAULT_SEARCH_RADIUS_KM);
   });
 });
 
@@ -285,10 +289,10 @@ describe("Phase 8.8 — rebuild + mobile copy", () => {
     const ready = collapsedPlanningCopy({
       hasStart: true,
       startLabel: "King & Spadina",
-      area: { kind: "travel-reach", minutes: 45 },
+      area: defaultArea(),
     });
     expect(ready.title).toBe("King & Spadina");
-    expect(ready.subtitle).toBe("Travel reach: 45 min");
+    expect(ready.subtitle).toBe(`Within ${DEFAULT_SEARCH_RADIUS_KM} km of your start`);
   });
 
   it("collapsed route sheet shows next stop, not planning controls", () => {

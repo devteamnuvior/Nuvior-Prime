@@ -4,20 +4,16 @@
  */
 
 import type { StartSelection } from "@/lib/placeSelection";
-import type { AreaStrategy } from "./travelReach";
+import type { AreaStrategy } from "./area";
 
-export const PLANNER_SESSION_KEY = "nuvior.today.planner.v1";
+/** v2: no day hours, clinic count or drive limit — every day is ten clinics. */
+export const PLANNER_SESSION_KEY = "nuvior.today.planner.v2";
 
 export type PlannerSessionSnapshot = {
   start: StartSelection | null;
   startText: string;
   textCommitted: boolean;
   area: AreaStrategy;
-  dayStart: string;
-  dayEnd: string;
-  target: number;
-  radiusOverride: number | null;
-  driveOverride: number | null;
   alreadyVisited: string;
   revisitsDue: string;
   province: string;
@@ -33,6 +29,8 @@ export function parsePlannerSession(raw: string): PlannerSessionSnapshot | null 
     if (!v || typeof v !== "object") return null;
     if (typeof v.startText !== "string") return null;
     if (!v.area || typeof v.area.kind !== "string") return null;
+    // An area kind this build no longer knows (an old drive-time preset) falls back to the default.
+    if (v.area.kind !== "drawn" && v.area.kind !== "radius") v.area = { kind: "none" };
     return v;
   } catch {
     return null;

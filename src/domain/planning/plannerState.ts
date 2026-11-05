@@ -7,12 +7,7 @@ import type { GeoPoint } from "@/domain/geo";
 import type { StartSelection } from "@/lib/placeSelection";
 import { validateDrawnArea } from "@/domain/geo/workingArea";
 import { drawnAreaInTerritory } from "./province";
-import {
-  type AreaStrategy,
-  effectiveDriveMinutes,
-  effectiveRadiusKm,
-  travelReachLabel,
-} from "./travelReach";
+import { areaLabel, effectiveRadiusKm, type AreaStrategy } from "./area";
 
 export type PlannerPhase =
   | "no-start"
@@ -31,11 +26,6 @@ export type PlannerInputs = {
   provinceCode: string | null;
   provinceError: string | null;
   area: AreaStrategy;
-  dayStart: string;
-  dayEnd: string;
-  target: number;
-  radiusOverride: number | null;
-  driveOverride: number | null;
   alreadyVisited: string;
   revisitsDue: string;
   allowedProvinces: string[];
@@ -59,37 +49,23 @@ export function materialFingerprint(inputs: PlannerInputs): string {
     ? `${inputs.start.lat.toFixed(5)},${inputs.start.lng.toFixed(5)}`
     : `text:${inputs.startText.trim().toUpperCase()}`;
   const area =
-    inputs.area.kind === "travel-reach"
-      ? `reach:${inputs.area.minutes}`
-      : inputs.area.kind === "drawn"
-        ? `drawn:${inputs.area.points.map((p) => `${p.lat.toFixed(5)},${p.lng.toFixed(5)}`).join(";")}`
-        : inputs.area.kind === "radius"
-          ? `radius:${inputs.area.km}`
-          : "none";
-  const drive = effectiveDriveMinutes(inputs.area, inputs.driveOverride);
-  const radius = inputs.start
-    ? effectiveRadiusKm(
-        inputs.area,
-        { lat: inputs.start.lat, lng: inputs.start.lng },
-        inputs.radiusOverride,
-      )
-    : inputs.radiusOverride;
+    inputs.area.kind === "drawn"
+      ? `drawn:${inputs.area.points.map((p) => `${p.lat.toFixed(5)},${p.lng.toFixed(5)}`).join(";")}`
+      : inputs.area.kind === "radius"
+        ? `radius:${inputs.area.km}`
+        : "none";
+  const radius = effectiveRadiusKm(inputs.area, inputs.start ? { lat: inputs.start.lat, lng: inputs.start.lng } : null);
   return [
     start,
     inputs.provinceCode ?? "",
     area,
-    inputs.dayStart,
-    inputs.dayEnd,
-    inputs.target,
-    drive ?? "",
-    radius ?? "",
+    radius,
     inputs.alreadyVisited.trim().toUpperCase(),
     inputs.revisitsDue.trim().toUpperCase(),
   ].join("|");
 }
 
 export function areaIsReady(area: AreaStrategy, allowedProvinces: string[] = []): boolean {
-  if (area.kind === "travel-reach") return true;
   if (area.kind === "radius") return area.km >= 1;
   if (area.kind === "drawn") {
     if (!validateDrawnArea(area.points).ok) return false;
@@ -102,7 +78,6 @@ export function canBuildDay(inputs: PlannerInputs): boolean {
   if (!hasStartLocation(inputs)) return false;
   if (!inputs.provinceCode || inputs.provinceError) return false;
   if (!areaIsReady(inputs.area, inputs.allowedProvinces)) return false;
-  if (inputs.target < 1) return false;
   return true;
 }
 
@@ -160,14 +135,7 @@ export function collapsedPlanningCopy(opts: {
 }): { title: string; subtitle: string } {
   return {
     title: opts.hasStart ? opts.startLabel : "Choose your starting point",
-    subtitle:
-      opts.area.kind === "travel-reach"
-        ? travelReachLabel(opts.area.minutes)
-        : opts.area.kind === "drawn"
-          ? "Today's area drawn"
-          : opts.area.kind === "radius"
-            ? `Search radius: ${opts.area.km} km`
-            : "Choose today's area",
+    subtitle: areaLabel(opts.area),
   };
 }
 
@@ -190,6 +158,6 @@ export function collapsedRouteCopy(opts: {
  * the planner sheet does not change PlannerInputs, so the fingerprint is stable.
  */
 export function sessionMemoryIsPlanningState(keys: string[]): boolean {
-  const required = ["start", "area", "dayStart", "dayEnd", "target"];
+  const required = ["start", "area"];
   return required.every((k) => keys.includes(k));
 }

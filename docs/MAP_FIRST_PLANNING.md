@@ -22,10 +22,13 @@ Related: `ROUTE_MAP_UX.md`, `ROUTING.md`, `GOOGLE_MAPS_SETUP.md`.
 
 The rep no longer searches for a start or draws an area. They share their
 location (**Use my location**, or **Drop a pin on the map**) and the day builds
-itself: ten clinics (`DAILY_CLINIC_SLOTS`) within the default travel reach of
-30 minutes (`DEFAULT_AREA` in `TodayRoute.tsx`), auto-submitted once per set of
-inputs so an error never loops. Day hours, travel reach, radius and the pasted
-lists stay available under **Edit plan → Advanced planning**; phase B
+itself: ten clinics (`DAILY_CLINIC_SLOTS`) within the default search radius of
+40 km (`DEFAULT_SEARCH_RADIUS_KM` in `src/domain/planning/area.ts`),
+auto-submitted once per set of inputs so an error never loops. The clinic
+count and the day hours are not the rep's to set — every day is ten 45-minute
+slots and the schedule uses the routing defaults — and there is no drive-time
+preset (travel reach was removed on 2026-11-05). The search radius and the
+pasted lists stay available under **Edit plan → Advanced planning**; phase B
 (`choose-area`) is still in the state machine but never shown because the area
 always has a value.
 
@@ -58,7 +61,7 @@ when, so the rep knows why a clinic next to them is not on the list.
 
 `BUILD MY DAY` is enabled only when `canBuildDay` is true: a start (coordinates
 or committed address/postal for mock geocode), an authorized province, and a
-valid area strategy (travel reach **or** valid drawn polygon).
+valid area strategy (a search radius **or** a valid drawn polygon).
 
 ---
 
@@ -101,19 +104,12 @@ a silent territory switch.
 
 ---
 
-## Auto Area (travel reach)
+## Auto Area (search radius)
 
-Presets: **30 / 45 / 60 min**. Label: `Travel reach: 45 min`.
-
-This is a real `maxDriveMinutes` planning constraint, not a drawn isochrone.
-Candidate/route selection respects it when verified drive-time data exists
-(`ROUTING_PROVIDER=google` or synthetic `mock` times).
-
-Geodesic mode shows the existing honest limitation — estimated times, no claim
-of a true 45-minute road boundary. **No fake isochrone polygon is drawn.**
-
-A geodesic search envelope (`travelReachRadiusKm`) bounds Places discovery
-(40 / 55 / 70 km). That envelope is not shown as a road-time area.
+The default area is a geodesic envelope of `DEFAULT_SEARCH_RADIUS_KM` (40 km)
+around the start, submitted as `maxRadiusKm`. The planner picks the ten nearest
+qualified clinics inside it; no drive-time limit is sent. The radius can be
+changed under Advanced planning. Nothing is drawn on the map for it.
 
 ---
 
@@ -124,7 +120,7 @@ area”, not GIS terms):
 
 - draw / finish / edit / clear / redraw
 - Esc cancel, Enter finish when valid
-- “Can’t draw? Use travel reach above.”
+- Clearing the outline goes back to the search radius.
 
 After completion: compact summary (`Today’s area · 8.4 km²`) + Edit / Clear.
 
@@ -145,15 +141,12 @@ requirement.
 
 ## Compact day controls
 
-Primary (visible once an area exists):
-
-- Target visits
-- Day start / Day end — **12-hour labels** (`9:00 AM`, `5:00 PM`)
+Primary (visible once an area exists): a one-line **Day** note — ten clinics,
+45 minutes each. There is no clinic count and no day start / day end to set.
 
 Secondary, collapsed under **Advanced planning**:
 
-- Search radius (km)
-- Max one-way drive (min)
+- Search radius (km) — hidden while an outline is drawn
 - Already visited / not due
 - Revisits due today
 - Note that visit duration and lunch use existing routing defaults

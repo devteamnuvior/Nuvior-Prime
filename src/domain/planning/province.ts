@@ -114,7 +114,7 @@ export function resolvePlanningProvince(input: {
 }
 
 export const AREA_OUTSIDE_TERRITORY_MESSAGE =
-  "Today's area is outside your assigned territory. Redraw in a province you cover, or use travel reach.";
+  "Today's area is outside your assigned territory. Redraw in a province you cover, or clear it to plan around your start.";
 
 /**
  * A drawn polygon is outside territory when none of its vertices resolve to an

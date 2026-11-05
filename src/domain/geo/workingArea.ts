@@ -20,7 +20,7 @@ export type DrawnAreaValidation =
 
 export function validateDrawnArea(points: GeoPoint[]): DrawnAreaValidation {
   if (points.length < MIN_WORKING_AREA_POINTS) {
-    return { ok: false, message: "Today's area needs at least 3 points. Keep tapping, or use travel reach instead." };
+    return { ok: false, message: "Today's area needs at least 3 points. Keep tapping, or clear it to plan around your start." };
   }
   if (points.length > MAX_WORKING_AREA_POINTS) {
     return { ok: false, message: `Today's area is too detailed (${MAX_WORKING_AREA_POINTS} points max). Clear and draw a simpler outline.` };
@@ -34,7 +34,7 @@ export function validateDrawnArea(points: GeoPoint[]): DrawnAreaValidation {
     return { ok: false, message: "Today's area crosses itself. Redraw so the outline doesn't overlap." };
   }
   if (polygonAreaKm2(points) < MIN_WORKING_AREA_KM2) {
-    return { ok: false, message: "Today's area is too small. Expand the outline, or use travel reach instead." };
+    return { ok: false, message: "Today's area is too small. Expand the outline, or clear it to plan around your start." };
   }
   return { ok: true };
 }

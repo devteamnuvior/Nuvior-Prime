@@ -1,7 +1,6 @@
 "use client";
 
 import { useActionState, useEffect, useMemo, useRef, useState } from "react";
-import { DAILY_CLINIC_SLOTS } from "@/domain/performance/visitSlots";
 import { APIProvider } from "@vis.gl/react-google-maps";
 import { useSession } from "next-auth/react";
 import Alert from "@mui/material/Alert";
@@ -39,11 +38,10 @@ import {
   resolvePlanningProvince,
 } from "@/domain/planning/province";
 import {
-  effectiveDriveMinutes,
+  defaultArea,
   effectiveRadiusKm,
   type AreaStrategy,
-  type TravelReachMinutes,
-} from "@/domain/planning/travelReach";
+} from "@/domain/planning/area";
 import {
   buildBlockedReason,
   canBuildDay,
@@ -93,8 +91,8 @@ import { applyIntelligenceToBrief } from "@/domain/intelligence/applyIntelligenc
 
 const initial: ActionState = { status: "idle" };
 
-/** The rep only shares a location; the day is built within this reach unless they change it under Edit plan. */
-const DEFAULT_AREA: AreaStrategy = { kind: "travel-reach", minutes: 30 };
+/** The rep only shares a location; the day is the nearest clinics within this radius unless they draw an area or change it under Edit plan. */
+const DEFAULT_AREA: AreaStrategy = defaultArea();
 
 const PROVINCE_CENTERS: Record<string, { lat: number; lng: number }> = {
   ON: { lat: 43.6532, lng: -79.3832 },
@@ -145,11 +143,6 @@ export function TodayRoute({
   const [draftArea, setDraftArea] = useState<GeoPoint[]>([]);
   const [area, setArea] = useState<AreaStrategy>(DEFAULT_AREA);
 
-  const [dayStart, setDayStart] = useState("09:00");
-  const [dayEnd, setDayEnd] = useState("17:00");
-  const [target, setTarget] = useState(DAILY_CLINIC_SLOTS);
-  const [radiusOverride, setRadiusOverride] = useState<number | null>(null);
-  const [driveOverride, setDriveOverride] = useState<number | null>(null);
   const [alreadyVisited, setAlreadyVisited] = useState("none");
   const [revisitsDue, setRevisitsDue] = useState("none");
 
@@ -209,11 +202,6 @@ export function TodayRoute({
       setStartText(saved.startText);
       setTextCommitted(saved.textCommitted);
       setArea(saved.area.kind === "none" ? DEFAULT_AREA : saved.area);
-      setDayStart(saved.dayStart);
-      setDayEnd(saved.dayEnd);
-      setTarget(saved.target);
-      setRadiusOverride(saved.radiusOverride);
-      setDriveOverride(saved.driveOverride);
       setAlreadyVisited(saved.alreadyVisited);
       setRevisitsDue(saved.revisitsDue);
       if (saved.province) setProvince(saved.province);
@@ -228,11 +216,6 @@ export function TodayRoute({
       startText,
       textCommitted,
       area,
-      dayStart,
-      dayEnd,
-      target,
-      radiusOverride,
-      driveOverride,
       alreadyVisited,
       revisitsDue,
       province,
@@ -242,11 +225,6 @@ export function TodayRoute({
     startText,
     textCommitted,
     area,
-    dayStart,
-    dayEnd,
-    target,
-    radiusOverride,
-    driveOverride,
     alreadyVisited,
     revisitsDue,
     province,
@@ -295,11 +273,6 @@ export function TodayRoute({
     provinceCode: provinceError ? null : province,
     provinceError,
     area,
-    dayStart,
-    dayEnd,
-    target,
-    radiusOverride,
-    driveOverride,
     alreadyVisited,
     revisitsDue,
     allowedProvinces: provinces.map((p) => p.code),
@@ -545,7 +518,6 @@ export function TodayRoute({
     routingProvider: serverProviders.routingProvider,
     mapRenderer: mapsCfg.renderer,
   });
-  const driveHonest = serverProviders.routingProvider === "google";
 
   const showProvincePicker =
     provinces.length > 1 &&
@@ -559,8 +531,7 @@ export function TodayRoute({
     ? { lat: start.lat, lng: start.lng }
     : (data?.startPoint ?? null);
 
-  const submitDrive = effectiveDriveMinutes(area, driveOverride);
-  const submitRadius = effectiveRadiusKm(area, startGeo, radiusOverride);
+  const submitRadius = effectiveRadiusKm(area, startGeo);
 
   const opportunity = data ? opportunitySummary(visiblePool) : null;
 
@@ -927,26 +898,10 @@ export function TodayRoute({
               onResolvedStart={onResolvedStart}
               onRequestDropPin={beginDropPin}
               area={area}
-              onSelectReach={(m: TravelReachMinutes) => {
-                setArea({ kind: "travel-reach", minutes: m });
+              onSearchRadiusKm={(km) => {
+                if (area.kind === "drawn") return;
+                setArea(km != null && km > 0 ? { kind: "radius", km } : DEFAULT_AREA);
               }}
-              driveHonest={driveHonest}
-              dayStart={dayStart}
-              dayEnd={dayEnd}
-              onDayStart={setDayStart}
-              onDayEnd={setDayEnd}
-              target={target}
-              onTarget={setTarget}
-              radiusOverride={radiusOverride}
-              onRadiusOverride={(n) => {
-                setRadiusOverride(n);
-                if (n != null && n > 0 && (area.kind === "none" || area.kind === "radius")) {
-                  setArea({ kind: "radius", km: n });
-                }
-                if (n == null && area.kind === "radius") setArea(DEFAULT_AREA);
-              }}
-              driveOverride={driveOverride}
-              onDriveOverride={setDriveOverride}
               alreadyVisited={alreadyVisited}
               onAlreadyVisited={setAlreadyVisited}
               revisitsDue={revisitsDue}
@@ -959,7 +914,6 @@ export function TodayRoute({
               changingStart={changingStart}
               buildEnabled={buildEnabled}
               submitRadiusKm={submitRadius}
-              submitDriveMinutes={submitDrive}
               hasStart={started}
               provinceError={provinceError}
               canPlanSomewhereElse={privileged || provinces.length > 1}

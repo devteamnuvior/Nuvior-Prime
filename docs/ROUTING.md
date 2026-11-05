@@ -59,9 +59,10 @@ See `ROUTE_OPTIMIZATION.md`, `ROUTING_RUNBOOK.md`, `ROUTE_MAP_UX.md`,
 
 ## Map-first planning (Phase 8.8)
 
-Today collects geography first (start + travel reach or drawn area), then
-compact day controls, then **BUILD MY DAY** on the same map. Travel-reach
-presets (30 / 45 / 60 min) submit `maxDriveMinutes`. Drawn “Today’s area”
-submits `workingAreaJson`. Province is inferred from the start; authorization
+Today collects geography first (start + search radius or drawn area), then
+**BUILD MY DAY** on the same map. The radius submits `maxRadiusKm`; no
+`maxDriveMinutes`, day hours or clinic count come from the form — the server
+always plans `DAILY_CLINIC_SLOTS` clinics. Drawn “Today’s area” submits
+`workingAreaJson`. Province is inferred from the start; authorization
 still gates `requireProvinceAccess`. UI-only — optimizer and discovery rules
 are unchanged.

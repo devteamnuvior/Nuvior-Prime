@@ -1,6 +1,6 @@
 import type { VisitListEntry } from "@/domain/visitList";
 import { pointInWorkingArea } from "@/domain/geo/workingArea";
-import type { AreaStrategy } from "./travelReach";
+import type { AreaStrategy } from "./area";
 
 export type OpportunitySummary = {
   qualified: number;
@@ -16,8 +16,7 @@ export function opportunitySummary(pool: VisitListEntry[]): OpportunitySummary {
 /**
  * Re-filter an already-qualified pool when Today's Area changes.
  * Does not call discovery. Drawn areas use point-in-polygon on stored coords.
- * Drive-time / radius modes keep the last-run pool (those constraints were
- * applied at build time).
+ * Radius mode keeps the last-run pool (that constraint was applied at build time).
  */
 export function filterPoolByArea(
   pool: VisitListEntry[],

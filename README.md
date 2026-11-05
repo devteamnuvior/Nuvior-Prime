@@ -64,8 +64,8 @@ and [`docs/MAP_FIRST_PLANNING.md`](docs/MAP_FIRST_PLANNING.md).
 
 Today (`/`) is operational route planning: start → today’s area → compact day
 controls → **BUILD MY DAY** on the same map. Prospecting (`/accounts`) is
-deeper account research. Travel reach (30/45/60 min) is a real drive-time
-constraint, not a drawn isochrone.
+deeper account research. Every day is ten clinics inside a 40 km search
+radius; there is no drive-time preset, clinic count or day hours to set.
 
 ## Checks
 

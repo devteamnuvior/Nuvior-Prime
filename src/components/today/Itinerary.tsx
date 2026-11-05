@@ -276,7 +276,7 @@ function VisitedNearby({ entries, stopCount }: { entries: VisitedNearbyEntry[]; 
   const filled =
     stopCount > 0
       ? "Skipped today and shown on the map with a check; other clinics took their place so your day stays full."
-      : "Skipped today and shown on the map with a check. Nothing else qualified within reach — widen the travel reach under Edit plan.";
+      : "Skipped today and shown on the map with a check. Nothing else qualified nearby — widen the search radius under Edit plan.";
   return (
     <Box component="section" sx={{ mx: 4, mb: 4, mt: 1, borderTop: 1, borderColor: "divider", pt: 3 }}>
       <Typography variant="eyebrow" component="h3" sx={{ display: "block" }}>

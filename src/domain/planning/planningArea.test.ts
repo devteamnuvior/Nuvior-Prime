@@ -2,13 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   REVISIT_OUTSIDE_DRAWN_AREA_POLICY,
   drawnArea,
-  driveTimeArea,
   planningAreaKind,
   radiusArea,
 } from "./planningArea";
 import { canBuildDay, derivePhase, materialFingerprint, type PlannerInputs } from "./plannerState";
 import { pinSelection } from "@/lib/placeSelection";
-import { effectiveRadiusKm } from "./travelReach";
+import { DEFAULT_SEARCH_RADIUS_KM, defaultArea, effectiveRadiusKm } from "./area";
 import { filterPoolByArea, clusterCandidateDots, candidateDots, opportunitySummary } from "./opportunity";
 import { parseWorkingArea, pointInWorkingArea, serializeWorkingArea, validateDrawnArea } from "@/domain/geo/workingArea";
 import type { VisitListEntry } from "@/domain/visitList";
@@ -22,11 +21,6 @@ const base: PlannerInputs = {
   provinceCode: "ON",
   provinceError: null,
   area: { kind: "none" },
-  dayStart: "09:00",
-  dayEnd: "17:00",
-  target: 20,
-  radiusOverride: null,
-  driveOverride: null,
   alreadyVisited: "none",
   revisitsDue: "none",
   allowedProvinces: ["ON"],
@@ -40,9 +34,10 @@ const square = [
 ];
 
 describe("Today's Area model", () => {
-  it("selects a drive-time area as a real constraint", () => {
-    const area = driveTimeArea(45);
-    expect(planningAreaKind(area)).toBe("drive-time");
+  it("starts from the default radius around the start", () => {
+    const area = defaultArea();
+    expect(planningAreaKind(area)).toBe("radius");
+    expect(effectiveRadiusKm(area, null)).toBe(DEFAULT_SEARCH_RADIUS_KM);
     expect(canBuildDay({ ...base, area })).toBe(true);
     expect(
       derivePhase(
@@ -62,7 +57,7 @@ describe("Today's Area model", () => {
     const area = radiusArea(25);
     expect(planningAreaKind(area)).toBe("radius");
     expect(canBuildDay({ ...base, area })).toBe(true);
-    expect(effectiveRadiusKm(area, { lat: 43.65, lng: -79.38 }, null)).toBe(25);
+    expect(effectiveRadiusKm(area, { lat: 43.65, lng: -79.38 })).toBe(25);
   });
 
   it("round-trips drawn polygon data and rejects invalid polygons", () => {
@@ -142,7 +137,7 @@ describe("point-in-polygon filtering + opportunity", () => {
 
 describe("PLAN → ROUTE and Edit plan", () => {
   it("transitions configure → building → route-ready → edit-plan", () => {
-    const inputs = { ...base, area: driveTimeArea(45) };
+    const inputs = { ...base, area: defaultArea() };
     expect(
       derivePhase(inputs, {
         pending: false,
@@ -189,19 +184,18 @@ describe("session memory", () => {
       start,
       startText: start.label,
       textCommitted: true,
-      area: driveTimeArea(45),
-      dayStart: "09:00",
-      dayEnd: "17:00",
-      target: 12,
-      radiusOverride: null,
-      driveOverride: null,
+      area: radiusArea(25),
       alreadyVisited: "none",
       revisitsDue: "none",
       province: "ON",
     };
     const parsed = parsePlannerSession(serializePlannerSession(snap));
-    expect(parsed?.area).toEqual(driveTimeArea(45));
+    expect(parsed?.area).toEqual(radiusArea(25));
     expect(parsed?.start?.source).toBe("map-pin");
-    expect(parsed?.target).toBe(12);
+  });
+
+  it("drops an area kind this build no longer knows, such as an old drive-time preset", () => {
+    const old = JSON.stringify({ startText: "x", area: { kind: "travel-reach", minutes: 45 } });
+    expect(parsePlannerSession(old)?.area).toEqual({ kind: "none" });
   });
 });
