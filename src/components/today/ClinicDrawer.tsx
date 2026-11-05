@@ -8,6 +8,7 @@ import Link from "@mui/material/Link";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import CheckOutlined from "@mui/icons-material/CheckOutlined";
 import CloseOutlined from "@mui/icons-material/CloseOutlined";
 import Instagram from "@mui/icons-material/Instagram";
 import MailOutlined from "@mui/icons-material/MailOutlined";
@@ -274,7 +275,12 @@ export function ClinicDrawer({
             <PlainList>
               {verified.map((f) => (
                 <Box component="li" key={f} sx={{ display: "flex", alignItems: "center", gap: 2, minWidth: 0 }}>
-                  <StatusChip tone="primary" dot={false} uppercase label="Verified" sx={{ flexShrink: 0 }} />
+                  <CheckOutlined
+                    role="img"
+                    aria-label="Found on the clinic's website"
+                    titleAccess="Found on the clinic's website"
+                    sx={{ flexShrink: 0, fontSize: 16, color: "primary.main" }}
+                  />
                   <Box component="span" sx={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {humanizeField(f)}
                   </Box>
