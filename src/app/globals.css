@@ -454,3 +454,15 @@ samp {
   background: var(--nv-palette-divider);
   border-radius: 3px;
 }
+
+/* Clinic drawer: scrolls, but never shows a scrollbar (card itself and any panel inside it). */
+.nv-drawer-in,
+.nv-drawer-in .nv-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.nv-drawer-in::-webkit-scrollbar,
+.nv-drawer-in .nv-scroll::-webkit-scrollbar {
+  display: none;
+  width: 0;
+}
