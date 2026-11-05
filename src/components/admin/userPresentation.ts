@@ -11,21 +11,15 @@ export const ROLE_META: Record<
     description: "Runs prospecting, builds briefs and records their own visits.",
     tone: "neutral",
   },
-  MANAGER: {
-    label: "Manager",
-    short: "Manager",
-    description: "Everything a rep can do, plus team visibility, CRM matching and assignments.",
-    tone: "primary",
-  },
   ADMIN: {
     label: "Administrator",
     short: "Admin",
-    description: "Full access including user management, audit log and system settings.",
+    description: "Everything a rep can do, plus team visibility, CRM matching, targets, user management, the audit log and settings.",
     tone: "inverse",
   },
 };
 
-export const ROLE_ORDER: AppRoleName[] = ["ADMIN", "MANAGER", "REP"];
+export const ROLE_ORDER: AppRoleName[] = ["ADMIN", "REP"];
 
 export const PROVINCE_OPTIONS = CANADIAN_PROVINCES.map((p) => ({ code: p.code, name: p.name }));
 

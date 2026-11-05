@@ -7,7 +7,7 @@ import { LiveMap } from "@/components/live/LiveMap";
 
 export const dynamic = "force-dynamic";
 
-/** Admin / manager live map: every rep's last known position, refreshed in the browser. */
+/** Admin live map: every rep's last known position, refreshed in the browser. */
 export default async function LiveMapPage({ searchParams }: { searchParams: Promise<{ province?: string }> }) {
   let user;
   try {

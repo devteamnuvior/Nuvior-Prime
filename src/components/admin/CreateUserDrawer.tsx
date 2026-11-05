@@ -34,7 +34,7 @@ const schema = z
   .object({
     displayName: z.string().trim().min(2, "Name must be at least 2 characters"),
     email: z.string().trim().email("Enter a valid email address"),
-    role: z.enum(["REP", "MANAGER", "ADMIN"]),
+    role: z.enum(["REP", "ADMIN"]),
     allProvinces: z.boolean(),
     provinces: z.array(z.string()),
     password: z.string().min(8, "Password must be at least 8 characters"),

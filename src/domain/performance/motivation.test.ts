@@ -9,11 +9,11 @@ describe("streak", () => {
   it("counts consecutive met weekdays ending yesterday, skipping weekends", () => {
     const s = computeStreak(
       [
-        { day: "2026-10-29", visits: 5 }, // Thu
-        { day: "2026-10-30", visits: 6 }, // Fri
-        { day: "2026-11-02", visits: 5 }, // Mon
-        { day: "2026-11-03", visits: 7 }, // Tue
-        { day: "2026-11-04", visits: 2 }, // Wed (today, not met yet)
+        { day: "2026-10-29", visitSlots: 5 }, // Thu
+        { day: "2026-10-30", visitSlots: 6 }, // Fri
+        { day: "2026-11-02", visitSlots: 5 }, // Mon
+        { day: "2026-11-03", visitSlots: 7 }, // Tue
+        { day: "2026-11-04", visitSlots: 2 }, // Wed (today, not met yet)
       ],
       targets,
       "2026-11-04",
@@ -26,10 +26,10 @@ describe("streak", () => {
   it("counts today once met and breaks on a missed weekday", () => {
     const s = computeStreak(
       [
-        { day: "2026-10-30", visits: 1 }, // Fri missed
-        { day: "2026-11-02", visits: 5 },
-        { day: "2026-11-03", visits: 5 },
-        { day: "2026-11-04", visits: 5 },
+        { day: "2026-10-30", visitSlots: 1 }, // Fri missed
+        { day: "2026-11-02", visitSlots: 5 },
+        { day: "2026-11-03", visitSlots: 5 },
+        { day: "2026-11-04", visitSlots: 5 },
       ],
       targets,
       "2026-11-04",
@@ -39,12 +39,13 @@ describe("streak", () => {
     expect(s.atRisk).toBe(false);
   });
 
-  it("is zero without a target", () => {
-    expect(computeStreak([{ day: "2026-11-03", visits: 9 }], [], "2026-11-04").days).toBe(0);
+  it("falls back to the ten-slot default without an admin target", () => {
+    expect(computeStreak([{ day: "2026-11-03", visitSlots: 9 }], [], "2026-11-04").days).toBe(0);
+    expect(computeStreak([{ day: "2026-11-03", visitSlots: 10 }], [], "2026-11-04").days).toBe(1);
   });
 
   it("weekend today is never at risk", () => {
-    const s = computeStreak([{ day: "2026-11-06", visits: 5 }], targets, "2026-11-07"); // Saturday
+    const s = computeStreak([{ day: "2026-11-06", visitSlots: 5 }], targets, "2026-11-07"); // Saturday
     expect(s.days).toBe(1);
     expect(s.atRisk).toBe(false);
   });
@@ -77,7 +78,7 @@ describe("day message", () => {
       dueTodayFollowUps: 0,
       isWorkingDay: true,
     });
-    expect(m.headline).toBe("Today's target reached: 7 of 7 visits");
+    expect(m.headline).toBe("Today's target reached: 7 of 7 clinics");
     expect(m.detail).toContain("3-day streak");
     expect(m.detail).toContain("2 follow-ups overdue");
     expect(m.tone).toBe("success");

@@ -28,7 +28,7 @@ export type Permission =
   /** Watch every rep's live position on the live map. */
   | "position.view.team";
 
-export type AppRoleName = "REP" | "MANAGER" | "ADMIN";
+export type AppRoleName = "REP" | "ADMIN";
 
 const ROLE_PERMISSIONS: Record<AppRoleName, readonly Permission[]> = {
   REP: [
@@ -42,25 +42,6 @@ const ROLE_PERMISSIONS: Record<AppRoleName, readonly Permission[]> = {
     "performance.view.own",
     "route.plan",
     "position.report",
-  ],
-  MANAGER: [
-    "prospect.run",
-    "prospect.view",
-    "brief.generate",
-    "brief.view",
-    "visit.create",
-    "visit.view.own",
-    "visit.view.team",
-    "mapping.review",
-    "mapping.confirm",
-    "verification.review",
-    "account.assign",
-    "performance.view.own",
-    "performance.view.team",
-    "target.manage",
-    "route.plan",
-    "position.report",
-    "position.view.team",
   ],
   ADMIN: [
     "prospect.run",
@@ -120,12 +101,10 @@ export function accessibleProvinces(user: AuthUser, allCodes: string[]): string[
 /**
  * Field visibility for CRM overlay — rep sees operational fields, not raw diagnostics.
  */
-export type CrmVisibilityLevel = "rep" | "manager" | "admin";
+export type CrmVisibilityLevel = "rep" | "admin";
 
 export function crmVisibilityForRole(role: AppRoleName): CrmVisibilityLevel {
-  if (role === "ADMIN") return "admin";
-  if (role === "MANAGER") return "manager";
-  return "rep";
+  return role === "ADMIN" ? "admin" : "rep";
 }
 
 export function filterCrmFieldsForVisibility(
@@ -145,21 +124,7 @@ export function filterCrmFieldsForVisibility(
     "matchState",
     "crmExternalId",
   ]);
-  const denyRep = new Set([
-    "rawPayload",
-    "providerErrors",
-    "dncDebug",
-    "internalDiagnostics",
-  ]);
-
   if (level === "admin") return { ...fields };
-  if (level === "manager") {
-    const out: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(fields)) {
-      if (!denyRep.has(k) || k === "dncDebug") out[k] = v;
-    }
-    return out;
-  }
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(fields)) {
     if (allowedRep.has(k)) out[k] = v;

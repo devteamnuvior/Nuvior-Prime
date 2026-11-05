@@ -121,7 +121,7 @@ export function LiveLocationToggle() {
   };
 
   return (
-    <Tooltip title={sharing ? "Your position is shared with your manager while this page is open. Click to stop." : "Share your live position with your manager while you work today."}>
+    <Tooltip title={sharing ? "Your position is shared with your admin while this page is open. Click to stop." : "Share your live position with your admin while you work today."}>
       <Chip
         clickable
         onClick={toggle}

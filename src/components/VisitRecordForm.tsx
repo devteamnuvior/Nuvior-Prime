@@ -9,6 +9,7 @@ import Paper from "@mui/material/Paper";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { recordVisitAction, structureVisitNotesAction } from "@/app/actions";
+import { VISIT_DURATION_OPTIONS, type VisitDurationMinutes } from "@/domain/performance/visitSlots";
 import { toast } from "@/components/feedback/toast";
 import {
   VISIT_OUTCOMES,
@@ -39,6 +40,7 @@ export function VisitRecordForm({
   const [nextAction, setNextAction] = useState("");
   const [followUpDate, setFollowUpDate] = useState("");
   const [visitType, setVisitType] = useState("first visit");
+  const [durationMinutes, setDurationMinutes] = useState<VisitDurationMinutes>(45);
   const [outcomeError, setOutcomeError] = useState<string | null>(null);
 
   const outcomeHint = outcomeCode ? visitOutcomeDefinition(outcomeCode).hint : "Required — pick what happened.";
@@ -67,6 +69,7 @@ export function VisitRecordForm({
               crmExternalId,
               visitDate: String(fd.get("visitDate")),
               visitType,
+              durationMinutes,
               outcomeCode,
               outcome: outcomeNote,
               peopleMet,
@@ -81,6 +84,7 @@ export function VisitRecordForm({
               // Refresh server data (My day panel, targets) while keeping the planned route in client state.
               router.refresh();
               setNotes("");
+              setDurationMinutes(45);
               setOutcomeCode("");
               setOutcomeNote("");
               setPeopleMet("");
@@ -103,6 +107,21 @@ export function VisitRecordForm({
           {VISIT_TYPES.map((v) => (
             <MenuItem key={v} value={v}>
               {v}
+            </MenuItem>
+          ))}
+        </TextField>
+        <TextField
+          name="durationMinutes"
+          label="Time at clinic"
+          select
+          value={durationMinutes}
+          onChange={(e) => setDurationMinutes(Number(e.target.value) as VisitDurationMinutes)}
+          helperText={VISIT_DURATION_OPTIONS.find((o) => o.minutes === durationMinutes)?.hint}
+          sx={{ gridColumn: { sm: "1 / -1" } }}
+        >
+          {VISIT_DURATION_OPTIONS.map((o) => (
+            <MenuItem key={o.minutes} value={o.minutes}>
+              {o.label}
             </MenuItem>
           ))}
         </TextField>

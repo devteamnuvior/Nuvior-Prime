@@ -11,11 +11,13 @@ import {
   periodDayIndex,
   periodLength,
   resolveActiveTarget,
+  resolveDailyVisitsTarget,
   targetProgress,
   dayKey,
   type SalesTargetLike,
 } from "./targets";
 import { buildDailySummary, metricValue, sumMetric } from "./dailySummary";
+import { DAILY_CLINIC_SLOTS, isVisitDuration, slotsForDuration } from "./visitSlots";
 
 describe("visit outcomes", () => {
   it("defines every code exactly once with a label", () => {
@@ -132,11 +134,11 @@ describe("daily summary", () => {
   it("counts visits, quality visits, outcomes, new accounts and follow-ups", () => {
     const s = buildDailySummary({
       visits: [
-        { accountId: "a1", outcomeCode: "INTERESTED", fitScoreSnapshot: 5, visitType: "first visit", firstEverVisit: true },
-        { accountId: "a2", outcomeCode: "ORDER_PLACED", fitScoreSnapshot: 4, visitType: "re-visit", firstEverVisit: false },
-        { accountId: "a3", outcomeCode: "NOT_AVAILABLE", fitScoreSnapshot: 2, visitType: "first visit", firstEverVisit: true },
-        { accountId: null, outcomeCode: null, fitScoreSnapshot: null, visitType: "follow-up on a quote", firstEverVisit: false },
-        { accountId: "a4", outcomeCode: "ACADEMY_SIGNUP", fitScoreSnapshot: 3, visitType: "first visit", firstEverVisit: true },
+        { accountId: "a1", outcomeCode: "INTERESTED", fitScoreSnapshot: 5, visitType: "first visit", durationMinutes: 45, firstEverVisit: true },
+        { accountId: "a2", outcomeCode: "ORDER_PLACED", fitScoreSnapshot: 4, visitType: "re-visit", durationMinutes: 90, firstEverVisit: false },
+        { accountId: "a3", outcomeCode: "NOT_AVAILABLE", fitScoreSnapshot: 2, visitType: "first visit", durationMinutes: 45, firstEverVisit: true },
+        { accountId: null, outcomeCode: null, fitScoreSnapshot: null, visitType: "follow-up on a quote", durationMinutes: 45, firstEverVisit: false },
+        { accountId: "a4", outcomeCode: "ACADEMY_SIGNUP", fitScoreSnapshot: 3, visitType: "first visit", durationMinutes: 45, firstEverVisit: true },
       ],
       runs: [
         { provinceCode: "ON", stopCount: 6, totalDriveMinutes: 90 },
@@ -144,6 +146,7 @@ describe("daily summary", () => {
       ],
     });
     expect(s.visits).toBe(5);
+    expect(s.visitSlots).toBe(6);
     expect(s.qualityVisits).toBe(2);
     expect(s.newAccounts).toBe(3);
     expect(s.followUpsDone).toBe(2);
@@ -159,17 +162,37 @@ describe("daily summary", () => {
   it("empty day yields zeros and nulls", () => {
     const s = buildDailySummary({ visits: [], runs: [] });
     expect(s.visits).toBe(0);
+    expect(s.visitSlots).toBe(0);
     expect(s.avgFitScore).toBeNull();
     expect(s.plannedDriveMinutes).toBeNull();
     expect(s.provinceCode).toBeNull();
   });
 
   it("metricValue and sumMetric read the matching column", () => {
-    const a = buildDailySummary({ visits: [{ accountId: "x", outcomeCode: "ORDER_PLACED", fitScoreSnapshot: 5, visitType: "first visit", firstEverVisit: true }], runs: [] });
-    const b = buildDailySummary({ visits: [{ accountId: "y", outcomeCode: "ORDER_PLACED", fitScoreSnapshot: 1, visitType: "first visit", firstEverVisit: false }], runs: [] });
+    const a = buildDailySummary({ visits: [{ accountId: "x", outcomeCode: "ORDER_PLACED", fitScoreSnapshot: 5, visitType: "first visit", durationMinutes: 90, firstEverVisit: true }], runs: [] });
+    const b = buildDailySummary({ visits: [{ accountId: "y", outcomeCode: "ORDER_PLACED", fitScoreSnapshot: 1, visitType: "first visit", durationMinutes: 45, firstEverVisit: false }], runs: [] });
     expect(metricValue(a, "QUALITY_VISITS")).toBe(1);
     expect(sumMetric([a, b], "ORDERS")).toBe(2);
     expect(sumMetric([a, b], "NEW_ACCOUNTS")).toBe(1);
-    expect(sumMetric([a, b], "VISITS")).toBe(2);
+    // VISITS is measured in clinic slots: the 90-minute visit counts twice.
+    expect(sumMetric([a, b], "VISITS")).toBe(3);
+  });
+});
+
+describe("clinic slots", () => {
+  it("a 45-minute visit is one slot, a 90-minute visit two; the default day is ten", () => {
+    expect(slotsForDuration(45)).toBe(1);
+    expect(slotsForDuration(90)).toBe(2);
+    expect(slotsForDuration(null)).toBe(1);
+    expect(DAILY_CLINIC_SLOTS).toBe(10);
+    expect(isVisitDuration(90)).toBe(true);
+    expect(isVisitDuration(60)).toBe(false);
+  });
+
+  it("the daily clinic target falls back to ten slots and yields to an admin-set one", () => {
+    expect(resolveDailyVisitsTarget([], "2026-11-05").value).toBe(10);
+    const custom: SalesTargetLike = { id: "t", period: "DAY", metric: "VISITS", value: 8, startsOn: "2026-11-01", endsOn: null };
+    expect(resolveDailyVisitsTarget([custom], "2026-11-05").value).toBe(8);
+    expect(resolveDailyVisitsTarget([custom], "2026-10-05").value).toBe(10);
   });
 });

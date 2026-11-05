@@ -15,7 +15,6 @@ import { ROLE_META } from "./userPresentation";
 
 const ROLE_COLOR: Record<AppRoleName, string> = {
   ADMIN: "background.inverse",
-  MANAGER: "primary.main",
   REP: "primary.light",
 };
 

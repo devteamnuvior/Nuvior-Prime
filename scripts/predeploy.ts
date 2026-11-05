@@ -4,16 +4,17 @@
  * Only acts on Vercel production builds (VERCEL_ENV=production), where the database
  * credentials are available; every other build (local, preview) returns immediately.
  *
- * For the 2026-11-02 release it:
- *   1. checks the database is the expected one and works out whether the release schema is
+ * For each release in RELEASES, in order, it:
+ *   1. checks the database is the expected one and works out whether that release is
  *      already there (all of it: nothing to do; none of it: apply; some of it: stop),
  *   2. backs up every public table into a new `predeploy_backup_<timestamp>` schema in the
  *      same database and checks the row counts match (and logs the time and WAL position
  *      for a Neon point-in-time restore),
- *   3. applies prisma/releases/2026-11-02_performance_live_map.sql in one transaction,
- *   4. verifies every new enum, table and column exists and existing row counts are unchanged,
- *   5. runs the XP backfill once (daily summaries, visit points, bonuses, badges),
- *   6. runs read-only smoke queries through the Prisma models the new pages use.
+ *   3. applies the release's prisma/releases/*.sql in one transaction,
+ *   4. verifies every expected object exists (and every retired one is gone) and existing
+ *      row counts are unchanged.
+ * Then it runs the XP backfill once (daily summaries, visit points, bonuses, badges) and
+ * read-only smoke queries through the Prisma models the new pages use.
  *
  * Any failure exits non-zero, which fails the build so the current deployment stays live.
  * Logs carry only object names and counts, never row data.
@@ -22,13 +23,49 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { PrismaClient } from "@prisma/client";
 
-const RELEASE_SQL = join(process.cwd(), "prisma/releases/2026-11-02_performance_live_map.sql");
 const BASELINE_TABLES = ["User", "Account", "VisitRecord", "VisitListRun", "AuditEvent"];
-const NEW_TABLES = ["SalesTarget", "RepDailySummary", "PointEvent", "UserBadge", "Challenge", "RepPosition", "ClinicWebProfile"];
-const NEW_ENUMS = ["VisitOutcome", "TargetPeriod", "TargetMetric", "PointReason"];
-const NEW_COLUMNS: [string, string][] = [
-  ["VisitRecord", "fitScoreSnapshot"],
-  ["VisitRecord", "outcomeCode"],
+
+type Release = {
+  name: string;
+  file: string;
+  /** Objects the release adds. Each one present counts as "done". */
+  present: { tables?: string[]; enums?: string[]; columns?: [string, string][] };
+  /** Objects the release removes. Each one gone counts as "done". */
+  absent?: { tables?: string[]; columns?: [string, string][] };
+};
+
+// Expected objects describe the database after every release, so a release that a later one
+// partly undoes (2026-11-02 created Challenge; 2026-11-05 drops it) does not list the undone object.
+const RELEASES: Release[] = [
+  {
+    name: "2026-11-02 performance + live map",
+    file: "prisma/releases/2026-11-02_performance_live_map.sql",
+    present: {
+      tables: ["SalesTarget", "RepDailySummary", "PointEvent", "UserBadge", "RepPosition", "ClinicWebProfile"],
+      enums: ["VisitOutcome", "TargetPeriod", "TargetMetric", "PointReason"],
+      columns: [
+        ["VisitRecord", "fitScoreSnapshot"],
+        ["VisitRecord", "outcomeCode"],
+      ],
+    },
+  },
+  {
+    name: "2026-11-05 clinic slots, no challenges, no MANAGER role",
+    file: "prisma/releases/2026-11-05_clinic_slots.sql",
+    present: {
+      columns: [
+        ["VisitRecord", "durationMinutes"],
+        ["RepDailySummary", "visitSlots"],
+      ],
+    },
+    absent: {
+      tables: ["Challenge"],
+      columns: [
+        ["PointEvent", "challengeId"],
+        ["PointEvent", "multiplier"],
+      ],
+    },
+  },
 ];
 
 const log = (msg: string) => console.log(`[predeploy] ${msg}`);
@@ -74,17 +111,46 @@ function splitStatements(sql: string): string[] {
     .filter(Boolean);
 }
 
-async function releaseState(db: PrismaClient): Promise<"applied" | "absent" | "partial"> {
+async function releaseState(db: PrismaClient, release: Release): Promise<"applied" | "absent" | "partial"> {
   const tables = new Set(await tablesIn(db, "public"));
   const enums = new Set(await enumsInPublic(db));
   const checks = [
-    ...NEW_TABLES.map((t) => tables.has(t)),
-    ...NEW_ENUMS.map((e) => enums.has(e)),
-    ...(await Promise.all(NEW_COLUMNS.map(([t, c]) => hasColumn(db, t, c)))),
+    ...(release.present.tables ?? []).map((t) => tables.has(t)),
+    ...(release.present.enums ?? []).map((e) => enums.has(e)),
+    ...(await Promise.all((release.present.columns ?? []).map(([t, c]) => hasColumn(db, t, c)))),
+    ...(release.absent?.tables ?? []).map((t) => !tables.has(t)),
+    ...(await Promise.all((release.absent?.columns ?? []).map(async ([t, c]) => !(await hasColumn(db, t, c))))),
   ];
-  const present = checks.filter(Boolean).length;
-  log(`release objects present: ${present} of ${checks.length}`);
-  return present === checks.length ? "applied" : present === 0 ? "absent" : "partial";
+  const done = checks.filter(Boolean).length;
+  log(`${release.name}: ${done} of ${checks.length} objects in their released state`);
+  return done === checks.length ? "applied" : done === 0 ? "absent" : "partial";
+}
+
+async function backup(db: PrismaClient, publicTables: string[]): Promise<Map<string, number>> {
+  const stamp = new Date().toISOString().replace(/[-:]/g, "").replace("T", "_").slice(0, 15);
+  const backupSchema = `predeploy_backup_${stamp}`;
+  const marker = await db.$queryRaw<{ at: Date }[]>`select now() as at`;
+  log(`restore point (Neon PITR): ${marker[0]!.at.toISOString()}`);
+  try {
+    const lsn = await db.$queryRaw<{ lsn: string }[]>`select pg_current_wal_lsn()::text as lsn`;
+    log(`restore point WAL LSN: ${lsn[0]!.lsn}`);
+  } catch {
+    log("WAL LSN not readable with this role; the timestamp above is the restore point");
+  }
+  const before = await rowCounts(db, "public", publicTables);
+  await db.$transaction(
+    async (tx) => {
+      await tx.$executeRawUnsafe(`create schema ${q(backupSchema)}`);
+      for (const t of publicTables) await tx.$executeRawUnsafe(`create table ${q(backupSchema)}.${q(t)} as table public.${q(t)}`);
+    },
+    { timeout: 600_000, maxWait: 60_000 },
+  );
+  const copied = await rowCounts(db, backupSchema, publicTables);
+  const mismatched = publicTables.filter((t) => copied.get(t) !== before.get(t));
+  if (mismatched.length) throw new Error(`Backup row counts differ for ${mismatched.join(", ")}`);
+  const totalRows = [...before.values()].reduce((a, b) => a + b, 0);
+  log(`backup ${backupSchema}: ${publicTables.length} tables, ${totalRows} rows, counts verified`);
+  return before;
 }
 
 async function main() {
@@ -103,52 +169,36 @@ async function main() {
     if (missingBaseline.length) throw new Error(`Baseline tables missing (${missingBaseline.join(", ")}); refusing to touch this database`);
     log(`connected; ${publicTables.length} tables in public`);
 
-    const state = await releaseState(db);
-    if (state === "partial") throw new Error("Release schema is partly present; stopping so nothing is guessed. Inspect the database before redeploying.");
-
-    if (state === "absent") {
-      // 2. Backup.
-      const stamp = new Date().toISOString().replace(/[-:]/g, "").replace("T", "_").slice(0, 15);
-      const backupSchema = `predeploy_backup_${stamp}`;
-      const marker = await db.$queryRaw<{ at: Date }[]>`select now() as at`;
-      log(`restore point (Neon PITR): ${marker[0]!.at.toISOString()}`);
-      try {
-        const lsn = await db.$queryRaw<{ lsn: string }[]>`select pg_current_wal_lsn()::text as lsn`;
-        log(`restore point WAL LSN: ${lsn[0]!.lsn}`);
-      } catch {
-        log("WAL LSN not readable with this role; the timestamp above is the restore point");
+    let backedUp = false;
+    for (const release of RELEASES) {
+      const state = await releaseState(db, release);
+      if (state === "partial") throw new Error(`${release.name} is partly present; stopping so nothing is guessed. Inspect the database before redeploying.`);
+      if (state === "applied") {
+        log(`${release.name}: already applied`);
+        continue;
       }
-      const before = await rowCounts(db, "public", publicTables);
-      await db.$transaction(
-        async (tx) => {
-          await tx.$executeRawUnsafe(`create schema ${q(backupSchema)}`);
-          for (const t of publicTables) await tx.$executeRawUnsafe(`create table ${q(backupSchema)}.${q(t)} as table public.${q(t)}`);
-        },
-        { timeout: 600_000, maxWait: 60_000 },
-      );
-      const copied = await rowCounts(db, backupSchema, publicTables);
-      const mismatched = publicTables.filter((t) => copied.get(t) !== before.get(t));
-      if (mismatched.length) throw new Error(`Backup row counts differ for ${mismatched.join(", ")}`);
-      const totalRows = [...before.values()].reduce((a, b) => a + b, 0);
-      log(`backup ${backupSchema}: ${publicTables.length} tables, ${totalRows} rows, counts verified`);
+
+      // 2. Backup, once per deploy, before the first release that has to run.
+      const tablesNow = await tablesIn(db, "public");
+      const before = backedUp ? await rowCounts(db, "public", tablesNow) : await backup(db, tablesNow);
+      backedUp = true;
 
       // 3. Apply the release in one transaction.
-      const statements = splitStatements(readFileSync(RELEASE_SQL, "utf8"));
+      const statements = splitStatements(readFileSync(join(process.cwd(), release.file), "utf8"));
       await db.$transaction(
         async (tx) => {
           for (const s of statements) await tx.$executeRawUnsafe(s);
         },
         { timeout: 600_000, maxWait: 60_000 },
       );
-      log(`applied ${statements.length} statements`);
+      log(`${release.name}: applied ${statements.length} statements`);
 
-      // 4. Verify.
-      if ((await releaseState(db)) !== "applied") throw new Error("Release objects missing after apply");
-      const after = await rowCounts(db, "public", publicTables);
-      const changed = publicTables.filter((t) => after.get(t) !== before.get(t));
+      // 4. Verify. Tables the release drops are not expected to keep their row counts.
+      if ((await releaseState(db, release)) !== "applied") throw new Error(`${release.name}: objects not in their released state after apply`);
+      const kept = tablesNow.filter((t) => !(release.absent?.tables ?? []).includes(t));
+      const after = await rowCounts(db, "public", kept);
+      const changed = kept.filter((t) => after.get(t) !== before.get(t));
       log(changed.length ? `existing tables with new writes during deploy: ${changed.join(", ")}` : "existing row counts unchanged");
-    } else {
-      log("release schema already applied; nothing to migrate");
     }
 
     // 5. XP backfill, once: only while the ledger is still empty.
@@ -192,7 +242,7 @@ async function main() {
       summaries: await db.repDailySummary.count(),
       xpByUser: (await db.pointEvent.groupBy({ by: ["userId"], _sum: { points: true } })).length,
       badges: await db.userBadge.count(),
-      challenges: await db.challenge.count(),
+      visitsExtended: await db.visitRecord.count({ where: { durationMinutes: { gt: 45 } } }),
       positions: await db.repPosition.count(),
       clinicWebProfiles: await db.clinicWebProfile.count(),
     };

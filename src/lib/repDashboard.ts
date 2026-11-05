@@ -90,7 +90,7 @@ export async function loadRepDashboard(user: AuthUser): Promise<RepDashboardDto>
     prisma.repDailySummary.findMany({
       where: { userId: user.id, day: { gte: since, lte: parseDayKey(today) } },
       orderBy: { day: "asc" },
-      select: { day: true, visits: true, qualityVisits: true, newAccounts: true, avgFitScore: true, plannedStops: true },
+      select: { day: true, visits: true, visitSlots: true, qualityVisits: true, newAccounts: true, avgFitScore: true, plannedStops: true },
     }),
     listSalesTargets(user.id),
     getTargetProgress(user.id, today),

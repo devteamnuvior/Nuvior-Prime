@@ -1,15 +1,12 @@
 /**
- * Performance phase 4 — XP ledger, badges, challenges and leaderboards.
+ * Performance phase 4 — XP ledger, badges and leaderboards.
  * Rules are pure in src/domain/performance/xp.ts; this file only touches Prisma.
  * Awarding is idempotent: PointEvent is unique per (user, reason, source).
  */
 
 import { prisma } from "@/lib/prisma";
-import type { PointReason, Prisma } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import {
-  activeChallenge,
-  applyMultiplier,
-  challengeState,
   computeStreak,
   dayKey,
   earnedBadges,
@@ -19,13 +16,11 @@ import {
   periodRange,
   pointsForVisit,
   rankEntries,
-  resolveActiveTarget,
+  resolveDailyVisitsTarget,
   STREAK_MILESTONES,
   POINT_RULES,
   type BadgeProgress,
   type BadgeStats,
-  type ChallengeLike,
-  type ChallengeState,
   type LeaderboardEntry,
   type Level,
   type PointAward,
@@ -35,82 +30,18 @@ import {
 } from "@/domain/performance";
 import { listSalesTargets } from "@/lib/performance";
 
-export type ChallengeRow = ChallengeLike & {
-  description: string | null;
-  createdById: string | null;
-  createdByName: string | null;
-  state: ChallengeState;
-};
-
-function toChallengeRow(c: {
-  id: string;
-  title: string;
-  description: string | null;
-  reason: PointReason;
-  multiplier: number;
-  provinceCodes: string[];
-  startsOn: Date;
-  endsOn: Date;
-  createdById: string | null;
-  createdBy?: { displayName: string } | null;
-}, day: string): ChallengeRow {
-  const row = {
-    id: c.id,
-    title: c.title,
-    description: c.description,
-    reason: c.reason as PointReasonCode,
-    multiplier: c.multiplier,
-    provinceCodes: c.provinceCodes,
-    startsOn: dayKey(c.startsOn),
-    endsOn: dayKey(c.endsOn),
-    createdById: c.createdById,
-    createdByName: c.createdBy?.displayName ?? null,
-  };
-  return { ...row, state: challengeState(row, day) };
-}
-
-export async function listChallenges(day: string, opts: { includeEnded?: boolean } = {}): Promise<ChallengeRow[]> {
-  const rows = await prisma.challenge.findMany({
-    where: opts.includeEnded ? {} : { endsOn: { gte: parseDayKey(day) } },
-    orderBy: [{ startsOn: "desc" }],
-    include: { createdBy: { select: { displayName: true } } },
-  });
-  return rows.map((r) => toChallengeRow(r, day));
-}
-
-async function challengesCovering(day: string): Promise<ChallengeLike[]> {
-  const d = parseDayKey(day);
-  const rows = await prisma.challenge.findMany({ where: { startsOn: { lte: d }, endsOn: { gte: d } } });
-  return rows.map((c) => ({
-    id: c.id,
-    title: c.title,
-    reason: c.reason as PointReasonCode,
-    multiplier: c.multiplier,
-    provinceCodes: c.provinceCodes,
-    startsOn: dayKey(c.startsOn),
-    endsOn: dayKey(c.endsOn),
-  }));
-}
-
 async function writeAwards(userId: string, day: string, provinceCode: string | null, awards: PointAward[]): Promise<number> {
   if (!awards.length) return 0;
-  const challenges = await challengesCovering(day);
-  const data: Prisma.PointEventCreateManyInput[] = awards.map((a) => {
-    const ch = activeChallenge(challenges, a.reason, day, provinceCode);
-    const multiplier = ch?.multiplier ?? 1;
-    return {
-      userId,
-      day: parseDayKey(day),
-      provinceCode,
-      reason: a.reason,
-      basePoints: a.basePoints,
-      multiplier,
-      points: applyMultiplier(a.basePoints, multiplier),
-      sourceType: a.sourceType,
-      sourceId: a.sourceId,
-      challengeId: ch?.id ?? null,
-    };
-  });
+  const data: Prisma.PointEventCreateManyInput[] = awards.map((a) => ({
+    userId,
+    day: parseDayKey(day),
+    provinceCode,
+    reason: a.reason,
+    basePoints: a.basePoints,
+    points: a.basePoints,
+    sourceType: a.sourceType,
+    sourceId: a.sourceId,
+  }));
   const r = await prisma.pointEvent.createMany({ data, skipDuplicates: true });
   return r.count;
 }
@@ -161,24 +92,27 @@ export async function awardPointsForVisit(visitId: string): Promise<number> {
   return writeAwards(v.createdByUserId, day, v.account?.provinceCode ?? null, awards);
 }
 
-/** Daily target bonus and streak milestones for one rep/day, from RepDailySummary. */
+/**
+ * Daily target bonus and streak milestones for one rep/day, from RepDailySummary.
+ * The target is in clinic slots (ten a day unless an admin set otherwise), so a
+ * 90-minute visit counts as two.
+ */
 export async function awardDailyBonuses(userId: string, day: string): Promise<number> {
   const targets = await listSalesTargets(userId);
-  const target = resolveActiveTarget(targets, "DAY", "VISITS", day);
-  if (!target) return 0;
+  const target = resolveDailyVisitsTarget(targets, day);
 
   const since = parseDayKey(day);
   since.setUTCDate(since.getUTCDate() - 120);
   const summaries = await prisma.repDailySummary.findMany({
     where: { userId, day: { gte: since, lte: parseDayKey(day) } },
-    select: { day: true, visits: true, provinceCode: true },
+    select: { day: true, visitSlots: true, provinceCode: true },
     orderBy: { day: "asc" },
   });
   const today = summaries.find((s) => dayKey(s.day) === day);
-  if (!today || today.visits < target.value) return 0;
+  if (!today || today.visitSlots < target.value) return 0;
 
   const awards: PointAward[] = [{ reason: "DAILY_TARGET_MET", basePoints: POINT_RULES.DAILY_TARGET_MET.points, sourceType: "Day", sourceId: day }];
-  const streak = computeStreak(summaries.map((s) => ({ day: dayKey(s.day), visits: s.visits })), targets, day);
+  const streak = computeStreak(summaries.map((s) => ({ day: dayKey(s.day), visitSlots: s.visitSlots })), targets, day);
   if (streak.todayCounted && (STREAK_MILESTONES as readonly number[]).includes(streak.days)) {
     awards.push({ reason: "STREAK_MILESTONE", basePoints: POINT_RULES.STREAK_MILESTONE.points, sourceType: "Streak", sourceId: `${day}:${streak.days}` });
   }
@@ -269,11 +203,9 @@ export type PointEventRow = {
   reason: PointReasonCode;
   label: string;
   basePoints: number;
-  multiplier: number;
   points: number;
   sourceType: string;
   sourceId: string;
-  challengeTitle: string | null;
 };
 
 export async function listPointEvents(userId: string, take = 30): Promise<PointEventRow[]> {
@@ -281,7 +213,6 @@ export async function listPointEvents(userId: string, take = 30): Promise<PointE
     where: { userId },
     orderBy: [{ day: "desc" }, { createdAt: "desc" }],
     take,
-    include: { challenge: { select: { title: true } } },
   });
   return rows.map((r) => ({
     id: r.id,
@@ -289,11 +220,9 @@ export async function listPointEvents(userId: string, take = 30): Promise<PointE
     reason: r.reason as PointReasonCode,
     label: POINT_RULES[r.reason as PointReasonCode]?.label ?? r.reason,
     basePoints: r.basePoints,
-    multiplier: r.multiplier,
     points: r.points,
     sourceType: r.sourceType,
     sourceId: r.sourceId,
-    challengeTitle: r.challenge?.title ?? null,
   }));
 }
 
@@ -328,37 +257,4 @@ export async function getLeaderboard(opts: { period: LeaderboardPeriod; day: str
     qualityVisits: summaries.find((s) => s.userId === u.id)?._sum.qualityVisits ?? 0,
   }));
   return { ranked: rankEntries(entries), range };
-}
-
-export async function createChallenge(input: {
-  title: string;
-  description?: string | null;
-  reason: PointReasonCode;
-  multiplier: number;
-  provinceCodes: string[];
-  startsOn: string;
-  endsOn: string;
-  createdById: string;
-}): Promise<ChallengeRow> {
-  const row = await prisma.challenge.create({
-    data: {
-      title: input.title,
-      description: input.description ?? null,
-      reason: input.reason,
-      multiplier: input.multiplier,
-      provinceCodes: input.provinceCodes,
-      startsOn: parseDayKey(input.startsOn),
-      endsOn: parseDayKey(input.endsOn),
-      createdById: input.createdById,
-    },
-    include: { createdBy: { select: { displayName: true } } },
-  });
-  return toChallengeRow(row, dayKey(new Date()));
-}
-
-export async function deleteChallenge(id: string): Promise<ChallengeRow | null> {
-  const existing = await prisma.challenge.findUnique({ where: { id }, include: { createdBy: { select: { displayName: true } } } });
-  if (!existing) return null;
-  await prisma.challenge.delete({ where: { id } });
-  return toChallengeRow(existing, dayKey(new Date()));
 }

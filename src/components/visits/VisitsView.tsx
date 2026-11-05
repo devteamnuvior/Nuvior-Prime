@@ -25,6 +25,7 @@ import { EASE } from "@/theme/tokens";
 import { clock12, duration } from "@/lib/format";
 import { VisitStats } from "./VisitStats";
 import { OUTCOME_BUCKETS, OUTCOME_TONE, VISIT_TYPE_LABEL, outcomeBucket, type LoggedVisitRow, type OutcomeBucket, type PlannedRouteRow } from "./visitPresentation";
+import { slotsForDuration } from "@/domain/performance/visitSlots";
 
 export type { LoggedVisitRow, PlannedRouteRow } from "./visitPresentation";
 
@@ -185,6 +186,18 @@ export function VisitsView({
         type: "singleSelect",
         valueOptions: Object.entries(VISIT_TYPE_LABEL).map(([value, label]) => ({ value, label })),
         renderCell: ({ value }) => <StatusChip dot={false} tone="primary" label={VISIT_TYPE_LABEL[String(value)] ?? String(value)} />,
+      },
+      {
+        field: "durationMinutes",
+        headerName: "Time",
+        width: 120,
+        type: "number",
+        align: "left",
+        headerAlign: "left",
+        renderCell: ({ row }) => {
+          const slots = slotsForDuration(row.durationMinutes);
+          return <StatusChip dot={false} tone={slots > 1 ? "warning" : "neutral"} label={`${row.durationMinutes} min${slots > 1 ? ` · ×${slots}` : ""}`} />;
+        },
       },
       {
         field: "outcomeLabel",

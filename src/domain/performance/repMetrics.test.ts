@@ -17,6 +17,7 @@ function day(partial: Partial<DailySummaryRow> & { day: string }): DailySummaryR
   return {
     plannedStops: 0,
     visits: 0,
+    visitSlots: partial.visits ?? 0,
     qualityVisits: 0,
     newAccounts: 0,
     followUpsDone: 0,
@@ -51,9 +52,10 @@ describe("rep KPIs", () => {
     expect(k.visitToOrder).toBe(0);
   });
 
-  it("returns nulls without targets or activity", () => {
+  it("returns nulls without activity and scores the default ten-slot target without admin targets", () => {
     const k = computeRepKpis([day({ day: "2026-11-02", visits: 3, plannedStops: 0, orders: 1, outcomeCounts: { ORDER_PLACED: 1, INTERESTED: 2 } })], []);
-    expect(k.targetHitRate).toBeNull();
+    // No admin target: the ten-clinic default applies, and 3 slots miss it.
+    expect(k.targetHitRate).toBe(0);
     expect(k.planAdherence).toBeNull();
     expect(k.visitToOrder).toBe(33);
     // No planned driving recorded → unknown, not zero

@@ -11,7 +11,7 @@ import { MatchingQueuePanel } from "@/components/MatchingQueuePanel";
 import { VerificationQueuePanel } from "@/components/VerificationQueuePanel";
 
 /**
- * Collapsed run diagnostics — pipeline stats, exclusions, and the manager
+ * Collapsed run diagnostics — pipeline stats, exclusions, and the admin
  * queues (matching / verification). Kept out of the rep's primary flow.
  */
 export function Diagnostics({ data }: { data: ProspectSearchSuccess }) {

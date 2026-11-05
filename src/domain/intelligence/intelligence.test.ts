@@ -30,8 +30,6 @@ const repUser: AuthUser = {
   territories: [],
 };
 
-const managerUser: AuthUser = { ...repUser, id: "mgr-1", role: "MANAGER" };
-void managerUser;
 
 describe("Clinic intelligence orchestration", () => {
   it("runs Stage C → D → E pipeline", async () => {
@@ -91,7 +89,7 @@ describe("Rep-safe DTO", () => {
     expect(JSON.stringify(dto)).not.toContain("scoreComponents");
   });
 
-  it("shows diagnostics to MANAGER", async () => {
+  it("shows diagnostics to ADMIN", async () => {
     const analysis = await runOpportunityScoringForFixture({
       fixtureId: "fixture-injectable-clinic",
     });
@@ -113,7 +111,7 @@ describe("Rep-safe DTO", () => {
       gapAnalysis: gap,
       opportunityAnalysis: analysis,
       catalog: MOCK_CATALOG_FIXTURES,
-      role: "MANAGER",
+      role: "ADMIN",
       accountFitScore: 4,
       researchState: "RESEARCHED",
     });

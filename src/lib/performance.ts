@@ -11,6 +11,7 @@ import {
   parseDayKey,
   periodRange,
   resolveActiveTarget,
+  resolveDailyVisitsTarget,
   sumMetric,
   targetProgress,
   isVisitOutcomeCode,
@@ -38,7 +39,7 @@ export async function recomputeRepDailySummary(userId: string, day: string): Pro
       prisma.visitRecord.findMany({
         where: { createdByUserId: userId, visitDate: { gte: dayStart, lt: dayEnd } },
         orderBy: { createdAt: "asc" },
-        select: { id: true, accountId: true, outcomeCode: true, fitScoreSnapshot: true, visitType: true, createdAt: true },
+        select: { id: true, accountId: true, outcomeCode: true, fitScoreSnapshot: true, visitType: true, durationMinutes: true, createdAt: true },
       }),
       prisma.visitListRun.findMany({
         where: { createdByUserId: userId, createdAt: { gte: dayStart, lt: dayEnd } },
@@ -65,6 +66,7 @@ export async function recomputeRepDailySummary(userId: string, day: string): Pro
         outcomeCode: isVisitOutcomeCode(v.outcomeCode) ? v.outcomeCode : null,
         fitScoreSnapshot: v.fitScoreSnapshot,
         visitType: v.visitType,
+        durationMinutes: v.durationMinutes,
         firstEverVisit,
       });
     }
@@ -83,6 +85,7 @@ export async function recomputeRepDailySummary(userId: string, day: string): Pro
       provinceCode: values.provinceCode,
       plannedStops: values.plannedStops,
       visits: values.visits,
+      visitSlots: values.visitSlots,
       qualityVisits: values.qualityVisits,
       newAccounts: values.newAccounts,
       followUpsDone: values.followUpsDone,
@@ -186,13 +189,13 @@ export async function deleteSalesTarget(id: string): Promise<SalesTargetRow | nu
 /**
  * Progress for every target active on `day` for one rep, computed from
  * RepDailySummary rows over each target's period. Targets with no summary rows
- * still appear with actual = 0.
+ * still appear with actual = 0. The daily clinic target is always present: the
+ * admin-set DAY/VISITS row, or the ten-slot default.
  */
 export async function getTargetProgress(userId: string, day: string): Promise<TargetProgress[]> {
   const targets = await listSalesTargets(userId);
-  if (!targets.length) return [];
 
-  const active: SalesTargetRow[] = [];
+  const active: SalesTargetLike[] = [];
   for (const period of TARGET_PERIODS) {
     const metrics = new Set(targets.filter((t) => t.period === period).map((t) => t.metric));
     for (const metric of metrics) {
@@ -200,13 +203,13 @@ export async function getTargetProgress(userId: string, day: string): Promise<Ta
       if (t) active.push(t);
     }
   }
-  if (!active.length) return [];
+  if (!active.some((t) => t.period === "DAY" && t.metric === "VISITS")) active.unshift(resolveDailyVisitsTarget(targets, day));
 
   // One query covers the widest period (month) and we slice per target.
   const month = periodRange("MONTH", day);
   const summaries = await prisma.repDailySummary.findMany({
     where: { userId, day: { gte: parseDayKey(month.start), lte: parseDayKey(month.end) } },
-    select: { day: true, visits: true, qualityVisits: true, newAccounts: true, followUpsDone: true, academySignups: true, orders: true },
+    select: { day: true, visitSlots: true, qualityVisits: true, newAccounts: true, followUpsDone: true, academySignups: true, orders: true },
   });
 
   return active.map((t) => {

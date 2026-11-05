@@ -73,7 +73,7 @@ export default async function AdminCrmPage() {
   return (
     <PageContainer>
       <AdminTabs />
-      <PageHeader title="CRM Diagnostics" description="Manager/admin view of CRM source health. Raw payloads are not shown. Reps do not see this page." />
+      <PageHeader title="CRM Diagnostics" description="Admin view of CRM source health. Raw payloads are not shown. Reps do not see this page." />
 
       <Box sx={{ display: "grid", gap: 6 }}>
         <KpiGrid>

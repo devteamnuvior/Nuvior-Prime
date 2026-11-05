@@ -54,6 +54,7 @@ export default async function MyVisitsPage() {
     accountName: v.account?.businessName ?? v.placeId ?? "Unknown account",
     city: v.account?.city ?? null,
     visitType: v.visitType,
+    durationMinutes: v.durationMinutes,
     outcomeCode: v.outcomeCode ?? null,
     outcomeLabel: visitOutcomeLabel(v.outcomeCode) ?? v.outcome ?? null,
     fitScore: v.fitScoreSnapshot ?? null,

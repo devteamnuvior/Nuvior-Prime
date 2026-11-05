@@ -6,9 +6,9 @@
  * Tone follows brand rules: encouraging, never pushy, never "guaranteed".
  */
 
-import { addDays, parseDayKey, resolveActiveTarget, TARGET_METRIC_LABELS, type SalesTargetLike, type TargetProgress } from "./targets";
+import { addDays, parseDayKey, resolveDailyVisitsTarget, TARGET_METRIC_LABELS, type SalesTargetLike, type TargetProgress } from "./targets";
 
-export type StreakInput = { day: string; visits: number };
+export type StreakInput = { day: string; visitSlots: number };
 
 export type Streak = {
   /** Consecutive working days (Mon–Fri) on which the daily visits target was met, ending yesterday or today. */
@@ -27,15 +27,11 @@ function isWeekend(day: string): boolean {
 /**
  * Walk back from today. Weekends neither count nor break. Today counts only
  * once met; an unmet today does not break the streak (the rep still has time).
- * Days without a DAY/VISITS target end the streak.
+ * The target is the admin-set DAY/VISITS one or the ten-clinic default.
  */
 export function computeStreak(summaries: readonly StreakInput[], targets: readonly SalesTargetLike[], today: string): Streak {
-  const byDay = new Map(summaries.map((s) => [s.day, s.visits] as const));
-  const met = (day: string): boolean | null => {
-    const t = resolveActiveTarget(targets, "DAY", "VISITS", day);
-    if (!t) return null;
-    return (byDay.get(day) ?? 0) >= t.value;
-  };
+  const byDay = new Map(summaries.map((s) => [s.day, s.visitSlots] as const));
+  const met = (day: string): boolean => (byDay.get(day) ?? 0) >= resolveDailyVisitsTarget(targets, day).value;
 
   let days = 0;
   let todayCounted = false;
@@ -94,7 +90,7 @@ export function buildDayMessage(input: {
   if (!daily) {
     return {
       headline: "No daily target set yet",
-      detail: followUpNote ?? "Ask your manager to set one — progress and streaks start from there.",
+      detail: followUpNote ?? "Ask an admin to set one — progress and streaks start from there.",
       tone: "neutral",
     };
   }
@@ -113,7 +109,7 @@ export function buildDayMessage(input: {
     else if (input.streak.days === 1) extras.push("Streak started — same again tomorrow keeps it going.");
     if (quality && quality.status !== "met") extras.push(`${plural(quality.remaining, "more fit-4+ clinic")} would also close the quality target.`);
     return {
-      headline: `Today's target reached: ${daily.actual} of ${daily.target} visits`,
+      headline: `Today's target reached: ${daily.actual} of ${daily.target} clinics`,
       detail: [...extras, followUpNote].filter(Boolean).join(" ") || null,
       tone: "success",
     };

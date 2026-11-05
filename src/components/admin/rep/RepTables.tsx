@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { slotsForDuration } from "@/domain/performance/visitSlots";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { DataTable, type GridColDef } from "@/components/data-table/DataTable";
@@ -52,6 +53,18 @@ export function RecentVisitsTable({ rows, today }: { rows: RepRecentVisit[]; tod
         ),
       },
       { field: "visitType", headerName: "Type", width: 150, renderCell: ({ value }) => <StatusChip dot={false} tone="primary" label={String(value)} /> },
+      {
+        field: "durationMinutes",
+        headerName: "Time",
+        type: "number",
+        width: 110,
+        align: "left",
+        headerAlign: "left",
+        renderCell: ({ value }) => {
+          const slots = slotsForDuration(Number(value));
+          return <StatusChip dot={false} tone={slots > 1 ? "warning" : "neutral"} label={`${value} min${slots > 1 ? ` · ×${slots}` : ""}`} />;
+        },
+      },
       {
         field: "outcomeLabel",
         headerName: "Outcome",

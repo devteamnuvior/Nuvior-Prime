@@ -48,7 +48,7 @@ const COLUMNS: GridColDef<Row>[] = [
   { field: "sourceType", headerName: "Source", width: 110 },
 ];
 
-/** Run-scoped verification items (manager diagnostics). Persisted items live on /verification. */
+/** Run-scoped verification items (admin diagnostics). Persisted items live on /verification. */
 export function VerificationQueuePanel({ items }: { items: VerificationItem[] }) {
   const [status, setStatus] = useState("");
   const [source, setSource] = useState("");

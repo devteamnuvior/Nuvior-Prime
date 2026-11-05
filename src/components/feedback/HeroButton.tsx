@@ -14,7 +14,7 @@ const sweep = keyframes`
 /**
  * Primary call-to-action: gradient fill, tinted shadow, a lift on hover with a light sweep,
  * and the start icon turning a quarter turn. All motion is skipped under `prefers-reduced-motion`.
- * Pass `startIcon` for the glyph; "Add user" and "New challenge" are built on this.
+ * Pass `startIcon` for the glyph; "Add user" is built on this.
  */
 export function HeroButton({ children, sx, ...props }: ButtonProps & { component?: React.ElementType; href?: string }) {
   return (

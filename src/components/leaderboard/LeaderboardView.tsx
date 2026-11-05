@@ -14,7 +14,7 @@ import Typography from "@mui/material/Typography";
 import ArrowForwardRounded from "@mui/icons-material/ArrowForwardRounded";
 import EmojiEventsRounded from "@mui/icons-material/EmojiEventsRounded";
 import { useRouter } from "next/navigation";
-import type { ChallengeRow, LeaderboardPeriod, UserXp } from "@/lib/xp";
+import type { LeaderboardPeriod, UserXp } from "@/lib/xp";
 import { BADGES, POINT_REASONS, POINT_RULES, badgeDefinition, levelFor, type RankedEntry } from "@/domain/performance/xp";
 import { EASE } from "@/theme/tokens";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -23,7 +23,6 @@ import { EmptyState } from "@/components/feedback/EmptyState";
 import { UserAvatar } from "@/components/admin/UserAvatar";
 import { BadgeIcon } from "@/components/performance/BadgeIcon";
 import { LevelBar } from "@/components/performance/LevelBar";
-import { ChallengesPanel } from "./ChallengesPanel";
 
 const nf = new Intl.NumberFormat("en-CA");
 const rangeFmt = new Intl.DateTimeFormat("en-CA", { month: "short", day: "numeric", timeZone: "UTC" });
@@ -150,10 +149,6 @@ export function LeaderboardView({
   totalRanked,
   myXp,
   viewerId,
-  viewerProvinces,
-  challenges,
-  canManage,
-  today,
 }: {
   period: LeaderboardPeriod;
   provinceCode: string;
@@ -166,10 +161,6 @@ export function LeaderboardView({
   totalRanked: number;
   myXp: UserXp;
   viewerId: string;
-  viewerProvinces: string[];
-  challenges: ChallengeRow[];
-  canManage: boolean;
-  today: string;
 }) {
   const router = useRouter();
   const go = (next: { period?: LeaderboardPeriod; province?: string }) => {
@@ -217,7 +208,7 @@ export function LeaderboardView({
         }
       />
 
-      {/* Both columns stretch to the taller one and their last card fills the rest, so "How XP works" and "Challenges" always end on the same line. */}
+      {/* Both columns stretch to the taller one and their last card fills the rest, so the two columns always end on the same line. */}
       <Box sx={{ display: "grid", gap: 6, gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 1.6fr) minmax(0, 1fr)" }, alignItems: "stretch" }}>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>
           {podium && (
@@ -366,7 +357,7 @@ export function LeaderboardView({
                 How XP works
               </Typography>
               <Typography variant="caption" sx={{ display: "block", color: "text.secondary", mt: 0.5 }}>
-                One award per clinic per day for visits. Active challenges multiply one reason for a while; they never reduce points.
+                One award per clinic per day for visits. Points never go down.
               </Typography>
             </Box>
             <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0, display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" } }}>
@@ -453,12 +444,11 @@ export function LeaderboardView({
             </Box>
           </Card>
 
-          <ChallengesPanel challenges={challenges} canManage={canManage} viewerProvinces={viewerProvinces} today={today} />
         </Box>
       </Box>
       {!me && !trimmed && rows.length > 0 && (
         <Typography variant="caption" sx={{ display: "block", mt: 3, color: "text.secondary" }}>
-          <StatusChip dot={false} tone="neutral" label="Managers and admins are not ranked" sx={{ mr: 1 }} />
+          <StatusChip dot={false} tone="neutral" label="Admins are not ranked" sx={{ mr: 1 }} />
           The board lists active representatives only.
         </Typography>
       )}

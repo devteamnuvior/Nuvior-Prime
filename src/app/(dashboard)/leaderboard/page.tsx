@@ -4,7 +4,7 @@ import { AuthError, requirePermission } from "@/lib/authz";
 import { hasPermission } from "@/domain/auth/permissions";
 import { CANADIAN_PROVINCES } from "@/domain/scopeOfPractice";
 import { dayKey, leaderboardView } from "@/domain/performance";
-import { getLeaderboard, getUserXp, listChallenges, type LeaderboardPeriod } from "@/lib/xp";
+import { getLeaderboard, getUserXp, type LeaderboardPeriod } from "@/lib/xp";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { LeaderboardView } from "@/components/leaderboard/LeaderboardView";
 
@@ -22,19 +22,14 @@ export default async function LeaderboardPage({ searchParams }: { searchParams: 
   const period: LeaderboardPeriod = sp.period === "month" ? "MONTH" : "WEEK";
   const today = dayKey(new Date());
   const full = hasPermission(user.role, "performance.view.team");
-  const canManage = hasPermission(user.role, "target.manage");
 
-  // Which provinces the viewer may browse: reps their own, managers theirs, admins all (+ national).
+  // Which provinces the viewer may browse: reps their own, admins all (+ national).
   const allCodes = CANADIAN_PROVINCES.map((p) => p.code);
   const allowed = user.provinces.includes("*") ? ["*", ...allCodes] : user.provinces;
   const requested = sp.province && allowed.includes(sp.province) ? sp.province : null;
   const provinceCode = requested ?? (user.provinces.includes("*") ? "*" : (user.provinces[0] ?? "*"));
 
-  const [{ ranked, range }, challenges, me] = await Promise.all([
-    getLeaderboard({ period, day: today, provinceCode }),
-    listChallenges(today),
-    getUserXp(user.id, today),
-  ]);
+  const [{ ranked, range }, me] = await Promise.all([getLeaderboard({ period, day: today, provinceCode }), getUserXp(user.id, today)]);
   const view = leaderboardView(ranked, user.id, full);
 
   return (
@@ -51,10 +46,6 @@ export default async function LeaderboardPage({ searchParams }: { searchParams: 
         totalRanked={ranked.length}
         myXp={me}
         viewerId={user.id}
-        viewerProvinces={user.provinces}
-        challenges={challenges}
-        canManage={canManage}
-        today={today}
       />
     </PageContainer>
   );

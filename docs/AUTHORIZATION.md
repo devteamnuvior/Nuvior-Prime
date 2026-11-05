@@ -6,18 +6,23 @@ Centralized RBAC + territory. UI hiding is not authorization.
 
 See `src/domain/auth/permissions.ts`.
 
-| Permission | REP | MANAGER | ADMIN |
-|---|---|---|---|
-| prospect.run / view | ✓ | ✓ | ✓ |
-| brief.generate / view | ✓ | ✓ | ✓ |
-| visit.create / view.own | ✓ | ✓ | ✓ |
-| visit.view.team | | ✓ | ✓ |
-| mapping.review / confirm | | ✓ | ✓ |
-| verification.review | ✓ | ✓ | ✓ |
-| account.assign | | ✓ | ✓ |
-| user.manage | | | ✓ |
-| audit.view | | | ✓ |
-| admin.settings | | | ✓ |
+Two roles: REP (field sales) and ADMIN (everything else). There is no manager tier.
+
+| Permission | REP | ADMIN |
+|---|---|---|
+| prospect.run / view | ✓ | ✓ |
+| brief.generate / view | ✓ | ✓ |
+| visit.create / view.own | ✓ | ✓ |
+| visit.view.team | | ✓ |
+| mapping.review / confirm | | ✓ |
+| verification.review | ✓ | ✓ |
+| account.assign | | ✓ |
+| user.manage | | ✓ |
+| audit.view | | ✓ |
+| admin.settings | | ✓ |
+| performance.view.team / target.manage | | ✓ |
+| route.plan / position.report | ✓ | |
+| position.view.team | | ✓ |
 
 ## Territory
 

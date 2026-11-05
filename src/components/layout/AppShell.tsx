@@ -47,7 +47,6 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
 
 export function roleLabel(role: string): string {
   if (role === "ADMIN") return "Administrator";
-  if (role === "MANAGER") return "Manager";
   return "Representative";
 }
 

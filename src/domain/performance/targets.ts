@@ -6,6 +6,8 @@
  * that date whose `endsOn` is null or on/after the date.
  */
 
+import { DAILY_CLINIC_SLOTS } from "./visitSlots";
+
 export const TARGET_PERIODS = ["DAY", "WEEK", "MONTH"] as const;
 export type TargetPeriod = (typeof TARGET_PERIODS)[number];
 
@@ -20,7 +22,7 @@ export const TARGET_METRICS = [
 export type TargetMetric = (typeof TARGET_METRICS)[number];
 
 export const TARGET_METRIC_LABELS: Record<TargetMetric, string> = {
-  VISITS: "Visits",
+  VISITS: "Clinics (45-min slots)",
   QUALITY_VISITS: "Quality visits (fit ≥ 4)",
   NEW_ACCOUNTS: "New accounts visited",
   FOLLOW_UPS: "Follow-ups completed",
@@ -85,6 +87,24 @@ export function periodLength(period: TargetPeriod, day: string): number {
 export function periodDayIndex(period: TargetPeriod, day: string): number {
   const { start } = periodRange(period, day);
   return Math.round((parseDayKey(day).getTime() - parseDayKey(start).getTime()) / 86_400_000) + 1;
+}
+
+/**
+ * The DAY/VISITS target every rep has by default: ten clinic slots a working
+ * day. An admin-set SalesTarget for the same period and metric overrides it.
+ */
+export const DEFAULT_DAILY_VISITS_TARGET: SalesTargetLike = {
+  id: "default-daily-visits",
+  period: "DAY",
+  metric: "VISITS",
+  value: DAILY_CLINIC_SLOTS,
+  startsOn: "1970-01-01",
+  endsOn: null,
+};
+
+/** Active DAY/VISITS target for `day`, falling back to the ten-clinic default. Never null. */
+export function resolveDailyVisitsTarget<T extends SalesTargetLike>(targets: readonly T[], day: string): T | SalesTargetLike {
+  return resolveActiveTarget(targets, "DAY", "VISITS", day) ?? DEFAULT_DAILY_VISITS_TARGET;
 }
 
 export function resolveActiveTarget<T extends SalesTargetLike>(

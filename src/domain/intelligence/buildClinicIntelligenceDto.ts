@@ -196,7 +196,7 @@ export function buildClinicIntelligenceDto(input: {
   canRefresh?: boolean;
 }): ClinicIntelligenceDto {
   const visibility = crmVisibilityForRole(input.role);
-  const showDiagnostics = visibility === "manager" || visibility === "admin";
+  const showDiagnostics = visibility === "admin";
 
   const catalogById = new Map(input.catalog.map((p) => [p.id, p]));
   const gapById = new Map((input.gapAnalysis?.gaps ?? []).map((g) => [g.id, g]));

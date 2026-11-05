@@ -135,6 +135,8 @@ export async function createVisitRecord(input: {
   visitType: string;
   /** Structured outcome code (VisitOutcome); invalid values are stored as null. */
   outcomeCode?: string | null;
+  /** Minutes at the clinic (45 or 90). Defaults to one 45-minute slot. */
+  durationMinutes?: number | null;
   outcome?: string | null;
   peopleMet?: string | null;
   productsDiscussed?: string | null;
@@ -191,6 +193,7 @@ export async function createVisitRecord(input: {
         visitType: input.visitType,
         outcomeCode: isVisitOutcomeCode(input.outcomeCode) ? (input.outcomeCode as VisitOutcome) : null,
         fitScoreSnapshot,
+        durationMinutes: input.durationMinutes ?? 45,
         outcome: input.outcome ?? null,
         peopleMet: input.peopleMet ?? null,
         productsDiscussed: input.productsDiscussed ?? null,

@@ -1,6 +1,6 @@
 # Rep performance — phases 1 to 4
 
-**Status:** Phase 1 complete (structured outcomes, targets, daily summaries) · Phase 2 complete (admin per-rep page) · Phase 3 complete (rep "My day" panel) · Phase 4 complete (XP, levels, badges, leaderboard, challenges)  
+**Status:** Phase 1 complete (structured outcomes, targets, daily summaries) · Phase 2 complete (admin per-rep page) · Phase 3 complete (rep "My day" panel) · Phase 4 complete (XP, levels, badges, leaderboard) · Phase 5 complete (clinic slots; challenges and the MANAGER role removed 2026-11-05)  
 **Next:** Phase 5 Odoo orders (deferred until Odoo access exists)
 
 ## Phase 4 — competition layer
@@ -39,20 +39,12 @@ stored in `UserBadge` when earned: First steps, Century, Quality focus, Route
 master, On a roll (5-day streak), Unstoppable (20), Academy builder, Opener,
 Closer, Follow-through.
 
-### Challenges
-
-`Challenge` = a window where one point reason is multiplied (default × 2),
-optionally limited to provinces. Managers create them only for their own
-provinces, admins anywhere (`createChallengeAction` / `removeChallengeAction`,
-audited as `challenge.*`). Removing a challenge keeps points already awarded.
-The highest active multiplier wins when windows overlap.
-
 ### Leaderboard
 
 `getLeaderboard` ranks active reps by period points (week Mon–Sun or calendar
 month) within one province, or nationally for admins. Ties share a rank.
-Reps see the top 3 plus the two reps on either side of themselves; managers
-and admins see the full list. Managers and admins are never ranked.
+Reps see the top 3 plus the two reps on either side of themselves; admins see
+the full list. Admins are never ranked.
 "My day" shows the rep's level, this week's rank and distance to first place.
 
 ## Phase 3 — rep "My day" panel
@@ -80,7 +72,7 @@ met, ending today (once met) or yesterday; weekends neither count nor break it.
 
 `/admin/users/[id]` (linked from the Users table name, its row menu "View
 performance", and the rep name on Team Activity). Gated by
-`performance.view.team`; managers only reach reps who share one of their
+`performance.view.team`; province-scoped admins only reach reps who share one of their
 provinces, admins reach everyone. Range switch `?range=30|90|365` (default 90).
 
 | Section | Source | Notes |
@@ -111,13 +103,13 @@ qualification, DNC, CRM or routing rule.
 
 | Area | Change |
 | --- | --- |
-| `VisitRecord` | `outcomeCode VisitOutcome?` (structured) and `fitScoreSnapshot Int?` (fit at visit time). `outcome` stays as the free-text note. |
+| `VisitRecord` | `outcomeCode VisitOutcome?` (structured), `fitScoreSnapshot Int?` (fit at visit time) and `durationMinutes Int` (45 or 90). `outcome` stays as the free-text note. |
 | `SalesTarget` | Per-rep target: `period` (DAY / WEEK / MONTH), `metric`, `value`, `startsOn`, optional `endsOn`. Unique on (user, period, metric, startsOn). |
-| `RepDailySummary` | One row per rep per calendar day: visits, quality visits, new accounts, follow-ups, academy sign-ups, orders, outcome counts, planned stops / drive minutes, average fit. Recomputed after every visit save. |
-| Permissions | `performance.view.own` (all roles), `performance.view.team` and `target.manage` (MANAGER, ADMIN). |
+| `RepDailySummary` | One row per rep per calendar day: visits, clinic slots (`visitSlots`), quality visits, new accounts, follow-ups, academy sign-ups, orders, outcome counts, planned stops / drive minutes, average fit. Recomputed after every visit save. |
+| Permissions | `performance.view.own` (all roles), `performance.view.team` and `target.manage` (ADMIN). |
 | Visit form | Outcome is a required select; the free-text field became "Outcome note". AI note structuring suggests a code via `inferVisitOutcomeCode` (never overrides a rep's choice). |
 | Visit History | Outcome chips, fit column, and a target strip for the signed-in rep. |
-| Seed | Default targets for seed reps (7 visits/day, 4 quality visits/day, 5 follow-ups/week, 4 new accounts/month, 2 academy sign-ups/month). |
+| Seed | Default targets for seed reps (10 clinic slots/day, 4 quality visits/day, 5 follow-ups/week, 4 new accounts/month, 2 academy sign-ups/month). |
 
 ## Outcome codes
 
@@ -150,7 +142,7 @@ that day whose `endsOn` is null or on/after it. Weeks run Monday–Sunday. Progr
 reports `actual`, `remaining`, `percent`, an even-pace `expectedByNow` and a
 linear `forecast`; status is `met` / `ahead` / `on_track` / `behind`.
 
-Managers can set targets only for reps who share one of their provinces; admins
+Province-scoped admins can set targets only for reps who share one of their provinces; national admins
 anywhere (`setSalesTargetAction`, `removeSalesTargetAction`, audited as
 `target.set` / `target.remove`). Editing UI lands with the admin per-rep page
 in phase 2.
@@ -181,3 +173,24 @@ how the visit form submits `visitDate`.
 - XP, levels, badges, leaderboards (phase 4) — `RepDailySummary` is their input.
 - Backfill of `outcomeCode` for visits logged before this phase: they keep the
   free-text `outcome` and show it as-is in Visit History.
+
+## Phase 5 — clinic slots (2026-11-05)
+
+A rep's day is **ten clinics of 45 minutes**. The daily `VISITS` target is measured in
+clinic slots (`src/domain/performance/visitSlots.ts`): a standard visit is one slot, and a
+visit the rep records as **Extended · 90 min** counts as two, so a long demo or training
+does not cost the rep their day. The rep picks the duration on the visit form
+("Time at clinic"); `VisitRecord.durationMinutes` stores it and
+`RepDailySummary.visitSlots` sums it per day. `metricValue("VISITS")` reads `visitSlots`,
+so target progress, the daily-target bonus, streaks and the admin KPIs all count slots.
+Raw `visits` stays for display and the leaderboard.
+
+Every rep has the ten-slot DAY/VISITS target by default
+(`DEFAULT_DAILY_VISITS_TARGET`, via `resolveDailyVisitsTarget`); an admin-set
+`SalesTarget` for the same period and metric overrides it. Route planning defaults to ten
+stops of 45 minutes (`ROUTING_DEFAULT_VISIT_MINUTES`).
+
+Removed in the same release: challenges (the `Challenge` table and the
+`PointEvent.multiplier` / `challengeId` columns; points are now always the base points) and
+the MANAGER role (existing managers became ADMIN). Release SQL:
+`prisma/releases/2026-11-05_clinic_slots.sql`, applied by `scripts/predeploy.ts`.

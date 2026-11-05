@@ -50,6 +50,7 @@ export type RepRecentVisit = {
   accountName: string;
   city: string | null;
   visitType: string;
+  durationMinutes: number;
   outcomeCode: string | null;
   outcomeLabel: string | null;
   fitScore: number | null;
@@ -140,6 +141,7 @@ export async function loadRepProfile(userId: string, rangeKey: RangeKey): Promis
     day: dayKey(s.day),
     plannedStops: s.plannedStops,
     visits: s.visits,
+    visitSlots: s.visitSlots,
     qualityVisits: s.qualityVisits,
     newAccounts: s.newAccounts,
     followUpsDone: s.followUpsDone,
@@ -188,6 +190,7 @@ export async function loadRepProfile(userId: string, rangeKey: RangeKey): Promis
       accountName: v.account?.businessName ?? v.placeId ?? "Unknown account",
       city: v.account?.city ?? null,
       visitType: v.visitType,
+      durationMinutes: v.durationMinutes,
       outcomeCode: v.outcomeCode ?? null,
       outcomeLabel: visitOutcomeLabel(v.outcomeCode) ?? v.outcome ?? null,
       fitScore: v.fitScoreSnapshot ?? null,

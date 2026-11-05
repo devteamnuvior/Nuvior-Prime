@@ -176,7 +176,6 @@ export function RepProfileView({
                     <Typography variant="body2" noWrap>
                       {e.label}
                     </Typography>
-                    {e.multiplier !== 1 && <StatusChip dot={false} tone="success" label={`× ${e.multiplier}${e.challengeTitle ? ` · ${e.challengeTitle}` : ""}`} />}
                   </Box>
                   <Typography variant="body2" sx={{ fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
                     +{e.points}
@@ -187,7 +186,7 @@ export function RepProfileView({
           )}
         </Section>
 
-        <Section title="Targets" hint={canManageTargets ? "Active targets drive the rep's progress bars. Changes are audited." : "Set by a manager or admin."}>
+        <Section title="Targets" hint={canManageTargets ? "Active targets drive the rep's progress bars. Changes are audited." : "Set by an admin."}>
           {profile.progress.length > 0 && (
             /* One column per target on wide screens (capped at six) so a fifth card never sits alone on a second row. */
             <Box sx={{ display: "grid", gap: 3, gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(0, 1fr))", lg: `repeat(${Math.min(profile.progress.length, 6)}, minmax(0, 1fr))` } }}>

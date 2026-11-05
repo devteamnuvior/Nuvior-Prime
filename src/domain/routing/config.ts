@@ -48,8 +48,8 @@ export function getRoutingConfig(): RoutingConfig {
         : "traffic_unaware",
     allowGeodesicFallback:
       (process.env.ROUTING_ALLOW_GEODESIC_FALLBACK ?? "true").toLowerCase() !== "false",
-    defaultVisitMinutes: num(process.env.ROUTING_DEFAULT_VISIT_MINUTES, 20),
-    revisitVisitMinutes: num(process.env.ROUTING_REVISIT_VISIT_MINUTES, 25),
+    defaultVisitMinutes: num(process.env.ROUTING_DEFAULT_VISIT_MINUTES, 45),
+    revisitVisitMinutes: num(process.env.ROUTING_REVISIT_VISIT_MINUTES, 45),
     lunchEnabled: (process.env.ROUTING_LUNCH_ENABLED ?? "true").toLowerCase() !== "false",
     lunchStartMinutes: parseHm(process.env.ROUTING_LUNCH_START ?? "12:00", 12 * 60),
     lunchEndMinutes: parseHm(process.env.ROUTING_LUNCH_END ?? "14:00", 14 * 60),

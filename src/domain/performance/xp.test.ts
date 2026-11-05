@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  activeChallenge,
-  applyMultiplier,
   BADGES,
-  challengeState,
   earnedBadges,
   leaderboardView,
   levelFor,
@@ -56,26 +53,6 @@ describe("points for a visit", () => {
 
   it("every reason has a rule", () => {
     for (const r of POINT_REASONS) expect(POINT_RULES[r].points).toBeGreaterThan(0);
-  });
-});
-
-describe("challenges", () => {
-  const ch = [
-    { id: "c1", title: "PRP month", reason: "ACADEMY_SIGNUP" as const, multiplier: 2, provinceCodes: ["ON"], startsOn: "2026-11-01", endsOn: "2026-11-30" },
-    { id: "c2", title: "National", reason: "ACADEMY_SIGNUP" as const, multiplier: 1.5, provinceCodes: [], startsOn: "2026-11-01", endsOn: "2026-11-30" },
-  ];
-  it("picks the highest active multiplier matching the province", () => {
-    expect(activeChallenge(ch, "ACADEMY_SIGNUP", "2026-11-10", "ON")?.id).toBe("c1");
-    expect(activeChallenge(ch, "ACADEMY_SIGNUP", "2026-11-10", "AB")?.id).toBe("c2");
-    expect(activeChallenge(ch, "ACADEMY_SIGNUP", "2026-12-01", "ON")).toBeNull();
-    expect(activeChallenge(ch, "VISIT", "2026-11-10", "ON")).toBeNull();
-  });
-  it("multiplies and rounds; state follows the window", () => {
-    expect(applyMultiplier(40, 2)).toBe(80);
-    expect(applyMultiplier(8, 1.5)).toBe(12);
-    expect(challengeState(ch[0], "2026-10-31")).toBe("upcoming");
-    expect(challengeState(ch[0], "2026-11-15")).toBe("active");
-    expect(challengeState(ch[0], "2026-12-01")).toBe("ended");
   });
 });
 

@@ -17,7 +17,7 @@ function asUser(row: {
   id: string;
   email: string;
   displayName: string;
-  role: "REP" | "MANAGER" | "ADMIN";
+  role: "REP" | "ADMIN";
   status: "ACTIVE" | "DISABLED";
   provinces: string[];
   territories: string[];
@@ -29,14 +29,13 @@ async function main() {
   console.log("=== NUVIOR Prime — Auth validation (Phase 6) ===\n");
 
   const users = await prisma.user.findMany({ orderBy: { email: "asc" } });
-  if (users.length < 4) {
+  if (users.length < 3) {
     console.error("FAILED: seed users missing — run npm run db:setup");
     process.exit(1);
   }
 
   const onRep = asUser(users.find((u) => u.email === "on.rep@nuvior.local")!);
   const abRep = asUser(users.find((u) => u.email === "ab.rep@nuvior.local")!);
-  const onMgr = asUser(users.find((u) => u.email === "on.manager@nuvior.local")!);
   const admin = asUser(users.find((u) => u.email === "admin@nuvior.local")!);
 
   const checks: { name: string; ok: boolean; detail?: string }[] = [];
@@ -56,12 +55,6 @@ async function main() {
   checks.push({
     name: "Ontario Rep cannot confirm CRM mappings",
     ok: !hasPermission(onRep.role, "mapping.confirm"),
-  });
-  checks.push({
-    name: "Ontario Manager can confirm mappings / view team",
-    ok:
-      hasPermission(onMgr.role, "mapping.confirm") &&
-      hasPermission(onMgr.role, "visit.view.team"),
   });
   checks.push({
     name: "National Admin can manage users and view audit",
@@ -183,7 +176,6 @@ async function main() {
   console.log("\nLocal login: http://localhost:3000/login");
   console.log("  on.rep@nuvior.local / DevPass123!");
   console.log("  ab.rep@nuvior.local / DevPass123!");
-  console.log("  on.manager@nuvior.local / DevPass123!");
   console.log("  admin@nuvior.local / DevPass123!");
 }
 

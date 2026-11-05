@@ -29,24 +29,17 @@ describe("permission matrix", () => {
     expect(hasPermission("REP", "visit.create")).toBe(true);
   });
 
-  it("MANAGER can review mappings and team visits, not users", () => {
-    expect(hasPermission("MANAGER", "mapping.confirm")).toBe(true);
-    expect(hasPermission("MANAGER", "visit.view.team")).toBe(true);
-    expect(hasPermission("MANAGER", "user.manage")).toBe(false);
-  });
-
   it("ADMIN has user.manage and audit.view", () => {
     expect(hasPermission("ADMIN", "user.manage")).toBe(true);
     expect(hasPermission("ADMIN", "audit.view")).toBe(true);
     expect(permissionsForRole("ADMIN")).toContain("admin.settings");
   });
 
-  it("performance: REP sees own, MANAGER/ADMIN see team and manage targets", () => {
+  it("performance: REP sees own, ADMIN sees team and manages targets", () => {
     expect(hasPermission("REP", "performance.view.own")).toBe(true);
     expect(hasPermission("REP", "performance.view.team")).toBe(false);
     expect(hasPermission("REP", "target.manage")).toBe(false);
-    expect(hasPermission("MANAGER", "performance.view.team")).toBe(true);
-    expect(hasPermission("MANAGER", "target.manage")).toBe(true);
+    expect(hasPermission("ADMIN", "performance.view.team")).toBe(true);
     expect(hasPermission("ADMIN", "target.manage")).toBe(true);
   });
 });

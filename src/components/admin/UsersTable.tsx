@@ -21,10 +21,9 @@ import { UsersTableSkeleton } from "./TeamMembersSkeleton";
 const ROLE_PILL_WIDTH = 124;
 const ROLE_PILL_HEIGHT = 28;
 
-/** Per-role colour: solid teal for admins, blue for managers, green for reps. */
+/** Per-role colour: solid teal for admins, green for reps. */
 const ROLE_PILL: Record<AppRoleName, { bg: string; fg: string }> = {
   ADMIN: { bg: "primary.main", fg: "primary.contrastText" },
-  MANAGER: { bg: "rgba(var(--nv-palette-info-mainChannel) / 0.12)", fg: "info.main" },
   REP: { bg: "rgba(var(--nv-palette-success-mainChannel) / 0.12)", fg: "success.main" },
 };
 

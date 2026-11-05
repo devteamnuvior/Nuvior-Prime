@@ -17,6 +17,8 @@ export type LoggedVisitRow = {
   accountName: string;
   city: string | null;
   visitType: string;
+  /** Minutes at the clinic; 90 counts as two of the day's ten slots. */
+  durationMinutes: number;
   outcomeCode: string | null;
   outcomeLabel: string | null;
   fitScore: number | null;

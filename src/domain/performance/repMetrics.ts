@@ -4,13 +4,13 @@
  * admin per-rep page renders. No Prisma here; src/lib/repProfile.ts loads data.
  */
 
-import { addDays, dayKey, parseDayKey, periodRange, resolveActiveTarget, type SalesTargetLike } from "./targets";
+import { addDays, dayKey, parseDayKey, periodRange, resolveActiveTarget, resolveDailyVisitsTarget, type SalesTargetLike } from "./targets";
 import { visitOutcomeDefinition, isVisitOutcomeCode, type VisitOutcomeCode } from "./visitOutcome";
 import type { DailySummaryValues } from "./dailySummary";
 
 export type DailySummaryRow = Pick<
   DailySummaryValues,
-  "plannedStops" | "visits" | "qualityVisits" | "newAccounts" | "followUpsDone" | "academySignups" | "orders" | "plannedDriveMinutes" | "avgFitScore"
+  "plannedStops" | "visits" | "visitSlots" | "qualityVisits" | "newAccounts" | "followUpsDone" | "academySignups" | "orders" | "plannedDriveMinutes" | "avgFitScore"
 > & { day: string; outcomeCounts: Partial<Record<string, number>> | null };
 
 export type VisitRowInput = {
@@ -92,11 +92,8 @@ export function computeRepKpis(summaries: readonly DailySummaryRow[], targets: r
     for (const [code, n] of Object.entries(s.outcomeCounts ?? {})) {
       if (isVisitOutcomeCode(code) && visitOutcomeDefinition(code).contactMade) contactVisits += n ?? 0;
     }
-    const t = resolveActiveTarget(targets, "DAY", "VISITS", s.day);
-    if (t) {
-      targetDays += 1;
-      if (s.visits >= t.value) targetMetDays += 1;
-    }
+    targetDays += 1;
+    if (s.visitSlots >= resolveDailyVisitsTarget(targets, s.day).value) targetMetDays += 1;
   }
 
   return {
@@ -127,8 +124,7 @@ export function weeklySeries(summaries: readonly DailySummaryRow[], targets: rea
       }
     }
     const weekly = resolveActiveTarget(targets, "WEEK", "VISITS", weekStart);
-    const daily = resolveActiveTarget(targets, "DAY", "VISITS", weekStart);
-    const target = weekly ? weekly.value : daily ? daily.value * 5 : null;
+    const target = weekly ? weekly.value : resolveDailyVisitsTarget(targets, weekStart).value * 5;
     points.push({ weekStart, label: weekLabel.format(parseDayKey(weekStart)), visits, qualityVisits, target });
     weekStart = addDays(weekStart, 7);
   }

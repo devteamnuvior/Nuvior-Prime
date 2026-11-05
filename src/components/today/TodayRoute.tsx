@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useMemo, useRef, useState } from "react";
+import { DAILY_CLINIC_SLOTS } from "@/domain/performance/visitSlots";
 import { APIProvider } from "@vis.gl/react-google-maps";
 import { useSession } from "next-auth/react";
 import Alert from "@mui/material/Alert";
@@ -144,7 +145,7 @@ export function TodayRoute({
 
   const [dayStart, setDayStart] = useState("09:00");
   const [dayEnd, setDayEnd] = useState("17:00");
-  const [target, setTarget] = useState(20);
+  const [target, setTarget] = useState(DAILY_CLINIC_SLOTS);
   const [minFit, setMinFit] = useState(3);
   const [radiusOverride, setRadiusOverride] = useState<number | null>(null);
   const [driveOverride, setDriveOverride] = useState<number | null>(null);
@@ -169,7 +170,7 @@ export function TodayRoute({
 
   const { data: session } = useSession();
   const role = session?.user?.role;
-  const privileged = role === "ADMIN" || role === "MANAGER";
+  const privileged = role === "ADMIN";
 
   const provinces = useMemo(() => {
     const all = CANADIAN_PROVINCES.map((p) => p.code);

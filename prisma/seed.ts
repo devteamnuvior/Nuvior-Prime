@@ -222,12 +222,6 @@ async function main() {
     { email: "to.rep.d@nuvior.local", displayName: "Toronto Rep D (Dev)", role: AppRole.REP, provinces: ["ON"] },
     { email: "to.rep.e@nuvior.local", displayName: "Toronto Rep E (Dev)", role: AppRole.REP, provinces: ["ON"] },
     {
-      email: "on.manager@nuvior.local",
-      displayName: "Ontario Manager (Dev)",
-      role: AppRole.MANAGER,
-      provinces: ["ON"],
-    },
-    {
       email: "admin@nuvior.local",
       displayName: "National Admin (Dev)",
       role: AppRole.ADMIN,
@@ -247,12 +241,12 @@ async function main() {
   }
   counts.users = await prisma.user.count();
 
-  // Performance phase 1 — default targets for reps (set by the dev manager/admin).
+  // Performance phase 1 — default targets for reps (set by the dev admin). Daily VISITS is in clinic slots: ten 45-minute slots.
   const admin = await prisma.user.findUnique({ where: { email: "admin@nuvior.local" } });
   const reps = await prisma.user.findMany({ where: { role: AppRole.REP } });
   const startsOn = new Date(Date.UTC(new Date().getUTCFullYear(), 0, 1));
   const defaultTargets: Array<{ period: TargetPeriod; metric: TargetMetric; value: number }> = [
-    { period: TargetPeriod.DAY, metric: TargetMetric.VISITS, value: 7 },
+    { period: TargetPeriod.DAY, metric: TargetMetric.VISITS, value: 10 },
     { period: TargetPeriod.DAY, metric: TargetMetric.QUALITY_VISITS, value: 4 },
     { period: TargetPeriod.WEEK, metric: TargetMetric.FOLLOW_UPS, value: 5 },
     { period: TargetPeriod.MONTH, metric: TargetMetric.NEW_ACCOUNTS, value: 4 },

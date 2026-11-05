@@ -318,7 +318,7 @@ function DiagnosticsPanel({
   ];
   return (
     <Paper variant="outlined" sx={{ mt: 3, p: 3, borderStyle: "dashed", borderColor: "text.disabled", bgcolor: "background.sunken" }}>
-      <Disclosure label={<Typography variant="eyebrow" component="span">Manager diagnostics</Typography>} contentSx={{ pt: 2 }}>
+      <Disclosure label={<Typography variant="eyebrow" component="span">Admin diagnostics</Typography>} contentSx={{ pt: 2 }}>
         <Box component="dl" sx={{ m: 0, display: "grid", gap: 1, typography: "caption", color: "text.secondary" }}>
           {rows.map(([label, value, mono]) => (
             <Box key={label} sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>

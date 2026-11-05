@@ -6,12 +6,15 @@
 
 import { isQualityVisit, type VisitOutcomeCode } from "./visitOutcome";
 import type { TargetMetric } from "./targets";
+import { slotsForDuration } from "./visitSlots";
 
 export type SummaryVisitInput = {
   accountId: string | null;
   outcomeCode: VisitOutcomeCode | null;
   fitScoreSnapshot: number | null;
   visitType: string;
+  /** Minutes at the clinic (45 or 90); drives `visitSlots`. */
+  durationMinutes: number;
   /** True when this account has no earlier VisitRecord by anyone. */
   firstEverVisit: boolean;
 };
@@ -26,6 +29,8 @@ export type DailySummaryValues = {
   provinceCode: string | null;
   plannedStops: number;
   visits: number;
+  /** 45-minute slots over the day's visits; a 90-minute visit counts 2. The VISITS metric reads this. */
+  visitSlots: number;
   qualityVisits: number;
   newAccounts: number;
   followUpsDone: number;
@@ -43,6 +48,7 @@ export function buildDailySummary(input: {
   runs: readonly SummaryRunInput[];
 }): DailySummaryValues {
   const outcomeCounts: Partial<Record<VisitOutcomeCode, number>> = {};
+  let visitSlots = 0;
   let qualityVisits = 0;
   let newAccounts = 0;
   let followUpsDone = 0;
@@ -53,6 +59,7 @@ export function buildDailySummary(input: {
 
   for (const v of input.visits) {
     if (v.outcomeCode) outcomeCounts[v.outcomeCode] = (outcomeCounts[v.outcomeCode] ?? 0) + 1;
+    visitSlots += slotsForDuration(v.durationMinutes);
     if (isQualityVisit(v.fitScoreSnapshot)) qualityVisits += 1;
     if (v.firstEverVisit && v.accountId) newAccounts += 1;
     if (FOLLOW_UP_TYPES.has(v.visitType)) followUpsDone += 1;
@@ -72,6 +79,7 @@ export function buildDailySummary(input: {
     provinceCode: lastRun?.provinceCode ?? null,
     plannedStops: lastRun?.stopCount ?? 0,
     visits: input.visits.length,
+    visitSlots,
     qualityVisits,
     newAccounts,
     followUpsDone,
@@ -83,11 +91,13 @@ export function buildDailySummary(input: {
   };
 }
 
-/** Which summary column a target metric reads. */
-export function metricValue(summary: Pick<DailySummaryValues, "visits" | "qualityVisits" | "newAccounts" | "followUpsDone" | "academySignups" | "orders">, metric: TargetMetric): number {
+export type MetricSummary = Pick<DailySummaryValues, "visitSlots" | "qualityVisits" | "newAccounts" | "followUpsDone" | "academySignups" | "orders">;
+
+/** Which summary column a target metric reads. VISITS is measured in clinic slots, so a 90-minute visit counts twice. */
+export function metricValue(summary: MetricSummary, metric: TargetMetric): number {
   switch (metric) {
     case "VISITS":
-      return summary.visits;
+      return summary.visitSlots;
     case "QUALITY_VISITS":
       return summary.qualityVisits;
     case "NEW_ACCOUNTS":
@@ -102,9 +112,6 @@ export function metricValue(summary: Pick<DailySummaryValues, "visits" | "qualit
 }
 
 /** Sum summaries over a range (used for week / month progress). */
-export function sumMetric(
-  summaries: readonly Pick<DailySummaryValues, "visits" | "qualityVisits" | "newAccounts" | "followUpsDone" | "academySignups" | "orders">[],
-  metric: TargetMetric,
-): number {
+export function sumMetric(summaries: readonly MetricSummary[], metric: TargetMetric): number {
   return summaries.reduce((acc, s) => acc + metricValue(s, metric), 0);
 }

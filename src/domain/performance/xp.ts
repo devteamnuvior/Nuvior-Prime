@@ -1,6 +1,6 @@
 /**
  * Competition layer (performance phase 4) — pure rules for XP, levels,
- * badges, challenges and ranking. Persistence lives in src/lib/xp.ts.
+ * badges and ranking. Persistence lives in src/lib/xp.ts.
  *
  * Design rules:
  * - Points reward quality and follow-through, never raw volume: a fit-4+
@@ -32,7 +32,7 @@ export const POINT_RULES: Record<PointReasonCode, { points: number; label: strin
   FOLLOW_UP_ON_TIME: { points: 10, label: "Follow-up on time", description: "Returned to a clinic on or before the follow-up date you set." },
   ACADEMY_SIGNUP: { points: 40, label: "Academy sign-up", description: "Clinic staff enrolled in NUVIOR Academy or an Aptos pathway." },
   FIRST_ORDER: { points: 60, label: "First order", description: "First order from an account you opened." },
-  DAILY_TARGET_MET: { points: 15, label: "Daily target met", description: "Hit the daily visits target." },
+  DAILY_TARGET_MET: { points: 15, label: "Daily target met", description: "Hit the daily clinic target (ten 45-minute slots)." },
   STREAK_MILESTONE: { points: 25, label: "Streak milestone", description: "5, 10, 20 or 50 working days on target in a row." },
 };
 
@@ -71,44 +71,6 @@ export function pointsForVisit(v: VisitPointInput): PointAward[] {
   if (v.outcomeCode === "ACADEMY_SIGNUP") awards.push({ reason: "ACADEMY_SIGNUP", basePoints: POINT_RULES.ACADEMY_SIGNUP.points, ...src });
   if (v.outcomeCode === "ORDER_PLACED" && !v.earlierOrderOnAccount) awards.push({ reason: "FIRST_ORDER", basePoints: POINT_RULES.FIRST_ORDER.points, ...src });
   return awards;
-}
-
-// ---------------------------------------------------------------------------
-// Challenges
-// ---------------------------------------------------------------------------
-
-export type ChallengeLike = {
-  id: string;
-  title: string;
-  reason: PointReasonCode;
-  multiplier: number;
-  /** Empty = all provinces */
-  provinceCodes: string[];
-  startsOn: string;
-  endsOn: string;
-};
-
-export function activeChallenge<T extends ChallengeLike>(challenges: readonly T[], reason: PointReasonCode, day: string, provinceCode: string | null): T | null {
-  let best: T | null = null;
-  for (const c of challenges) {
-    if (c.reason !== reason) continue;
-    if (day < c.startsOn || day > c.endsOn) continue;
-    if (c.provinceCodes.length && (!provinceCode || !c.provinceCodes.includes(provinceCode))) continue;
-    if (!best || c.multiplier > best.multiplier) best = c;
-  }
-  return best;
-}
-
-export function applyMultiplier(basePoints: number, multiplier: number): number {
-  return Math.round(basePoints * Math.max(0, multiplier));
-}
-
-export type ChallengeState = "active" | "upcoming" | "ended";
-
-export function challengeState(c: Pick<ChallengeLike, "startsOn" | "endsOn">, day: string): ChallengeState {
-  if (day < c.startsOn) return "upcoming";
-  if (day > c.endsOn) return "ended";
-  return "active";
 }
 
 // ---------------------------------------------------------------------------
