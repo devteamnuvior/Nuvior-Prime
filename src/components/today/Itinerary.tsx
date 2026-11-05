@@ -17,6 +17,7 @@ import { prefersReducedMotion } from "@/lib/motion";
 import type { DisplayStop } from "./manualPlan";
 import { IntelligenceItineraryBadge } from "@/components/intelligence/ClinicIntelligenceSection";
 import type { ClinicIntelligenceDto } from "@/domain/intelligence/clinicIntelligenceDto";
+import type { VisitedNearbyEntry } from "@/domain/visitList";
 
 const NODE = 28;
 
@@ -35,6 +36,7 @@ export function Itinerary({
   onRemove,
   onResetPlan,
   intelligenceByAccountId,
+  visitedNearby = [],
 }: {
   stops: DisplayStop[];
   dayStartClock: string;
@@ -51,6 +53,8 @@ export function Itinerary({
   onRemove: (id: string) => void;
   onResetPlan: () => void;
   intelligenceByAccountId?: Record<string, ClinicIntelligenceDto>;
+  /** Nearby clinics left off today because you or a teammate visited them recently. */
+  visitedNearby?: VisitedNearbyEntry[];
 }) {
   // Map/list choreography: selecting a marker scrolls its card into view.
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -253,7 +257,53 @@ export function Itinerary({
           );
         })}
       </Box>
+
+      {visitedNearby.length > 0 && <VisitedNearby entries={visitedNearby} stopCount={stops.length} />}
     </>
+  );
+}
+
+const visitedDateFmt = new Intl.DateTimeFormat("en-CA", { month: "short", day: "numeric", timeZone: "UTC" });
+
+/**
+ * Clinics near the start that the team already visited. They are skipped when the
+ * day is built and other clinics take their place, so the rep sees why a nearby
+ * clinic is not on the list and who was there.
+ */
+function VisitedNearby({ entries, stopCount }: { entries: VisitedNearbyEntry[]; stopCount: number }) {
+  const mine = entries.filter((e) => e.mine).length;
+  const team = entries.length - mine;
+  const who = [mine > 0 ? `${mine} by you` : null, team > 0 ? `${team} by a teammate` : null].filter(Boolean).join(" · ");
+  const filled =
+    stopCount > 0
+      ? "Skipped today and shown on the map with a check; other clinics took their place so your day stays full."
+      : "Skipped today and shown on the map with a check. Nothing else qualified within reach — widen the travel reach under Edit plan.";
+  return (
+    <Box component="section" sx={{ mx: 4, mb: 4, mt: 1, borderTop: 1, borderColor: "divider", pt: 3 }}>
+      <Typography variant="eyebrow" component="h3" sx={{ display: "block" }}>
+        Already visited nearby · {entries.length}
+      </Typography>
+      <Typography variant="caption" sx={{ display: "block", mt: 1, color: "text.secondary", lineHeight: 1.6 }}>
+        {who}. {filled}
+      </Typography>
+      <Box component="ul" sx={{ listStyle: "none", m: 0, mt: 2, p: 0, display: "grid", gap: 1 }}>
+        {entries.map((e) => (
+          <Box component="li" key={e.accountId} sx={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 3, px: 3, py: 1.5, borderRadius: 1.5, bgcolor: "background.sunken" }}>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="body2" noWrap sx={{ fontWeight: 500, color: "text.secondary" }}>
+                {e.businessName}
+              </Typography>
+              <Typography variant="caption" noWrap sx={{ display: "block", color: "text.faint" }}>
+                {e.city} · {km(e.distanceKm)} away
+              </Typography>
+            </Box>
+            <Typography variant="caption" sx={{ flexShrink: 0, color: e.mine ? "primary.main" : "text.secondary", fontWeight: 500 }}>
+              {e.visitedBy} · {visitedDateFmt.format(new Date(`${e.visitedOn}T00:00:00.000Z`))}
+            </Typography>
+          </Box>
+        ))}
+      </Box>
+    </Box>
   );
 }
 

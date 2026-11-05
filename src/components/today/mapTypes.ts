@@ -11,6 +11,19 @@ export type MapStop = {
   warn: boolean;
 };
 
+/** A nearby clinic the team already visited — drawn muted with a check, never numbered or routed. */
+export type MapVisited = {
+  id: string;
+  lat: number;
+  lng: number;
+  name: string;
+  /** "You" or the teammate's display name. */
+  by: string;
+  /** YYYY-MM-DD */
+  on: string;
+  mine: boolean;
+};
+
 export type MapCandidate = {
   id: string;
   lat: number;
@@ -48,6 +61,8 @@ export type RouteMapCommonProps = {
   onHover?: (id: string | null) => void;
   /** Qualified-but-not-routed dots — subordinate to numbered stops. Never DNC. */
   candidates?: MapCandidate[];
+  /** Clinics nearby that you or a teammate already visited; shown so the rep knows why they are not on the list. */
+  visited?: MapVisited[];
 };
 
 /** Google Maps directions URL for the whole route (external hand-off). */

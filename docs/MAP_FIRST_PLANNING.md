@@ -18,6 +18,29 @@ Related: `ROUTE_MAP_UX.md`, `ROUTING.md`, `GOOGLE_MAPS_SETUP.md`.
 
 ---
 
+## Location-only planning (2026-11-05)
+
+The rep no longer searches for a start or draws an area. They share their
+location (**Use my location**, or **Drop a pin on the map**) and the day builds
+itself: ten clinics (`DAILY_CLINIC_SLOTS`) within the default travel reach of
+30 minutes (`DEFAULT_AREA` in `TodayRoute.tsx`), auto-submitted once per set of
+inputs so an error never loops. Day hours, travel reach, radius and the pasted
+lists stay available under **Edit plan → Advanced planning**; phase B
+(`choose-area`) is still in the state machine but never shown because the area
+always has a value.
+
+**Team visits.** Before the daily list is sliced, `src/lib/teamVisits.ts` looks
+up every discovered clinic in `VisitRecord` for the last
+`TEAM_VISIT_LOOKBACK_DAYS` (90). Any clinic anyone on the team visited — the rep
+included — is removed from the pool (`buildDailyVisitList` →
+`result.visitedNearby`), so the next-nearest clinics fill the ten. A CRM
+revisit-due flag still wins. Visited clinics are drawn on the map as muted
+check pins (`MapVisited`, `.nv-pin--visited`) and listed under the itinerary as
+“Already visited nearby” with who visited (“You” or the teammate’s name) and
+when, so the rep knows why a clinic next to them is not on the list.
+
+---
+
 ## Planner state machine
 
 `src/domain/planning/plannerState.ts` — pure, unit-tested.

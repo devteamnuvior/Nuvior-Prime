@@ -40,12 +40,14 @@ function pinIcon(opts: {
   title?: string;
   inert?: boolean;
   candidate?: boolean;
+  visited?: boolean;
   kind?: string;
   count?: number;
 }) {
   const cls = [
     "nv-pin",
     opts.candidate ? "nv-pin--candidate" : "",
+    opts.visited ? "nv-pin--visited" : "",
     opts.kind === "cluster" ? "nv-pin--cluster" : "",
     opts.kind && opts.kind !== "cluster" ? `nv-pin--cand-${opts.kind}` : "",
     opts.start ? "" : opts.candidate ? "" : "nv-pin-in",
@@ -109,6 +111,7 @@ export default function RouteMap({
   hoveredId,
   onHover,
   candidates = [],
+  visited = [],
 }: RouteMapCommonProps) {
   const mapRef = useRef<L.Map | null>(null);
   const ordered = [...stops].sort((a, b) => a.seq - b.seq);
@@ -227,6 +230,15 @@ export default function RouteMap({
               count: c.count,
             })}
             zIndexOffset={1}
+          />
+        ))}
+
+        {visited.map((v) => (
+          <Marker
+            key={`visited-${v.id}`}
+            position={[v.lat, v.lng]}
+            icon={pinIcon({ label: "✓", visited: true, title: `${v.name} — visited by ${v.by} on ${v.on}` })}
+            zIndexOffset={2}
           />
         ))}
 

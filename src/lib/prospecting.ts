@@ -47,6 +47,7 @@ import { evaluateDnc } from "@/domain/crm/dnc";
 import { deriveLastOrderStatus, type LastOrderStatus } from "@/domain/crm/lastOrder";
 import { loadPersistedMappings } from "@/lib/crmMappings";
 import { persistVisitRun } from "@/lib/visitPersistence";
+import { loadTeamVisits } from "@/lib/teamVisits";
 import type { CrmAccountStatus, CrmInternalAccount } from "@/providers/crm/types";
 import { MOCK_CRM_AS_OF } from "@/providers/crm/mockCrmProvider";
 
@@ -540,6 +541,12 @@ export async function runProspectSearch(
     };
   }
 
+  // Clinics anyone on the team logged recently come off today's list and show as visited.
+  const teamVisits = await loadTeamVisits(
+    candidates.map((c) => c.id),
+    input.actorUserId ?? null,
+  );
+
   let result = buildDailyVisitList(
     {
       provinceCode: input.provinceCode,
@@ -551,6 +558,7 @@ export async function runProspectSearch(
       revisitNames: parseAccountNameList(input.revisitsDueRaw),
       crmRevisitKeys,
       crmAlreadyVisitedKeys,
+      teamVisits,
     },
     candidates,
   );

@@ -68,6 +68,7 @@ function LoadedMap({
   hoveredId,
   onHover,
   candidates = [],
+  visited = [],
   mapId,
 }: RouteMapCommonProps & { mapId: string }) {
   const drawing = interaction !== "none";
@@ -185,6 +186,15 @@ function LoadedMap({
           </AdvancedMarker>
         ))}
 
+        {/* Already visited by the team — muted check pins, not part of the route */}
+        {visited.map((v) => (
+          <AdvancedMarker key={`visited-${v.id}`} position={{ lat: v.lat, lng: v.lng }} anchorPoint={AdvancedMarkerAnchorPoint.CENTER} zIndex={2}>
+            <div className="nv-pin nv-pin--visited" title={visitedTitle(v)} aria-label={visitedTitle(v)}>
+              ✓
+            </div>
+          </AdvancedMarker>
+        ))}
+
         {/* Start */}
         {start && (
           <AdvancedMarker
@@ -244,6 +254,10 @@ function LoadedMap({
       {!geometrySegments && ordered.length > 0 && <MapCaption>Planned sequence — mock path, not a road route</MapCaption>}
     </Box>
   );
+}
+
+function visitedTitle(v: { name: string; by: string; on: string }): string {
+  return `${v.name} — visited by ${v.by} on ${v.on}`;
 }
 
 function pinClass(s: MapStop, selected: boolean, hovered: boolean, arrive: boolean): string {

@@ -36,6 +36,33 @@ export type ProspectCandidate = {
     Partial<Pick<QualificationInput, "businessName" | "provinceCode">>;
 };
 
+/** How far back a logged team visit keeps a clinic off a rep's day. */
+export const TEAM_VISIT_LOOKBACK_DAYS = 90;
+
+/** The latest logged visit to a clinic by anyone on the team (src/lib/teamVisits.ts). */
+export type TeamVisitMark = {
+  /** YYYY-MM-DD */
+  visitedOn: string;
+  byUserId: string | null;
+  byName: string;
+  /** True when the planning rep logged it themselves. */
+  mine: boolean;
+};
+
+/** A nearby clinic left out of the day because the team already visited it; shown on the map, never routed. */
+export type VisitedNearbyEntry = {
+  accountId: string;
+  businessName: string;
+  streetAddress: string;
+  city: string;
+  latitude: number;
+  longitude: number;
+  distanceKm: number;
+  visitedOn: string;
+  visitedBy: string;
+  mine: boolean;
+};
+
 export type VisitListRequest = {
   provinceCode: string;
   startPoint: GeoPoint;
@@ -48,6 +75,8 @@ export type VisitListRequest = {
   crmRevisitKeys?: string[];
   /** CRM placeIds / names already visited and not due */
   crmAlreadyVisitedKeys?: string[];
+  /** Logged team visits keyed by candidate id (place id). A CRM revisit-due flag still wins. */
+  teamVisits?: Record<string, TeamVisitMark>;
 };
 
 export type VisitListEntry = {
@@ -84,6 +113,8 @@ export type VisitListResult = {
   unverifiedAccounts: VisitListEntry[];
   excludedDoNotContact: string[];
   excludedAlreadyVisited: string[];
+  /** Nearest first. The target slice is taken after these are removed, so the day is filled with other clinics. */
+  visitedNearby: VisitedNearbyEntry[];
   excludedDebug: string[];
 };
 
@@ -93,6 +124,7 @@ export function buildDailyVisitList(
 ): VisitListResult {
   const excludedDoNotContact: string[] = [];
   const excludedAlreadyVisited: string[] = [];
+  const visitedNearby: VisitedNearbyEntry[] = [];
   const excludedDebug: string[] = [];
   const scored: VisitListEntry[] = [];
 
@@ -114,6 +146,26 @@ export function buildDailyVisitList(
       placeId: c.placeId,
       doNotContact: c.qualificationInput.doNotContact,
     });
+
+    // A visit anyone on the team logged recently takes the clinic off today's list
+    // (unless CRM says a revisit is due) and shows it on the map as visited instead.
+    const teamVisit = request.teamVisits?.[c.id] ?? (c.placeId ? request.teamVisits?.[c.placeId] : undefined);
+    if (teamVisit && !revisit.isRevisit && !c.qualificationInput.doNotContact) {
+      visitedNearby.push({
+        accountId: c.id,
+        businessName: c.businessName,
+        streetAddress: c.streetAddress,
+        city: c.city,
+        latitude: c.latitude,
+        longitude: c.longitude,
+        distanceKm: Math.round(distanceKm * 10) / 10,
+        visitedOn: teamVisit.visitedOn,
+        visitedBy: teamVisit.mine ? "You" : teamVisit.byName,
+        mine: teamVisit.mine,
+      });
+      excludedDebug.push(`${c.businessName}: visited ${teamVisit.visitedOn} by ${teamVisit.mine ? "you" : teamVisit.byName}`);
+      continue;
+    }
 
     if (revisit.alreadyVisitedExclude && !revisit.isRevisit) {
       if (c.qualificationInput.doNotContact) {
@@ -193,6 +245,7 @@ export function buildDailyVisitList(
   });
 
   const unverifiedAccounts = entries.filter((e) => e.needsManualVerification);
+  visitedNearby.sort((a, b) => a.distanceKm - b.distanceKm);
 
   return {
     entries,
@@ -202,6 +255,7 @@ export function buildDailyVisitList(
     unverifiedAccounts,
     excludedDoNotContact,
     excludedAlreadyVisited,
+    visitedNearby,
     excludedDebug,
   };
 }

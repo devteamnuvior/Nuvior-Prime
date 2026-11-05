@@ -12,10 +12,9 @@ import Typography from "@mui/material/Typography";
 import { Disclosure } from "@/components/feedback/Disclosure";
 import type { CANADIAN_PROVINCES } from "@/domain/scopeOfPractice";
 import type { GeoPoint } from "@/domain/geo";
-import { polygonAreaKm2, serializeWorkingArea, validateDrawnArea } from "@/domain/geo/workingArea";
+import { serializeWorkingArea, validateDrawnArea } from "@/domain/geo/workingArea";
 import {
   applyGeocodeToStart,
-  canCommitTypedStart,
   geolocationSelection,
   provinceFromAddressComponents,
   type StartSelection,
@@ -30,7 +29,6 @@ import {
 } from "@/domain/planning/travelReach";
 import type { PlannerPhase } from "@/domain/planning/plannerState";
 import type { OpportunitySummary } from "@/domain/planning/opportunity";
-import { StartLocationField } from "./StartLocationField";
 import { Segmented } from "./Segmented";
 
 type ProvinceOption = (typeof CANADIAN_PROVINCES)[number];
@@ -38,8 +36,9 @@ type ProvinceOption = (typeof CANADIAN_PROVINCES)[number];
 const TIMES = clockOptions();
 
 /**
- * Compact map-first planning panel. Geography is primary; the form is a
- * secondary control surface that submits the existing generateVisitListAction.
+ * Location-first planning panel. The rep shares where they are and the day is
+ * built around it: ten clinics within the default travel reach, skipping any the
+ * team visited recently. Day hours, reach and the rest live under "Edit plan".
  */
 export function PlanningWorkspace({
   phase,
@@ -58,11 +57,8 @@ export function PlanningWorkspace({
   start,
   onResolvedStart,
   onRequestDropPin,
-  onRequestDrawArea,
-  onClearArea,
   area,
   onSelectReach,
-  areaError,
   driveHonest,
   dayStart,
   dayEnd,
@@ -90,7 +86,6 @@ export function PlanningWorkspace({
   submitRadiusKm,
   submitDriveMinutes,
   hasStart,
-  onCommitTextStart,
   onPlanSomewhereElse,
   canPlanSomewhereElse,
   provinceError,
@@ -110,11 +105,8 @@ export function PlanningWorkspace({
   start: StartSelection | null;
   onResolvedStart: (selection: StartSelection | null) => void;
   onRequestDropPin: () => void;
-  onRequestDrawArea: () => void;
-  onClearArea: () => void;
   area: AreaStrategy;
   onSelectReach: (minutes: TravelReachMinutes) => void;
-  areaError: string | null;
   driveHonest: boolean;
   dayStart: string;
   dayEnd: string;
@@ -142,12 +134,10 @@ export function PlanningWorkspace({
   submitRadiusKm: number;
   submitDriveMinutes: number | null;
   hasStart: boolean;
-  onCommitTextStart: () => void;
   onPlanSomewhereElse?: () => void;
   canPlanSomewhereElse?: boolean;
   provinceError?: string | null;
 }) {
-  const [searchOpen, setSearchOpen] = useState(false);
   const [geoError, setGeoError] = useState<string | null>(null);
   const [geoPending, setGeoPending] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -190,8 +180,6 @@ export function PlanningWorkspace({
 
   const workingAreaJson =
     area.kind === "drawn" && validateDrawnArea(area.points).ok ? serializeWorkingArea(area.points) : "";
-
-  const drawnKm2 = area.kind === "drawn" && area.points.length >= 3 ? polygonAreaKm2(area.points) : 0;
 
   const provinceNote = provinceError ? (
     <Alert
@@ -239,48 +227,19 @@ export function PlanningWorkspace({
         {!hasStart || changingStart ? (
           <Box component="section">
             <Typography variant="h3" component="h2">
-              Where are you starting today?
+              Where are you right now?
             </Typography>
             <Typography variant="body2" sx={{ mt: 1, color: "text.secondary", lineHeight: 1.6 }}>
-              Choose your starting point. We&rsquo;ll build the day around it.
+              Share your location and we&rsquo;ll line up today&rsquo;s {target} clinics around you — skipping any the team has visited recently.
             </Typography>
             <Stack spacing={2} sx={{ mt: 4 }}>
               <Button variant="contained" size="large" fullWidth onClick={useMyLocation} disabled={geoPending}>
                 {geoPending ? "Locating…" : "Use my location"}
               </Button>
-              <Button variant="outlined" size="large" fullWidth onClick={() => setSearchOpen((v) => !v)} aria-expanded={searchOpen}>
-                Search
-              </Button>
               <Button variant="outlined" size="large" fullWidth onClick={onRequestDropPin}>
-                Drop a pin
+                Drop a pin on the map
               </Button>
             </Stack>
-            {searchOpen && (
-              <Box sx={{ mt: 3 }}>
-                <StartLocationField
-                  googleEnabled={googleEnabled}
-                  value={startText}
-                  onValueChange={onStartTextChange}
-                  onResolvedStart={(sel) => {
-                    onResolvedStart(sel);
-                    if (sel) setSearchOpen(false);
-                  }}
-                />
-                {canCommitTypedStart(startText, start) && (
-                  <Button
-                    variant="outlined"
-                    fullWidth
-                    onClick={() => {
-                      onCommitTextStart();
-                      setSearchOpen(false);
-                    }}
-                    sx={{ mt: 2, fontWeight: 600 }}
-                  >
-                    Use this address
-                  </Button>
-                )}
-              </Box>
-            )}
             {geoError && (
               <Typography variant="caption" sx={{ display: "block", mt: 2, color: "warning.main", lineHeight: 1.6 }}>
                 {geoError}
@@ -323,76 +282,6 @@ export function PlanningWorkspace({
           </TextField>
         )}
 
-        {/* ---- Area ---- */}
-        {hasStart && (
-          <Box component="section">
-            <Typography variant="eyebrow" component="h2" sx={{ display: "block" }}>
-              Today&rsquo;s area
-            </Typography>
-            <Typography variant="body2" sx={{ mt: 1, color: "text.secondary" }}>
-              Where do you want to work today?
-            </Typography>
-
-            <Box sx={{ mt: 3 }}>
-              <FieldLabel>Travel reach</FieldLabel>
-              <Segmented
-                ariaLabel="Travel reach"
-                height={44}
-                value={area.kind === "travel-reach" ? area.minutes : null}
-                options={TRAVEL_REACH_PRESETS.map((m) => ({ value: m, label: `${m} min` }))}
-                onChange={(m) => onSelectReach(m)}
-              />
-              {area.kind === "travel-reach" && (
-                <Typography variant="caption" sx={{ display: "block", mt: 2, color: "text.secondary", lineHeight: 1.6 }}>
-                  {travelReachLabel(area.minutes)}
-                  {driveHonest
-                    ? " — a drive-time limit for today’s route, not a drawn road boundary."
-                    : " — drive times are estimated in this mode; a true road-time boundary is not shown."}
-                </Typography>
-              )}
-            </Box>
-
-            <Box sx={{ mt: 3 }}>
-              {area.kind === "drawn" && validateDrawnArea(area.points).ok ? (
-                <Paper variant="outlined" sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 3, px: 3, py: 1.5, bgcolor: "background.default" }}>
-                  <Typography variant="caption">
-                    Today&rsquo;s area · {drawnKm2 >= 10 ? Math.round(drawnKm2) : drawnKm2.toFixed(1)} km²
-                  </Typography>
-                  <Box sx={{ display: "flex", gap: 1 }}>
-                    <Button size="small" variant="text" onClick={onRequestDrawArea}>
-                      Edit
-                    </Button>
-                    <Button size="small" variant="text" color="error" onClick={onClearArea}>
-                      Clear
-                    </Button>
-                  </Box>
-                </Paper>
-              ) : (
-                <Button
-                  variant="outlined"
-                  size="large"
-                  fullWidth
-                  onClick={onRequestDrawArea}
-                  sx={{ borderStyle: "dashed", color: "text.secondary", bgcolor: "background.default", fontWeight: 500, "&:hover": { borderStyle: "dashed", color: "text.primary" } }}
-                >
-                  Draw today&rsquo;s area
-                </Button>
-              )}
-              <Typography variant="caption" sx={{ display: "block", mt: 1.5, color: "text.faint" }}>
-                Can&rsquo;t draw? Use travel reach above.
-              </Typography>
-              <Typography variant="caption" sx={{ display: "block", mt: 1, color: "text.faint" }}>
-                Saved areas (later): Downtown Toronto, North York, Mississauga West.
-              </Typography>
-            </Box>
-            {areaError && (
-              <Typography variant="caption" sx={{ display: "block", mt: 2, color: "warning.main", lineHeight: 1.6 }}>
-                {areaError}
-              </Typography>
-            )}
-          </Box>
-        )}
-
         {/* ---- Day controls ---- */}
         {hasStart && area.kind !== "none" && (
           <Box component="section" sx={{ display: "grid", gap: 3 }}>
@@ -416,7 +305,7 @@ export function PlanningWorkspace({
               </TextField>
             </Box>
             <TextField
-              label="Target visits"
+              label="Clinics today"
               type="number"
               value={target}
               onChange={(e) => onTarget(Number(e.target.value))}
@@ -452,6 +341,24 @@ export function PlanningWorkspace({
         {hasStart && (
           <Disclosure label="Advanced planning" open={advancedOpen} onToggle={setAdvancedOpen} contentSx={{ pt: 3 }}>
             <Stack spacing={3}>
+              <Box>
+                <FieldLabel>Travel reach</FieldLabel>
+                <Segmented
+                  ariaLabel="Travel reach"
+                  height={44}
+                  value={area.kind === "travel-reach" ? area.minutes : null}
+                  options={TRAVEL_REACH_PRESETS.map((m) => ({ value: m, label: `${m} min` }))}
+                  onChange={(m) => onSelectReach(m)}
+                />
+                {area.kind === "travel-reach" && (
+                  <Typography variant="caption" sx={{ display: "block", mt: 2, color: "text.secondary", lineHeight: 1.6 }}>
+                    {travelReachLabel(area.minutes)}
+                    {driveHonest
+                      ? " — a drive-time limit for today’s route, not a drawn road boundary."
+                      : " — drive times are estimated in this mode; a true road-time boundary is not shown."}
+                  </Typography>
+                )}
+              </Box>
               <TextField
                 label="Search radius (km)"
                 type="number"
@@ -483,7 +390,7 @@ export function PlanningWorkspace({
                 onChange={(e) => onRevisitsDue(e.target.value)}
               />
               <Typography variant="caption" sx={{ color: "text.faint", lineHeight: 1.6 }}>
-                Visit length and lunch use routing defaults (20 min visit, optional lunch 12:00–2:00 PM).
+                Each clinic is planned as a 45-minute slot; lunch uses the routing default (12:00–2:00 PM).
               </Typography>
             </Stack>
           </Disclosure>
@@ -515,7 +422,7 @@ export function PlanningWorkspace({
         )}
         {buildEnabled && ctaLabel === "Build My Day" && (
           <Typography variant="caption" sx={{ display: "block", mt: 2, textAlign: "center", color: "text.faint" }}>
-            Find the highest-value feasible visits in today&rsquo;s area.
+            The nearest qualified clinics around you, minus any the team visited in the last 90 days.
           </Typography>
         )}
         {hasStart && (

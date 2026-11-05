@@ -75,6 +75,21 @@ samp {
 .nv-pin--revisit {
   background: var(--nv-palette-warning-main);
 }
+/* Already visited by the team: muted, checked, not part of the route */
+.nv-pin--visited {
+  width: 22px;
+  height: 22px;
+  font-size: 11px;
+  background: var(--nv-palette-background-paper);
+  color: var(--nv-palette-text-secondary);
+  border: 1.5px dashed var(--nv-palette-text-disabled);
+  box-shadow: 0 1px 3px rgb(20 32 28 / 0.18);
+  cursor: default;
+}
+.nv-pin--visited:hover {
+  transform: none;
+  box-shadow: 0 1px 3px rgb(20 32 28 / 0.18);
+}
 /* Opening-hours warning: small amber badge dot */
 .nv-pin--warn::after {
   content: "";

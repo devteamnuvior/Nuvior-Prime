@@ -85,13 +85,16 @@ import { SummaryStrip } from "./SummaryStrip";
 import { Diagnostics } from "./Diagnostics";
 import { MapCanvas } from "./MapCanvas";
 import { MAP_Z } from "./mapChrome";
-import type { MapInteraction, MapStop } from "./mapTypes";
+import type { MapInteraction, MapStop, MapVisited } from "./mapTypes";
 import { clock12 } from "@/lib/format";
 import type { ProspectSearchSuccess } from "@/lib/prospecting";
 import type { ClinicIntelligenceDto } from "@/domain/intelligence/clinicIntelligenceDto";
 import { applyIntelligenceToBrief } from "@/domain/intelligence/applyIntelligenceToBrief";
 
 const initial: ActionState = { status: "idle" };
+
+/** The rep only shares a location; the day is built within this reach unless they change it under Edit plan. */
+const DEFAULT_AREA: AreaStrategy = { kind: "travel-reach", minutes: 30 };
 
 const PROVINCE_CENTERS: Record<string, { lat: number; lng: number }> = {
   ON: { lat: 43.6532, lng: -79.3832 },
@@ -140,8 +143,7 @@ export function TodayRoute({
 
   const [interaction, setInteraction] = useState<MapInteraction>("none");
   const [draftArea, setDraftArea] = useState<GeoPoint[]>([]);
-  const [area, setArea] = useState<AreaStrategy>({ kind: "none" });
-  const [areaError, setAreaError] = useState<string | null>(null);
+  const [area, setArea] = useState<AreaStrategy>(DEFAULT_AREA);
 
   const [dayStart, setDayStart] = useState("09:00");
   const [dayEnd, setDayEnd] = useState("17:00");
@@ -207,7 +209,7 @@ export function TodayRoute({
       setStart(saved.start);
       setStartText(saved.startText);
       setTextCommitted(saved.textCommitted);
-      setArea(saved.area);
+      setArea(saved.area.kind === "none" ? DEFAULT_AREA : saved.area);
       setDayStart(saved.dayStart);
       setDayEnd(saved.dayEnd);
       setTarget(saved.target);
@@ -338,6 +340,18 @@ export function TodayRoute({
   const blockedReason = buildBlockedReason(plannerInputs);
   const started = hasStartLocation(plannerInputs);
 
+  // Location-first: once the rep has a start and nothing is built yet, build the day
+  // without a second tap. One attempt per set of inputs, so an error does not loop.
+  const autoBuiltFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (data || pending || editPlanOpen || !buildEnabled || !start) return;
+    const key = materialFingerprint(plannerInputs);
+    if (autoBuiltFor.current === key) return;
+    autoBuiltFor.current = key;
+    formRef.current?.requestSubmit();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, pending, editPlanOpen, buildEnabled, start, province]);
+
   const routeStops = useMemo(
     () =>
       data
@@ -366,6 +380,20 @@ export function TodayRoute({
       };
     })
     .filter((s): s is MapStop => s !== null);
+
+  const visitedMarks: MapVisited[] = useMemo(
+    () =>
+      (data?.result.visitedNearby ?? []).map((v) => ({
+        id: v.accountId,
+        lat: v.latitude,
+        lng: v.longitude,
+        name: v.businessName,
+        by: v.visitedBy,
+        on: v.visitedOn,
+        mine: v.mine,
+      })),
+    [data],
+  );
 
   const visiblePool = useMemo(() => {
     if (!data) return [];
@@ -583,17 +611,9 @@ export function TodayRoute({
     setSheetExpanded(false);
   };
 
-  const beginDrawArea = () => {
-    setDraftArea(area.kind === "drawn" ? area.points : []);
-    setAreaError(null);
-    setInteraction("draw-area");
-    setSheetExpanded(false);
-  };
-
   const finishDrawArea = () => {
     const v = validateDrawnArea(draftArea);
     if (!v.ok) {
-      setAreaError(v.message);
       return;
     }
     const t = drawnAreaInTerritory(
@@ -601,11 +621,9 @@ export function TodayRoute({
       provinces.map((p) => p.code),
     );
     if (!t.ok) {
-      setAreaError(t.message);
       return;
     }
     setArea({ kind: "drawn", points: draftArea });
-    setAreaError(null);
     setDraftArea([]);
     setInteraction("none");
     setSheetExpanded(true);
@@ -647,9 +665,9 @@ export function TodayRoute({
     setStart(null);
     setStartText("");
     setTextCommitted(false);
-    setArea({ kind: "none" });
-    setAreaError(null);
+    setArea(DEFAULT_AREA);
     setEditPlanOpen(false);
+    autoBuiltFor.current = null;
     setChangingStart(false);
     setManualPlan(resetManualPlan());
     setSelectedId(null);
@@ -699,7 +717,7 @@ export function TodayRoute({
           <Typography variant="body2" noWrap sx={{ color: "text.secondary", display: { xs: "none", sm: "block" } }}>
             {data
               ? `Today · ${displayStops.length} stop${displayStops.length === 1 ? "" : "s"}`
-              : "Where do you want to work today?"}
+              : "Share your location to line up today's clinics"}
           </Typography>
         </Box>
         <Box sx={{ display: "flex", flexShrink: 0, alignItems: "center", gap: 2 }}>
@@ -754,7 +772,6 @@ export function TodayRoute({
             onWorkingAreaEdited={(pts) => {
               const v = validateDrawnArea(pts);
               if (!v.ok) {
-                setAreaError(v.message);
                 return;
               }
               const t = drawnAreaInTerritory(
@@ -762,15 +779,14 @@ export function TodayRoute({
                 provinces.map((p) => p.code),
               );
               if (!t.ok) {
-                setAreaError(t.message);
                 return;
               }
               setArea({ kind: "drawn", points: pts });
-              setAreaError(null);
             }}
             hoveredId={hoveredId}
             onHover={setHoveredId}
             candidates={candidates}
+            visited={visitedMarks}
           />
 
           {interaction === "set-start" && (
@@ -916,17 +932,10 @@ export function TodayRoute({
               start={start}
               onResolvedStart={onResolvedStart}
               onRequestDropPin={beginDropPin}
-              onRequestDrawArea={beginDrawArea}
-              onClearArea={() => {
-                setArea({ kind: "none" });
-                setAreaError(null);
-              }}
               area={area}
               onSelectReach={(m: TravelReachMinutes) => {
                 setArea({ kind: "travel-reach", minutes: m });
-                setAreaError(null);
               }}
-              areaError={areaError}
               driveHonest={driveHonest}
               dayStart={dayStart}
               dayEnd={dayEnd}
@@ -942,7 +951,7 @@ export function TodayRoute({
                 if (n != null && n > 0 && (area.kind === "none" || area.kind === "radius")) {
                   setArea({ kind: "radius", km: n });
                 }
-                if (n == null && area.kind === "radius") setArea({ kind: "none" });
+                if (n == null && area.kind === "radius") setArea(DEFAULT_AREA);
               }}
               driveOverride={driveOverride}
               onDriveOverride={setDriveOverride}
@@ -960,7 +969,6 @@ export function TodayRoute({
               submitRadiusKm={submitRadius}
               submitDriveMinutes={submitDrive}
               hasStart={started}
-              onCommitTextStart={() => setTextCommitted(true)}
               provinceError={provinceError}
               canPlanSomewhereElse={privileged || provinces.length > 1}
               onPlanSomewhereElse={() => {
@@ -1017,6 +1025,7 @@ export function TodayRoute({
                 }}
                 onResetPlan={() => setManualPlan(resetManualPlan())}
                 intelligenceByAccountId={intelligenceByAccountId}
+                visitedNearby={data.result.visitedNearby}
               />
               {privileged && <Diagnostics data={data} />}
             </>
