@@ -195,7 +195,7 @@ export function ClinicWebProfileSection({
       )}
 
       {profile.sources.length > 0 && (
-        <Row label="Sources">
+        <Row label="Sources" prominent>
           <PlainList gap={0.5}>
             {profile.sources.map((s) => (
               <Box component="li" key={s.url} sx={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -226,10 +226,15 @@ function Shell({ title, children }: { title: string; children: React.ReactNode }
   );
 }
 
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
+/** `prominent`: a slightly larger title with more room before the content (used for Sources). */
+function Row({ label, children, prominent = false }: { label: string; children: React.ReactNode; prominent?: boolean }) {
   return (
-    <Box sx={{ mt: 2 }}>
-      <Typography variant="caption" component="div" sx={{ fontWeight: 500, color: "text.secondary" }}>
+    <Box sx={{ mt: prominent ? 3 : 2 }}>
+      <Typography
+        variant={prominent ? "body2" : "caption"}
+        component="div"
+        sx={{ fontWeight: prominent ? 600 : 500, color: prominent ? "text.primary" : "text.secondary", mb: prominent ? 1.5 : 0 }}
+      >
         {label}
       </Typography>
       <div>{children}</div>
