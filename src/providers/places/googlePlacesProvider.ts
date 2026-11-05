@@ -263,7 +263,7 @@ export function createGooglePlacesProviderFromEnv(): GooglePlacesProvider | null
   if (!apiKey) return null;
   return new GooglePlacesProvider({
     apiKey,
-    cacheTtlSeconds: Number(process.env.GOOGLE_PLACES_CACHE_TTL_SECONDS ?? 86400),
+    cacheTtlSeconds: Number(process.env.GOOGLE_PLACES_CACHE_TTL_SECONDS ?? 604800), // one week
     maxSearches: Number(process.env.GOOGLE_PLACES_MAX_SEARCHES_PER_RUN ?? 24),
   });
 }
