@@ -1,6 +1,6 @@
 /**
  * Deterministic visit route planner — downstream of qualification.
- * Utility ≈ fit×W_fit + revisit×W_rev − travel×W_travel − schedulePenalty
+ * Utility ≈ revisit×W_rev − travel×W_travel − schedulePenalty
  */
 
 import type { GeoPoint } from "@/domain/geo";
@@ -104,7 +104,6 @@ export async function planVisitRoute(input: PlanRouteInput): Promise<RoutePlanRe
   const capped = [...withCoords]
     .sort((a, b) => {
       if (a.isRevisit !== b.isRevisit) return a.isRevisit ? -1 : 1;
-      if (b.fitScore !== a.fitScore) return b.fitScore - a.fitScore;
       return a.distanceKm - b.distanceKm;
     })
     .slice(0, cfg.maxCandidates);
@@ -278,21 +277,16 @@ export async function planVisitRoute(input: PlanRouteInput): Promise<RoutePlanRe
       }
 
       const utility =
-        item.entry.fitScore * cfg.weightFit +
         (item.entry.isRevisit ? cfg.weightRevisit : 0) -
         travelMin * cfg.weightTravelMinutes -
         schedulePenalty * cfg.weightSchedulePenalty;
 
       const reasons: string[] = [];
       if (item.entry.isRevisit) reasons.push("due revisit");
-      reasons.push(`fit ${item.entry.fitScore}`);
       if (travelMin <= 15) reasons.push("low detour");
       if (hours.state === "unknown") reasons.push("hours UNKNOWN, verify");
       else if (hours.state === "open") reasons.push("open during planned arrival");
       if (isGeo) reasons.push("travel estimate geodesic (not drive time)");
-      if (item.entry.fitScore >= 5) {
-        reasons.push("selected high-fit over lower-fit nearby alternatives");
-      }
 
       if (!best || utility > best.utility) {
         best = { item, utility, travel, reasons, arrival, visitMin };
@@ -467,7 +461,7 @@ async function legacyNearestPlan(
       openingHoursState: hours.state,
       openingHoursLabel: hours.label,
       suggestedDropInWindow: hours.suggestedDropInWindow,
-      routeReasons: ["legacy nearest order", `fit ${entry.fitScore}`],
+      routeReasons: ["legacy nearest order"],
       durationIsTrafficAware: false,
       durationIsGeodesicEstimate: isGeo,
     });
@@ -479,7 +473,7 @@ async function legacyNearestPlan(
     presentationStops: [...stops].sort((a, b) => {
       const p = a.postalCodePrefix.localeCompare(b.postalCodePrefix);
       if (p !== 0) return p;
-      return b.fitScore - a.fitScore;
+      return a.distanceKm - b.distanceKm;
     }),
     summary: {
       stopCount: stops.length,

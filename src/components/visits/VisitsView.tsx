@@ -11,7 +11,6 @@ import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
-import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import ArrowForwardRounded from "@mui/icons-material/ArrowForwardRounded";
 import RouteOutlined from "@mui/icons-material/RouteOutlined";
@@ -66,25 +65,6 @@ function AccountTile({ name }: { name: string }) {
     <Box aria-hidden sx={{ width: 36, height: 36, borderRadius: 2, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", bgcolor: `hsl(${hue} 30% 90%)`, color: `hsl(${hue} 45% 28%)`, fontSize: "0.75rem", fontWeight: 700 }}>
       {initials || <StorefrontOutlined sx={{ fontSize: 18 }} />}
     </Box>
-  );
-}
-
-/** Five dots, filled up to the fit score. */
-function FitMeter({ score }: { score: number | null }) {
-  if (score == null)
-    return (
-      <Typography variant="body2" sx={{ color: "text.disabled" }}>
-        —
-      </Typography>
-    );
-  return (
-    <Tooltip title={`Fit ${score} of 5`}>
-      <Box role="img" aria-label={`Fit ${score} of 5`} sx={{ display: "inline-flex", alignItems: "center", gap: "3px" }}>
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Box key={i} sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: i < score ? "primary.main" : "grey.200" }} />
-        ))}
-      </Box>
-    </Tooltip>
   );
 }
 
@@ -210,15 +190,6 @@ export function VisitsView({
               No outcome
             </Typography>
           ),
-      },
-      {
-        field: "fitScore",
-        headerName: "Fit",
-        type: "number",
-        width: 100,
-        align: "left",
-        headerAlign: "left",
-        renderCell: ({ row }) => <FitMeter score={row.fitScore} />,
       },
       {
         field: "nextAction",

@@ -43,7 +43,6 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
       address: `${a.streetAddress}, ${a.city} ${a.provinceCode} ${a.postalCode}`,
       city: a.city,
       provinceCode: a.provinceCode,
-      fitScore: qual?.fitScore ?? null,
       leadProduct: qual?.recommendedLeadProduct ?? null,
       rating: a.publicProfile?.googleRating ?? null,
       website: a.publicProfile?.website ?? null,
@@ -55,7 +54,7 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
     <PageContainer>
       <PageHeader
         title="Prospecting"
-        description="Account research in your territory. Use Today to build the day's route; this page is for deeper discovery. Fit and lead product reflect the latest qualification run."
+        description="Account research in your territory. Use Today to build the day's route; this page is for deeper discovery. Lead product reflects the latest qualification run."
       />
       <AccountsTable rows={rows} query={q ?? ""} />
     </PageContainer>

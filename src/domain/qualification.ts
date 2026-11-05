@@ -1,6 +1,6 @@
 /**
  * Deterministic qualification engine.
- * Fit scoring rubric: IMPLEMENTATION_PLAN.md assumption A2 / §5.
+ * Lead product, certification pathway and scope rules: IMPLEMENTATION_PLAN.md §5. The 1–5 fit score was removed on 2026-11-05.
  * Never recommends Mesoestetic as lead product.
  */
 
@@ -43,7 +43,6 @@ export type QualificationInput = {
 export type QualificationResult = {
   excluded: boolean;
   exclusionReason: string | null;
-  fitScore: number;
   recommendedLeadProduct: LeadProductCode;
   recommendedLeadProductLabel: string;
   certificationPathwayFit: CertificationPathwayCode;
@@ -51,10 +50,6 @@ export type QualificationResult = {
   scopeBlockedProducts: string[];
   scopeNotes: string[];
 };
-
-function clampScore(n: number): number {
-  return Math.max(1, Math.min(5, Math.round(n)));
-}
 
 function hasInjectableSignal(input: QualificationInput): boolean {
   const text = `${input.injectablesOffered} ${input.threadsOffered}`.toLowerCase();
@@ -158,36 +153,11 @@ function buildOpeningAngle(
   return "In-taxonomy skincare/peel opportunity — lead with Dermaceutic.";
 }
 
-function scoreFit(input: QualificationInput, scope: ReturnType<typeof evaluateScopeOfPractice>): number {
-  let score = 3;
-
-  if (input.segmentNumber === 1) score += 2;
-  else if (input.segmentNumber === 2 || input.segmentNumber === 3) score += 1;
-  else if (input.segmentNumber === 4) score += 0;
-  else score -= 1;
-
-  if (input.credentials.hasPhysicianOrNp) score += 1;
-  if (input.advertisesThreadLifting === true) score += 1;
-  if (input.pricePositioning === "premium") score += 1;
-  if (input.formerMesoesteticCustomer) score += 1;
-
-  const injectableLeadsBlocked =
-    !scope.aptosProductAllowed &&
-    !scope.aptosCertificationLeadOk &&
-    !scope.fidiaAllowed;
-  if (injectableLeadsBlocked && input.segmentNumber >= 5) {
-    score = Math.min(score, 2);
-  }
-
-  return clampScore(score);
-}
-
 export function qualifyAccount(input: QualificationInput): QualificationResult {
   if (input.doNotContact) {
     return {
       excluded: true,
       exclusionReason: "Do-Not-Contact",
-      fitScore: 1,
       recommendedLeadProduct: "DERMACEUTIC",
       recommendedLeadProductLabel: LEAD_PRODUCT_LABELS.DERMACEUTIC,
       certificationPathwayFit: "NONE",
@@ -201,7 +171,6 @@ export function qualifyAccount(input: QualificationInput): QualificationResult {
     return {
       excluded: true,
       exclusionReason: "Outside category taxonomy",
-      fitScore: 1,
       recommendedLeadProduct: "DERMACEUTIC",
       recommendedLeadProductLabel: LEAD_PRODUCT_LABELS.DERMACEUTIC,
       certificationPathwayFit: "NONE",
@@ -223,12 +192,9 @@ export function qualifyAccount(input: QualificationInput): QualificationResult {
     throw new Error("Invariant violated: Mesoestetic cannot be recommended as lead product.");
   }
 
-  const fitScore = scoreFit(input, scope);
-
   return {
     excluded: false,
     exclusionReason: null,
-    fitScore,
     recommendedLeadProduct: lead,
     recommendedLeadProductLabel: LEAD_PRODUCT_LABELS[lead],
     certificationPathwayFit: pathway,

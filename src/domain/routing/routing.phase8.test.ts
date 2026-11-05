@@ -26,7 +26,6 @@ const baseCfg = (): RoutingConfig => ({
   lunchEndMinutes: 14 * 60,
   defaultVisitMinutes: 20,
   revisitVisitMinutes: 25,
-  weightFit: 12,
   weightRevisit: 40,
   weightTravelMinutes: 1,
   weightSchedulePenalty: 2,
@@ -36,7 +35,7 @@ const baseCfg = (): RoutingConfig => ({
 const start = { lat: 43.6426, lng: -79.3871 }; // M5V-ish
 
 function entry(
-  partial: Partial<VisitListEntry> & Pick<VisitListEntry, "accountId" | "businessName" | "fitScore">,
+  partial: Partial<VisitListEntry> & Pick<VisitListEntry, "accountId" | "businessName">,
 ): VisitListEntry {
   return {
     segmentNumber: 1,
@@ -132,24 +131,21 @@ describe("opening hours", () => {
 });
 
 describe("route optimization", () => {
-  it("prioritizes revisit and higher fit", async () => {
+  it("prioritizes revisits, then nearness", async () => {
     const pool = [
       entry({
         accountId: "a-low",
-        businessName: "Low Fit Near",
-        fitScore: 3,
+        businessName: "Near",
         distanceKm: 1,
       }),
       entry({
         accountId: "a-high",
-        businessName: "High Fit Farther",
-        fitScore: 5,
+        businessName: "Farther",
         distanceKm: 8,
       }),
       entry({
         accountId: "a-rev",
         businessName: "Revisit Mid",
-        fitScore: 3,
         distanceKm: 6,
         isRevisit: true,
       }),
@@ -171,7 +167,8 @@ describe("route optimization", () => {
       config: baseCfg(),
     });
     expect(plan.stops[0]!.accountId).toBe("a-rev");
-    expect(plan.stops.map((s) => s.accountId)).toContain("a-high");
+    // Without a fit score the second pick is the nearer clinic.
+    expect(plan.stops.map((s) => s.accountId)).toContain("a-low");
   });
 
   it("enforces max drive time with mock routing", async () => {
@@ -179,13 +176,11 @@ describe("route optimization", () => {
       entry({
         accountId: "near",
         businessName: "Near",
-        fitScore: 4,
         distanceKm: 2,
       }),
       entry({
         accountId: "far",
         businessName: "Far",
-        fitScore: 5,
         distanceKm: 35,
       }),
     ];
@@ -214,7 +209,7 @@ describe("route optimization", () => {
 
   it("does not falsely enforce drive-time on geodesic", async () => {
     const pool = [
-      entry({ accountId: "x", businessName: "X", fitScore: 4, distanceKm: 5 }),
+      entry({ accountId: "x", businessName: "X", distanceKm: 5 }),
     ];
     const plan = await planVisitRoute({
       startPoint: start,
@@ -235,8 +230,8 @@ describe("route optimization", () => {
   it("excludes closed clinics", async () => {
     const monday = new Date(2026, 7, 31);
     const pool = [
-      entry({ accountId: "closed", businessName: "Closed", fitScore: 5, distanceKm: 2 }),
-      entry({ accountId: "open", businessName: "Open", fitScore: 4, distanceKm: 3 }),
+      entry({ accountId: "closed", businessName: "Closed", distanceKm: 2 }),
+      entry({ accountId: "open", businessName: "Open", distanceKm: 3 }),
     ];
     const plan = await planVisitRoute({
       startPoint: start,
@@ -265,7 +260,6 @@ describe("route optimization", () => {
       entry({
         accountId: `s${i}`,
         businessName: `Stop ${i}`,
-        fitScore: 4,
         distanceKm: 2 + i,
       }),
     );
@@ -295,8 +289,8 @@ describe("route optimization", () => {
 
   it("legacy mode preserves nearest order when optimization off", async () => {
     const pool = [
-      entry({ accountId: "far", businessName: "Far", fitScore: 5, distanceKm: 10 }),
-      entry({ accountId: "near", businessName: "Near", fitScore: 3, distanceKm: 1 }),
+      entry({ accountId: "far", businessName: "Far", distanceKm: 10 }),
+      entry({ accountId: "near", businessName: "Near", distanceKm: 1 }),
     ].sort((a, b) => a.distanceKm - b.distanceKm);
     const plan = await planVisitRoute({
       startPoint: start,
@@ -317,7 +311,7 @@ describe("route optimization", () => {
   });
 
   it("marks unresolved location", async () => {
-    const pool = [entry({ accountId: "missing", businessName: "Missing", fitScore: 4 })];
+    const pool = [entry({ accountId: "missing", businessName: "Missing" })];
     const plan = await planVisitRoute({
       startPoint: start,
       qualifiedPool: pool,
@@ -382,7 +376,6 @@ describe("qualification still authoritative before routing", () => {
         startPoint: start,
         dailyVisitTarget: 10,
         maxRadiusKm: 40,
-        minFitScore: 3,
         alreadyVisitedNames: [],
         revisitNames: [],
       },

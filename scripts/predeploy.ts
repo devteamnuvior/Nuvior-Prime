@@ -43,10 +43,7 @@ const RELEASES: Release[] = [
     present: {
       tables: ["SalesTarget", "RepDailySummary", "PointEvent", "UserBadge", "RepPosition", "ClinicWebProfile"],
       enums: ["VisitOutcome", "TargetPeriod", "TargetMetric", "PointReason"],
-      columns: [
-        ["VisitRecord", "fitScoreSnapshot"],
-        ["VisitRecord", "outcomeCode"],
-      ],
+      columns: [["VisitRecord", "outcomeCode"]],
     },
   },
   {
@@ -72,6 +69,20 @@ const RELEASES: Release[] = [
     present: {},
     absent: {
       columns: [["RepDailySummary", "qualityVisits"]],
+    },
+  },
+  {
+    name: "2026-11-05 fit score removed",
+    file: "prisma/releases/2026-11-05_fit_removed.sql",
+    present: {},
+    absent: {
+      columns: [
+        ["AccountQualification", "fitScore"],
+        ["VisitListItem", "fitScore"],
+        ["VisitListRun", "minFitScore"],
+        ["VisitRecord", "fitScoreSnapshot"],
+        ["RepDailySummary", "avgFitScore"],
+      ],
     },
   },
 ];
@@ -245,7 +256,7 @@ async function main() {
     const smoke = {
       users: await db.user.count(),
       visitsWithOutcome: await db.visitRecord.count({ where: { outcomeCode: { not: null } } }),
-      visitsSample: (await db.visitRecord.findMany({ take: 1, select: { id: true, outcomeCode: true, fitScoreSnapshot: true } })).length,
+      visitsSample: (await db.visitRecord.findMany({ take: 1, select: { id: true, outcomeCode: true, durationMinutes: true } })).length,
       targets: await db.salesTarget.count(),
       summaries: await db.repDailySummary.count(),
       xpByUser: (await db.pointEvent.groupBy({ by: ["userId"], _sum: { points: true } })).length,

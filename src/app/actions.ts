@@ -131,8 +131,6 @@ export async function generateVisitListAction(
 
     const result = await runProspectSearch({
       ...parsed.data,
-      // No minimum-fit filter: the ten nearest qualified clinics, whatever their fit.
-      minFitScore: 1,
       startCoords,
       workingArea,
       actorUserId: user.id,
@@ -578,7 +576,6 @@ const intelligenceInputSchema = z.object({
   segmentNumber: z.coerce.number().int().min(1).max(6),
   categoryLabel: z.string().min(1),
   websiteUrl: z.string().nullable().optional(),
-  fitScore: z.coerce.number().int().min(1).max(5).optional().nullable(),
   forceRefresh: z.coerce.boolean().optional(),
   enrichmentJson: z.string().optional().nullable(),
   crmJson: z.string().optional().nullable(),
@@ -614,7 +611,6 @@ export async function getClinicIntelligenceAction(input: {
   segmentNumber: number;
   categoryLabel: string;
   websiteUrl?: string | null;
-  fitScore?: number | null;
   enrichmentJson?: string | null;
   crmJson?: string | null;
 }): Promise<{ ok: true; dto: ClinicIntelligenceDto } | { ok: false; error: string }> {
@@ -640,7 +636,6 @@ export async function getClinicIntelligenceAction(input: {
       segmentNumber: parsed.data.segmentNumber,
       categoryLabel: parsed.data.categoryLabel,
       websiteUrl: parsed.data.websiteUrl ?? null,
-      fitScore: parsed.data.fitScore ?? null,
       enrichment,
       crm,
       role: user.role,
@@ -660,7 +655,6 @@ export async function runClinicResearchAction(input: {
   segmentNumber: number;
   categoryLabel: string;
   websiteUrl?: string | null;
-  fitScore?: number | null;
   forceRefresh?: boolean;
   enrichmentJson?: string | null;
   crmJson?: string | null;
@@ -687,7 +681,6 @@ export async function runClinicResearchAction(input: {
       segmentNumber: parsed.data.segmentNumber,
       categoryLabel: parsed.data.categoryLabel,
       websiteUrl: parsed.data.websiteUrl ?? null,
-      fitScore: parsed.data.fitScore ?? null,
       enrichment,
       crm,
       forceRefresh: parsed.data.forceRefresh ?? false,

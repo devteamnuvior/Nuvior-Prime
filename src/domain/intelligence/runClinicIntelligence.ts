@@ -1,6 +1,6 @@
 /**
  * On-demand clinic intelligence orchestrator — Stage C → D → E.
- * Does not alter routing, Account Fit, gap rules, or scoring weights.
+ * Does not alter routing, gap rules, or scoring weights.
  */
 
 import { analyzeProductGaps } from "@/domain/gap/analyzeProductGapsCore";
@@ -62,7 +62,6 @@ export type ClinicIntelligenceInput = {
   crm?: GapCrmContext;
   crmExtensions?: OpportunityCrmExtensions;
   credentials?: import("@/domain/scopeOfPractice").AccountCredentialSignals;
-  accountFitScore?: number | null;
   catalog: NuviorProduct[];
   catalogVersion: string;
   forceRefresh?: boolean;
@@ -127,7 +126,7 @@ export async function runClinicIntelligencePipeline(
         ok: false,
         error: research.error,
         dto: {
-          ...emptyClinicIntelligenceDto(input.clinicId, input.accountFitScore ?? null),
+          ...emptyClinicIntelligenceDto(input.clinicId),
           researchState: research.status === "FAILED" ? "FAILED" : "NOT_RESEARCHED",
           failureMessage: research.error,
         },
@@ -198,7 +197,6 @@ export async function runClinicIntelligencePipeline(
       credentials,
       crm,
       crmExtensions: input.crmExtensions,
-      accountFitScore: input.accountFitScore ?? null,
     });
     await persistOpportunityAnalysis(opportunityAnalysis, cfg.cacheTtlSeconds);
   }
@@ -209,7 +207,6 @@ export async function runClinicIntelligencePipeline(
     opportunityAnalysis,
     catalog: input.catalog,
     role: "REP",
-    accountFitScore: input.accountFitScore ?? null,
     researchState: researchUiState(profile, sourceStale),
     canRefresh: true,
   });
@@ -250,7 +247,7 @@ export async function getCachedClinicIntelligence(
   }
 
   if (!profile) {
-    return emptyClinicIntelligenceDto(input.clinicId, input.accountFitScore ?? null);
+    return emptyClinicIntelligenceDto(input.clinicId);
   }
 
   const gapCacheKey = gapAnalysisCacheKey({
@@ -281,7 +278,6 @@ export async function getCachedClinicIntelligence(
       opportunityAnalysis: null,
       catalog: input.catalog,
       role: input.role,
-      accountFitScore: input.accountFitScore ?? null,
       researchState: stale ? "STALE" : researchUiState(profile, false),
       canRefresh: true,
     });
@@ -293,7 +289,6 @@ export async function getCachedClinicIntelligence(
     opportunityAnalysis,
     catalog: input.catalog,
     role: input.role,
-    accountFitScore: input.accountFitScore ?? null,
     researchState: stale ? "STALE" : researchUiState(profile, false),
     canRefresh: true,
   });

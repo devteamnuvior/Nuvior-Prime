@@ -53,7 +53,7 @@ export class MockLlmProvider implements LlmProvider {
           .map((e) => `${e.fieldPath}=${e.value}`)
           .join("; ");
         const content = {
-          summary: `${locked.accountName} is Segment-fit for ${locked.leadProductLabel} (fit ${locked.fitScore}). ${locked.openingAngle}${evidenceBits ? ` Public signals: ${evidenceBits}.` : ""}`,
+          summary: `${locked.accountName} is Segment-fit for ${locked.leadProductLabel}. ${locked.openingAngle}${evidenceBits ? ` Public signals: ${evidenceBits}.` : ""}`,
           confirmOnSite: user.thinInputWarnings?.slice(0, 3) ?? [],
         };
         return {
@@ -78,7 +78,7 @@ export class MockLlmProvider implements LlmProvider {
           .join("; ") || "confirm services on site";
 
       const narrative: LlmBriefNarrative = {
-        accountSummary: `${locked.accountName} — ${locked.categoryLabel}. Locked lead ${locked.leadProductLabel} (fit ${locked.fitScore}). ${locked.formerMesoesteticCustomer ? "Former Mesoestetic: Dermaceutic retention." : locked.openingAngle}`,
+        accountSummary: `${locked.accountName} — ${locked.categoryLabel}. Locked lead ${locked.leadProductLabel}. ${locked.formerMesoesteticCustomer ? "Former Mesoestetic: Dermaceutic retention." : locked.openingAngle}`,
         snapshotThreeLines: [
           base.snapshotThreeLines[0],
           base.snapshotThreeLines[1],

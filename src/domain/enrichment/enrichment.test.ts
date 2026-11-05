@@ -293,7 +293,6 @@ describe("end-to-end with enrichment fixtures", () => {
       startQuery: "M5V 2T6",
       dailyVisitTarget: 20,
       maxRadiusKm: 40,
-      minFitScore: 3,
       alreadyVisitedRaw: "none",
       revisitsDueRaw: "none",
     });

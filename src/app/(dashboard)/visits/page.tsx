@@ -57,7 +57,6 @@ export default async function MyVisitsPage() {
     durationMinutes: v.durationMinutes,
     outcomeCode: v.outcomeCode ?? null,
     outcomeLabel: visitOutcomeLabel(v.outcomeCode) ?? v.outcome ?? null,
-    fitScore: v.fitScoreSnapshot ?? null,
     nextAction: v.nextAction ?? null,
   }));
 

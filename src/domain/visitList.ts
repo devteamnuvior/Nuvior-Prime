@@ -68,7 +68,6 @@ export type VisitListRequest = {
   startPoint: GeoPoint;
   dailyVisitTarget: number;
   maxRadiusKm: number;
-  minFitScore: number;
   alreadyVisitedNames: string[];
   revisitNames: string[];
   /** CRM placeIds / names due for revisit */
@@ -93,7 +92,6 @@ export type VisitListEntry = {
   postalCodePrefix: string;
   distanceKm: number;
   isRevisit: boolean;
-  fitScore: number;
   leadProduct: LeadProductCode;
   leadProductLabel: string;
   openingAngle: string;
@@ -105,7 +103,7 @@ export type VisitListEntry = {
 
 export type VisitListResult = {
   entries: VisitListEntry[];
-  /** Spec §07 presentation: postal prefix then fit score descending */
+  /** Spec §07 presentation: postal prefix then nearest first */
   presentationEntries: VisitListEntry[];
   /** All accounts that passed qualification filters before target slice / routing */
   qualifiedPool: VisitListEntry[];
@@ -204,7 +202,6 @@ export function buildDailyVisitList(
       continue;
     }
     if (qualification.excluded) continue;
-    if (qualification.fitScore < request.minFitScore) continue;
 
     scored.push({
       accountId: c.id,
@@ -220,7 +217,6 @@ export function buildDailyVisitList(
       postalCodePrefix: postalCodePrefix(c.postalCode),
       distanceKm: Math.round(distanceKm * 10) / 10,
       isRevisit: revisit.isRevisit,
-      fitScore: qualification.fitScore,
       leadProduct: qualification.recommendedLeadProduct,
       leadProductLabel: qualification.recommendedLeadProductLabel,
       openingAngle: qualification.openingAngle,
@@ -241,7 +237,7 @@ export function buildDailyVisitList(
   const presentationEntries = [...entries].sort((a, b) => {
     const p = a.postalCodePrefix.localeCompare(b.postalCodePrefix);
     if (p !== 0) return p;
-    return b.fitScore - a.fitScore;
+    return a.distanceKm - b.distanceKm;
   });
 
   const unverifiedAccounts = entries.filter((e) => e.needsManualVerification);

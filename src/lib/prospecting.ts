@@ -70,7 +70,6 @@ export type ProspectSearchInput = {
   maxDriveMinutes?: number | null;
   dayStartClock?: string | null;
   dayEndClock?: string | null;
-  minFitScore: number;
   alreadyVisitedRaw: string;
   revisitsDueRaw: string;
   /** Phase 6 — authenticated actor for visit-run ownership */
@@ -553,7 +552,6 @@ export async function runProspectSearch(
       startPoint,
       dailyVisitTarget: input.dailyVisitTarget,
       maxRadiusKm: input.maxRadiusKm,
-      minFitScore: input.minFitScore,
       alreadyVisitedNames: parseAccountNameList(input.alreadyVisitedRaw),
       revisitNames: parseAccountNameList(input.revisitsDueRaw),
       crmRevisitKeys,
@@ -729,7 +727,6 @@ export async function runProspectSearch(
           categoryLabel: entry.categoryLabel,
           organizationTypeLabel: entry.organizationTypeLabel,
           provinceCode: entry.provinceCode,
-          fitScore: entry.fitScore,
           leadProduct: entry.leadProduct,
           leadProductLabel: entry.leadProductLabel,
           certificationPathwayFit: entry.certificationPathwayFit,

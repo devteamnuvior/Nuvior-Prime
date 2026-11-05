@@ -75,6 +75,5 @@ export type ProductOpportunityAnalysis = {
   noRecommendationReasons: string[];
   blockedOpportunities: BlockedProductOpportunity[];
   evidenceRefs: ProfileEvidenceRef[];
-  /** Account Fit remains separate — optional passthrough for calibration display only. */
   accountFitScore: number | null;
 };

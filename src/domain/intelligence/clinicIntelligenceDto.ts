@@ -71,8 +71,6 @@ export type ClinicIntelligenceDto = {
   clinicId: string;
   researchState: ClinicResearchUiState;
   researchedAt: string | null;
-  /** Account Fit — separate from product opportunity. */
-  accountFitScore: number | null;
   offerings: OfferingItem[];
   primary: PrimaryOpportunityView | null;
   secondaryOpportunities: SecondaryOpportunityView[];
@@ -87,7 +85,6 @@ export type ClinicIntelligenceDto = {
 export type BriefIntelligenceSections = {
   lockedFromOpportunityEngine: boolean;
   clinicSnapshot: string[];
-  accountFitLine: string | null;
   whatTheyAppearToOffer: string[];
   bestOpportunity: {
     productName: string;

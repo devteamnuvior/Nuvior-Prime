@@ -11,7 +11,7 @@ Evidence-grounded narrative only. Phase 1–4 deterministic logic remains author
 
 ## What the LLM must never own
 
-DNC · CRM status · certification · taxonomy · fit score · lead product · revisit eligibility · identity matching.
+DNC · CRM status · certification · taxonomy · lead product · revisit eligibility · identity matching.
 
 These are passed as **locked facts**, re-applied on merge (`leadProductForVisit` always from qualification), and validated after generation.
 

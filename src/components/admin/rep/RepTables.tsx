@@ -71,7 +71,6 @@ export function RecentVisitsTable({ rows, today }: { rows: RepRecentVisit[]; tod
         width: 220,
         renderCell: ({ row }) => (row.outcomeLabel ? <StatusChip tone={row.outcomeCode ? (OUTCOME_TONE[row.outcomeCode] ?? "neutral") : "neutral"} label={row.outcomeLabel} /> : "—"),
       },
-      { field: "fitScore", headerName: "Fit", type: "number", width: 70, valueFormatter: (v) => (v == null ? "—" : String(v)) },
       {
         field: "followUpDate",
         headerName: "Follow-up",

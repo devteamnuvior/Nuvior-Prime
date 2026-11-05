@@ -51,7 +51,6 @@ function makeCtx(overrides?: Partial<SynthesisContext["locked"]>): SynthesisCont
       categoryLabel: "Dermatology clinic, medical and/or cosmetic",
       organizationTypeLabel: "Independent",
       provinceCode: "ON",
-      fitScore: 5,
       leadProduct: "APTOS",
       leadProductLabel: "Aptos",
       certificationPathwayFit: "THREE_LEVEL",
@@ -217,7 +216,6 @@ describe("prospecting LLM wiring", () => {
       startQuery: "M5V 2T6",
       dailyVisitTarget: 3,
       maxRadiusKm: 40,
-      minFitScore: 3,
       alreadyVisitedRaw: "none",
       revisitsDueRaw: "none",
     });
@@ -242,7 +240,6 @@ describe("prospecting LLM wiring", () => {
       startQuery: "M5V 2T6",
       dailyVisitTarget: 3,
       maxRadiusKm: 40,
-      minFitScore: 3,
       alreadyVisitedRaw: "none",
       revisitsDueRaw: "none",
     });

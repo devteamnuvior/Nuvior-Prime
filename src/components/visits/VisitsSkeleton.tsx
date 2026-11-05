@@ -22,7 +22,7 @@ function TargetCardSkeleton() {
   );
 }
 
-/** One table row with the shapes of the logged-visits columns: account tile, date, type, outcome, fit dots, next action. */
+/** One table row with the shapes of the logged-visits columns: account tile, date, type, time, outcome, next action. */
 function VisitRowSkeleton({ index, last }: { index: number; last: boolean }) {
   return (
     <Box sx={{ display: "grid", gridTemplateColumns: "minmax(240px, 1.3fr) 160px 140px 230px 100px minmax(220px, 1fr)", alignItems: "center", gap: 3, px: 4, height: 60, borderBottom: last ? 0 : 1, borderColor: "divider", opacity: Math.max(0.35, 1 - index * 0.09) }}>

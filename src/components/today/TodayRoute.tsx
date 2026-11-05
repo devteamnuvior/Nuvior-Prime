@@ -455,7 +455,6 @@ export function TodayRoute({
       segmentNumber: stop.segmentNumber,
       categoryLabel: stop.categoryLabel,
       websiteUrl: enrichment?.website ?? null,
-      fitScore: stop.fitScore,
       enrichmentJson: enrichment ? JSON.stringify(enrichment) : null,
       crmJson: crm ? JSON.stringify(crm) : null,
     };
@@ -1059,7 +1058,6 @@ export function TodayRoute({
         {displayBrief && (
           <PreVisitBriefView
             brief={displayBrief}
-            fitScore={briefRoute?.fitScore}
             arrivalClock={planAdjusted ? null : (briefRoute?.arrivalClock ?? null)}
             onClose={() => setBriefId(null)}
           />

@@ -10,7 +10,7 @@ import type { DailySummaryValues } from "./dailySummary";
 
 export type DailySummaryRow = Pick<
   DailySummaryValues,
-  "plannedStops" | "visits" | "visitSlots" | "newAccounts" | "followUpsDone" | "academySignups" | "orders" | "plannedDriveMinutes" | "avgFitScore"
+  "plannedStops" | "visits" | "visitSlots" | "newAccounts" | "followUpsDone" | "academySignups" | "orders" | "plannedDriveMinutes"
 > & { day: string; outcomeCounts: Partial<Record<string, number>> | null };
 
 export type VisitRowInput = {
@@ -18,11 +18,10 @@ export type VisitRowInput = {
   accountId: string | null;
   day: string;
   outcomeCode: string | null;
-  fitScoreSnapshot: number | null;
   followUpDate: string | null;
 };
 
-export type PlannedStopInput = { leadProduct: string; fitScore: number };
+export type PlannedStopInput = { leadProduct: string };
 
 export type RepKpis = {
   /** Days with a DAY/VISITS target and any activity where the target was met, as 0–100. Null without a target. */
@@ -55,7 +54,6 @@ export type ProductMixSlice = { product: string; count: number; percent: number 
 export type CalendarCell = { day: string; visits: number };
 
 export type QualityStats = {
-  avgFitScore: number | null;
   /** Share of logged visits carrying a structured outcome, 0–100. */
   outcomeCoverage: number | null;
   overdueFollowUps: number;
@@ -182,14 +180,8 @@ export function activityCalendar(summaries: readonly DailySummaryRow[], start: s
  * logged a later visit to the same account on or after that date.
  */
 export function qualityStats(visits: readonly VisitRowInput[], today: string): QualityStats {
-  let fitSum = 0;
-  let fitCount = 0;
   let withOutcome = 0;
   for (const v of visits) {
-    if (typeof v.fitScoreSnapshot === "number") {
-      fitSum += v.fitScoreSnapshot;
-      fitCount += 1;
-    }
     if (isVisitOutcomeCode(v.outcomeCode)) withOutcome += 1;
   }
 
@@ -201,7 +193,6 @@ export function qualityStats(visits: readonly VisitRowInput[], today: string): Q
   }
 
   return {
-    avgFitScore: fitCount ? Math.round((fitSum / fitCount) * 10) / 10 : null,
     outcomeCoverage: pct(withOutcome, visits.length),
     overdueFollowUps: overdue,
   };

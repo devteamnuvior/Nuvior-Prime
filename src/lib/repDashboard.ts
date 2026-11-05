@@ -43,8 +43,6 @@ export type RepDashboardDto = {
     visitsPrev: number;
     visitsDelta: number | null;
     newAccounts: number;
-    avgFitScore: number | null;
-    teamAvgFitScore: number | null;
     activeDays: number;
   };
   /** Visits per day for the last 14 days, oldest first. */
@@ -89,13 +87,13 @@ export async function loadRepDashboard(user: AuthUser): Promise<RepDashboardDto>
     prisma.repDailySummary.findMany({
       where: { userId: user.id, day: { gte: since, lte: parseDayKey(today) } },
       orderBy: { day: "asc" },
-      select: { day: true, visits: true, visitSlots: true, newAccounts: true, avgFitScore: true, plannedStops: true },
+      select: { day: true, visits: true, visitSlots: true, newAccounts: true, plannedStops: true },
     }),
     listSalesTargets(user.id),
     getTargetProgress(user.id, today),
     prisma.visitRecord.findMany({
       where: { createdByUserId: user.id, visitDate: { gte: parseDayKey(addDays(today, -120)) } },
-      select: { id: true, accountId: true, visitDate: true, outcomeCode: true, fitScoreSnapshot: true, followUpDate: true },
+      select: { id: true, accountId: true, visitDate: true, outcomeCode: true, followUpDate: true },
     }),
   ]);
 
@@ -106,32 +104,14 @@ export async function loadRepDashboard(user: AuthUser): Promise<RepDashboardDto>
   const visits = inMonth.reduce((a, r) => a + r.visits, 0);
   const visitsPrev = inPrev.reduce((a, r) => a + r.visits, 0);
   const newAccounts = inMonth.reduce((a, r) => a + r.newAccounts, 0);
-  const fitRows = inMonth.filter((r) => r.avgFitScore != null);
-  const avgFitScore = fitRows.length ? Math.round((fitRows.reduce((a, r) => a + (r.avgFitScore ?? 0) * r.visits, 0) / Math.max(1, fitRows.reduce((a, r) => a + r.visits, 0))) * 10) / 10 : null;
   const activeDays = inMonth.filter((r) => r.visits > 0 || r.plannedStops > 0).length;
 
-  // Team benchmark: other reps in the same provinces, this month. Aggregate only.
-  let teamAvgFitScore: number | null = null;
-  if (!user.provinces.includes("*") && user.provinces.length) {
-    const team = await prisma.repDailySummary.findMany({
-      where: {
-        userId: { not: user.id },
-        day: { gte: parseDayKey(month.start), lte: parseDayKey(month.end) },
-        avgFitScore: { not: null },
-        user: { role: "REP", status: "ACTIVE", provinces: { hasSome: user.provinces } },
-      },
-      select: { avgFitScore: true, visits: true },
-    });
-    const w = team.reduce((a, r) => a + r.visits, 0);
-    if (w > 0) teamAvgFitScore = Math.round((team.reduce((a, r) => a + (r.avgFitScore ?? 0) * r.visits, 0) / w) * 10) / 10;
-  }
 
   const visitInputs = recentVisits.map((v) => ({
     id: v.id,
     accountId: v.accountId,
     day: dayKey(v.visitDate),
     outcomeCode: v.outcomeCode,
-    fitScoreSnapshot: v.fitScoreSnapshot,
     followUpDate: v.followUpDate ? dayKey(v.followUpDate) : null,
   }));
   const overdueFollowUps = qualityStats(visitInputs, today).overdueFollowUps;
@@ -158,8 +138,6 @@ export async function loadRepDashboard(user: AuthUser): Promise<RepDashboardDto>
       visitsPrev,
       visitsDelta: deltaPercent(visits, visitsPrev),
       newAccounts,
-      avgFitScore,
-      teamAvgFitScore,
       activeDays,
     },
     spark,

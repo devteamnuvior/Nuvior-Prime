@@ -23,7 +23,6 @@ async function runMode(label: string, env: Record<string, string>) {
     maxDriveMinutes: 60,
     dayStartClock: "09:00",
     dayEndClock: "17:00",
-    minFitScore: 3,
     alreadyVisitedRaw: "none",
     revisitsDueRaw: "none",
   });
@@ -60,7 +59,6 @@ async function runMode(label: string, env: Record<string, string>) {
           return {
             seq: r?.sequence,
             name: e.businessName.slice(0, 28),
-            fit: e.fitScore,
             driveMin: r?.travelMinutesFromPrevious,
             eta: r?.arrivalClock,
             hours: r?.openingHoursState,
@@ -105,7 +103,6 @@ async function main() {
     maxDriveMinutes: null,
     dayStartClock: "09:00",
     dayEndClock: "17:00",
-    minFitScore: 3,
     alreadyVisitedRaw: "none",
     revisitsDueRaw: "none",
   });

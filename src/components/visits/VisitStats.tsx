@@ -11,6 +11,7 @@ import StarOutlineRounded from "@mui/icons-material/StarOutlineRounded";
 import EventRepeatOutlined from "@mui/icons-material/EventRepeatOutlined";
 import { StatBar, StatBreakdown, StatCard, StatRing, useMounted } from "@/components/feedback/StatCard";
 import { duration } from "@/lib/format";
+import { slotsForDuration } from "@/domain/performance/visitSlots";
 import { OUTCOME_BUCKETS, outcomeBucket, type LoggedVisitRow, type PlannedRouteRow } from "./visitPresentation";
 
 /** The four animated tiles at the top of Visit History. */
@@ -19,14 +20,14 @@ export function VisitStats({ runs, visits }: { runs: PlannedRouteRow[]; visits: 
   const mounted = useMounted() || reduceMotion;
   const animate = !reduceMotion;
 
-  const scored = visits.filter((v) => typeof v.fitScore === "number");
-  const avgFit = scored.length ? Math.round((scored.reduce((a, v) => a + (v.fitScore ?? 0), 0) / scored.length) * 10) / 10 : null;
+  const slots = visits.reduce((a, v) => a + slotsForDuration(v.durationMinutes), 0);
+  const extended = visits.filter((v) => slotsForDuration(v.durationMinutes) > 1).length;
   const followUps = visits.filter((v) => !!v.nextAction?.trim()).length;
   const stops = runs.reduce((a, r) => a + r.stopCount, 0);
   const drive = runs.reduce((a, r) => a + (r.totalDriveMinutes ?? 0), 0);
   const buckets = OUTCOME_BUCKETS.map((b) => ({ key: b.key, label: b.label, color: b.color, count: visits.filter((v) => outcomeBucket(v.outcomeCode) === b.key).length }));
   const withOutcome = buckets.reduce((a, b) => a + b.count, 0);
-  const fitRatio = avgFit != null ? avgFit / 5 : 0;
+  const slotRatio = visits.length ? Math.min(1, visits.length / Math.max(1, slots)) : 0;
   const followRatio = visits.length ? followUps / visits.length : 0;
 
   return (
@@ -50,16 +51,15 @@ export function VisitStats({ runs, visits }: { runs: PlannedRouteRow[]; visits: 
       />
       <StatCard
         index={1}
-        label="Average fit"
-        value={avgFit != null ? Math.round(avgFit * 10) : 0}
-        format={(n) => (avgFit == null ? "—" : (n / 10).toFixed(1))}
+        label="Clinic slots"
+        value={slots}
         icon={StarOutlineRounded}
         tone="primary"
         animate={animate}
-        aside={<StatRing ratio={fitRatio} tone="primary" mounted={mounted} label={avgFit != null ? `Average fit ${avgFit} of 5 across ${scored.length} visits` : "No fit scores yet"} />}
+        aside={<StatRing ratio={slotRatio} tone="primary" mounted={mounted} label={visits.length ? `${slots} slots across ${visits.length} visits` : "No visits yet"} />}
         footer={
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            {avgFit != null ? `Out of 5 · ${scored.length} of ${visits.length} visits scored` : "Fit of the clinics you visit"}
+            {visits.length ? `45-minute slots · ${extended} extended visit${extended === 1 ? "" : "s"}` : "A 90-minute visit counts as two"}
           </Typography>
         }
       />

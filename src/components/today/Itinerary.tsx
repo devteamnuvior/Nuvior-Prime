@@ -202,7 +202,6 @@ export function Itinerary({
                     {s.categoryLabel}
                   </Typography>
                   <Box sx={{ mt: 2, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1.5 }}>
-                    <Badge tone="accent">Fit {s.fitScore}</Badge>
                     <IntelligenceItineraryBadge intelligence={intelligenceByAccountId?.[s.accountId]} />
                     {s.isRevisit && <Badge tone="signal">Revisit</Badge>}
                     {warn && <Badge tone="signal">{s.openingHoursLabel}</Badge>}
@@ -394,7 +393,7 @@ const BADGE_TONE = {
 } as const;
 
 /**
- * Compact 4px-radius badge for itinerary cards and the clinic drawer (fit, lead product,
+ * Compact 4px-radius badge for itinerary cards and the clinic drawer (lead product,
  * revisit, verify). Tones follow the design system: accent = quality, signal = attention,
  * danger = stop, neutral = fact, outline = low-emphasis flag.
  */

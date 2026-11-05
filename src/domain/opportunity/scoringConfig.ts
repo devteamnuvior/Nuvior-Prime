@@ -71,7 +71,7 @@ export const UNCERTAINTY_PENALTIES = {
 
 export const UNCERTAINTY_PENALTY_CAP = 18;
 
-/** Score display bands — product opportunity strength, not Account Fit. */
+/** Score display bands — product opportunity strength. */
 export const SCORE_BAND_THRESHOLDS = [
   { min: 85, band: "VERY_HIGH" as const },
   { min: 70, band: "HIGH" as const },

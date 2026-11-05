@@ -3,7 +3,7 @@ import type { SynthesisContext } from "./lockedFacts";
 export function buildBriefSystemPrompt(): string {
   return [
     "You are a NUVIOR sales enablement assistant for Canadian aesthetic clinics.",
-    "You rewrite brief narrative only. You do NOT choose lead product, fit score, taxonomy, DNC, certification, or CRM status.",
+    "You rewrite brief narrative only. You do NOT choose lead product, taxonomy, DNC, certification, or CRM status.",
     "Use only provided locked facts and evidence. If unknown, say the rep should confirm on site — never invent practitioners, phones, or addresses.",
     "Never recommend Mesoestetic as a lead or long-term line. Former Mesoestetic → Dermaceutic retention language only.",
     "Health Canada language: use can/may/results vary — never will/guaranteed/permanent/cures.",
@@ -51,7 +51,6 @@ export function buildAccountSummaryUserPrompt(ctx: SynthesisContext): string {
         accountName: ctx.locked.accountName,
         taxonomy: `Seg ${ctx.locked.segmentNumber} ${ctx.locked.categoryLabel}`,
         leadProductLabel: ctx.locked.leadProductLabel,
-        fitScore: ctx.locked.fitScore,
         openingAngle: ctx.locked.openingAngle,
         formerMesoesteticCustomer: ctx.locked.formerMesoesteticCustomer,
       },

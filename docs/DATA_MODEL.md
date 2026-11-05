@@ -254,7 +254,6 @@ Core identity + location (may originate from Places).
 
 | Field | Notes |
 |---|---|
-| fitScore | 1–5 |
 | recommendedLeadProduct | Allowed lead only |
 | certificationPathwayFit | `3-level` \| `4-level` \| `none` |
 | openingAngle | One line |
@@ -277,7 +276,6 @@ Core identity + location (may originate from Places).
 | startLat / startLng | |
 | dailyVisitTarget | default 20 |
 | maxRadiusKm | |
-| minFitScore | |
 | alreadyVisitedRaw | text paste |
 | revisitsDueRaw | text paste |
 | radiusExhausted | Boolean — target not met within radius |
@@ -292,13 +290,12 @@ Core identity + location (may originate from Places).
 | sortDistanceKm | |
 | postalCodePrefix | for §07 sort presentation |
 | isRevisit | Boolean → label **RE-VISIT** |
-| fitScore | denormalized |
 | leadProduct | |
 | openingAngle | |
 | needsManualVerification | Boolean |
 | rank | list order nearest→farthest |
 
-**Output presentation (spec §07):** table sorted by postal code prefix then fit score descending; also retain geographic generation order (nearest→farthest). Phase 1 UI shows both: primary table per §07, with distance column.
+**Output presentation (spec §07):** table sorted by postal code prefix then nearest first; also retain geographic generation order (nearest→farthest). Phase 1 UI shows both: primary table per §07, with distance column.
 
 ---
 

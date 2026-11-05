@@ -24,7 +24,6 @@ export type RoutingConfig = {
   /** Avoid last N minutes before close */
   avoidBeforeCloseMinutes: number;
   /** Utility weights */
-  weightFit: number;
   weightRevisit: number;
   weightTravelMinutes: number;
   weightSchedulePenalty: number;
@@ -57,7 +56,6 @@ export function getRoutingConfig(): RoutingConfig {
     lunchEndMinutes: parseHm(process.env.ROUTING_LUNCH_END ?? "14:00", 14 * 60),
     avoidAfterOpenMinutes: num(process.env.ROUTING_AVOID_AFTER_OPEN_MINUTES, 60),
     avoidBeforeCloseMinutes: num(process.env.ROUTING_AVOID_BEFORE_CLOSE_MINUTES, 60),
-    weightFit: num(process.env.ROUTING_WEIGHT_FIT, 12),
     weightRevisit: num(process.env.ROUTING_WEIGHT_REVISIT, 40),
     weightTravelMinutes: num(process.env.ROUTING_WEIGHT_TRAVEL, 1),
     weightSchedulePenalty: num(process.env.ROUTING_WEIGHT_SCHEDULE, 2),

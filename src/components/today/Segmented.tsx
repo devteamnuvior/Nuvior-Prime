@@ -4,7 +4,7 @@ import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 
 /**
- * Equal-width segmented control (travel reach 30/45/60, minimum fit 1+…5+).
+ * Equal-width segmented control (travel reach 30/45/60).
  * Selected cell is primary-filled; clicking the selected cell keeps it selected.
  */
 export function Segmented<T extends string | number>({

@@ -36,7 +36,6 @@ export const FIELD_OWNERSHIP: Record<string, FieldOwner> = {
   serviceMenuSummary: "website",
 
   taxonomy: "derived",
-  fitScore: "derived",
   recommendedLeadProduct: "derived",
   certificationPathwayFit: "derived",
   openingAngle: "derived",

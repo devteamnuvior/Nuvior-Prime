@@ -4,19 +4,13 @@ import type { AreaStrategy } from "./travelReach";
 
 export type OpportunitySummary = {
   qualified: number;
-  byFit: Record<1 | 2 | 3 | 4 | 5, number>;
   revisitsDue: number;
 };
 
 export function opportunitySummary(pool: VisitListEntry[]): OpportunitySummary {
-  const byFit: OpportunitySummary["byFit"] = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
   let revisitsDue = 0;
-  for (const e of pool) {
-    const f = e.fitScore;
-    if (f >= 1 && f <= 5) byFit[f as 1 | 2 | 3 | 4 | 5] += 1;
-    if (e.isRevisit) revisitsDue += 1;
-  }
-  return { qualified: pool.length, byFit, revisitsDue };
+  for (const e of pool) if (e.isRevisit) revisitsDue += 1;
+  return { qualified: pool.length, revisitsDue };
 }
 
 /**
@@ -45,7 +39,6 @@ export type CandidateDot = {
   lat: number;
   lng: number;
   name: string;
-  fit: number;
   revisit: boolean;
   kind: CandidateKind;
 };
@@ -87,7 +80,6 @@ export function candidateDots(
       lat: c.lat,
       lng: c.lng,
       name: e.businessName,
-      fit: e.fitScore,
       revisit: e.isRevisit,
       kind,
     });

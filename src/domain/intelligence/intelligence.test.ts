@@ -42,7 +42,6 @@ describe("Clinic intelligence orchestration", () => {
       websiteUrl: "https://example-clinic.ca",
       catalog: MOCK_CATALOG_FIXTURES,
       catalogVersion: MOCK_CATALOG_VERSION,
-      accountFitScore: 5,
     });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
@@ -59,7 +58,6 @@ describe("Rep-safe DTO", () => {
   it("hides score internals from REP", async () => {
     const analysis = await runOpportunityScoringForFixture({
       fixtureId: "fixture-injectable-clinic",
-      accountFitScore: 5,
     });
     const gap = await runGapAnalysisForFixture({ fixtureId: "fixture-injectable-clinic" });
     const ctx = buildResearchContext({
@@ -80,7 +78,6 @@ describe("Rep-safe DTO", () => {
       opportunityAnalysis: analysis,
       catalog: MOCK_CATALOG_FIXTURES,
       role: "REP",
-      accountFitScore: 5,
       researchState: "RESEARCHED",
     });
 
@@ -112,7 +109,6 @@ describe("Rep-safe DTO", () => {
       opportunityAnalysis: analysis,
       catalog: MOCK_CATALOG_FIXTURES,
       role: "ADMIN",
-      accountFitScore: 4,
       researchState: "RESEARCHED",
     });
 
@@ -179,7 +175,6 @@ describe("Mesoestetic exclusion", () => {
       opportunityAnalysis: analysis,
       catalog: MOCK_CATALOG_FIXTURES,
       role: "REP",
-      accountFitScore: 4,
       researchState: "RESEARCHED",
     });
 
@@ -240,7 +235,6 @@ describe("Secondary opportunities", () => {
       opportunityAnalysis: analysis,
       catalog: MOCK_CATALOG_FIXTURES,
       role: "REP",
-      accountFitScore: 5,
       researchState: "RESEARCHED",
     });
 
@@ -276,7 +270,6 @@ describe("Pre-visit brief product lock", () => {
       opportunityAnalysis: analysis,
       catalog: MOCK_CATALOG_FIXTURES,
       role: "REP",
-      accountFitScore: 5,
       researchState: "RESEARCHED",
     });
 
@@ -398,7 +391,6 @@ describe("BLOCKED_DNC state", () => {
       opportunityAnalysis: analysis,
       catalog: MOCK_CATALOG_FIXTURES,
       role: "REP",
-      accountFitScore: 5,
       researchState: "RESEARCHED",
     });
 
@@ -441,7 +433,7 @@ describe("RBAC permissions", () => {
 
 describe("Empty intelligence DTO", () => {
   it("NOT_RESEARCHED state", () => {
-    const dto = emptyClinicIntelligenceDto("place-1", 4);
+    const dto = emptyClinicIntelligenceDto("place-1");
     expect(dto.researchState).toBe("NOT_RESEARCHED");
     expect(dto.primary).toBeNull();
   });

@@ -53,7 +53,6 @@ export type RepRecentVisit = {
   durationMinutes: number;
   outcomeCode: string | null;
   outcomeLabel: string | null;
-  fitScore: number | null;
   nextAction: string | null;
   followUpDate: string | null;
 };
@@ -109,11 +108,11 @@ export async function loadRepProfile(userId: string, rangeKey: RangeKey): Promis
     getTargetProgress(userId, today),
     prisma.visitRecord.findMany({
       where: { createdByUserId: userId, visitDate: { gte: start, lt: endExclusive } },
-      select: { id: true, accountId: true, visitDate: true, outcomeCode: true, fitScoreSnapshot: true, followUpDate: true },
+      select: { id: true, accountId: true, visitDate: true, outcomeCode: true, followUpDate: true },
     }),
     prisma.visitListItem.findMany({
       where: { run: { createdByUserId: userId, createdAt: { gte: start, lt: endExclusive } } },
-      select: { leadProduct: true, fitScore: true },
+      select: { leadProduct: true },
     }),
     prisma.visitRecord.findMany({
       where: { createdByUserId: userId },
@@ -147,7 +146,6 @@ export async function loadRepProfile(userId: string, rangeKey: RangeKey): Promis
     academySignups: s.academySignups,
     orders: s.orders,
     plannedDriveMinutes: s.plannedDriveMinutes,
-    avgFitScore: s.avgFitScore,
     outcomeCounts: (s.outcomeCounts as Partial<Record<string, number>> | null) ?? null,
   }));
 
@@ -156,7 +154,6 @@ export async function loadRepProfile(userId: string, rangeKey: RangeKey): Promis
     accountId: v.accountId,
     day: dayKey(v.visitDate),
     outcomeCode: v.outcomeCode,
-    fitScoreSnapshot: v.fitScoreSnapshot,
     followUpDate: v.followUpDate ? dayKey(v.followUpDate) : null,
   }));
 
@@ -192,7 +189,6 @@ export async function loadRepProfile(userId: string, rangeKey: RangeKey): Promis
       durationMinutes: v.durationMinutes,
       outcomeCode: v.outcomeCode ?? null,
       outcomeLabel: visitOutcomeLabel(v.outcomeCode) ?? v.outcome ?? null,
-      fitScore: v.fitScoreSnapshot ?? null,
       nextAction: v.nextAction ?? null,
       followUpDate: v.followUpDate ? dayKey(v.followUpDate) : null,
     })),

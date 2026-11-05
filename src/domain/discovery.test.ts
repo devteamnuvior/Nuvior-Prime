@@ -265,7 +265,6 @@ describe("end-to-end mock prospect search", () => {
       startQuery: "M5V 2T6",
       dailyVisitTarget: 20,
       maxRadiusKm: 40,
-      minFitScore: 3,
       alreadyVisitedRaw: "none",
       revisitsDueRaw: "none",
     });

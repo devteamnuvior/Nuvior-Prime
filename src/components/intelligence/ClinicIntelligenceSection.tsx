@@ -83,19 +83,6 @@ export function ClinicIntelligenceSection({
         </Typography>
       )}
 
-      {/* Account Fit — visually separate */}
-      <Paper variant="outlined" sx={{ px: 3, py: 2.5, bgcolor: "background.sunken" }}>
-        <Eyebrow>Account fit</Eyebrow>
-        <Typography variant="body2" sx={{ mt: 0.5 }}>
-          Should we visit this clinic?
-          {intelligence.accountFitScore != null && (
-            <Box component="span" sx={{ ml: 2, fontWeight: 600, color: "primary.main" }}>
-              Fit {intelligence.accountFitScore}
-            </Box>
-          )}
-        </Typography>
-      </Paper>
-
       {/* Primary opportunity */}
       <Box sx={{ mt: 3 }}>
         <Eyebrow>Best NUVIOR opportunity</Eyebrow>

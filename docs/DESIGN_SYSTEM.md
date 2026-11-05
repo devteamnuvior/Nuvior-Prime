@@ -76,7 +76,7 @@ colour. The route and the day are the product; chrome stays quiet.
 | `Disclosure` | `components/feedback/Disclosure.tsx` | Chevron toggle + `Collapse`; `inline` text button or full-width `row` with trailing count. Content unmounts while closed. |
 | `DotList`, `PlainList` | `components/feedback/DotList.tsx` | Quiet bulleted list with a 4px primary dot; marker-less list. |
 | `Badge` | `components/today/Itinerary.tsx` | 20px, 4px-radius chip for fit / lead product / revisit / verify (tones: accent, signal, neutral, outline, danger). |
-| `Segmented` | `components/today/Segmented.tsx` | Equal-width `ToggleButtonGroup` (travel reach, minimum fit); selected cell primary-filled. |
+| `Segmented` | `components/today/Segmented.tsx` | Equal-width `ToggleButtonGroup` (travel reach); selected cell primary-filled. |
 | `MapControls`, `MapCaption`, `MapBadge` | `components/today/mapChrome.tsx` | Zoom / fit / centre / external stack, schematic honesty pill, non-production renderer badge; `MAP_Z` stacking constants. |
 | `toast` | `components/feedback/toast.ts` | `toast.success/error/info/warning/result()` via notistack. |
 | `FormTextField`, `FormSelect`, `FormCheckbox`, `FormSwitch` | `components/form/fields.tsx` | react-hook-form bindings; errors render as helper text under the field. |
@@ -154,7 +154,7 @@ tracking `0.16em`, `--faint`; metrics 13px with 600 value + 400 muted label.
 
 | Tone | Style | Meaning |
 | --- | --- | --- |
-| accent | `primary.tint` / `primary.main` | Fit score |
+| accent | `primary.tint` / `primary.main` | Accent badges |
 | neutral | `background.sunken` / `text.primary` | Lead product |
 | signal | `warning.tint` / `warning.main` | Revisit, opening warnings |
 | outline | `divider` border / `text.secondary` | Unknown hours, low-emphasis flags |

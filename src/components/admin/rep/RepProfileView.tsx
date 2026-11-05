@@ -134,9 +134,8 @@ export function RepProfileView({
           <Section title="Activity" hint="Logged visits per day. Darker means more visits.">
             <ActivityCalendar cells={profile.calendar} />
           </Section>
-          <Section title="Quality" hint="How well the logged visits are documented and targeted.">
-            <Box sx={{ display: "grid", gap: 4, gridTemplateColumns: "repeat(3, minmax(0, 1fr))" }}>
-              <Stat label="Average fit score" value={profile.quality.avgFitScore ?? "—"} />
+          <Section title="Quality" hint="How well the logged visits are documented and followed up.">
+            <Box sx={{ display: "grid", gap: 4, gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}>
               <Stat label="Visits with an outcome" value={pctText(profile.quality.outcomeCoverage)} />
               <Stat label="Overdue follow-ups" value={profile.quality.overdueFollowUps} tone={profile.quality.overdueFollowUps > 0 ? "warning" : "success"} />
             </Box>

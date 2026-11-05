@@ -233,30 +233,22 @@ describe("Phase 8.8 — travel reach", () => {
 });
 
 describe("Phase 8.8 — opportunity + candidate layer", () => {
-  const entry = (id: string, fit: number, revisit = false): VisitListEntry =>
+  const entry = (id: string, revisit = false): VisitListEntry =>
     ({
       accountId: id,
       businessName: id,
-      fitScore: fit,
       isRevisit: revisit,
     }) as VisitListEntry;
 
   it("summarizes qualified pool without a blocking extra step", () => {
-    const s = opportunitySummary([
-      entry("a", 5, true),
-      entry("b", 5),
-      entry("c", 4),
-      entry("d", 3),
-    ]);
+    const s = opportunitySummary([entry("a", true), entry("b"), entry("c"), entry("d")]);
     expect(s.qualified).toBe(4);
-    expect(s.byFit[5]).toBe(2);
-    expect(s.byFit[4]).toBe(1);
     expect(s.revisitsDue).toBe(1);
   });
 
   it("never plots routed stops as candidates and only uses the qualified pool (no DNC)", () => {
     const dots = candidateDots(
-      [entry("keep", 4), entry("routed", 5)],
+      [entry("keep"), entry("routed")],
       {
         keep: { lat: 43.65, lng: -79.38 },
         routed: { lat: 43.66, lng: -79.39 },
@@ -270,7 +262,7 @@ describe("Phase 8.8 — opportunity + candidate layer", () => {
   });
 
   it("distinguishes candidate dots from numbered route stops", () => {
-    const dots = candidateDots([entry("keep", 4)], { keep: { lat: 43.65, lng: -79.38 } }, new Set());
+    const dots = candidateDots([entry("keep")], { keep: { lat: 43.65, lng: -79.38 } }, new Set());
     expect(dots[0]).not.toHaveProperty("seq");
     expect(dots[0]!.id).toBe("keep");
   });

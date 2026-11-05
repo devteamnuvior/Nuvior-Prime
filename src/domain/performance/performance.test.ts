@@ -126,11 +126,11 @@ describe("daily summary", () => {
   it("counts visits, outcomes, new accounts and follow-ups", () => {
     const s = buildDailySummary({
       visits: [
-        { accountId: "a1", outcomeCode: "INTERESTED", fitScoreSnapshot: 5, visitType: "first visit", durationMinutes: 45, firstEverVisit: true },
-        { accountId: "a2", outcomeCode: "ORDER_PLACED", fitScoreSnapshot: 4, visitType: "re-visit", durationMinutes: 90, firstEverVisit: false },
-        { accountId: "a3", outcomeCode: "NOT_AVAILABLE", fitScoreSnapshot: 2, visitType: "first visit", durationMinutes: 45, firstEverVisit: true },
-        { accountId: null, outcomeCode: null, fitScoreSnapshot: null, visitType: "follow-up on a quote", durationMinutes: 45, firstEverVisit: false },
-        { accountId: "a4", outcomeCode: "ACADEMY_SIGNUP", fitScoreSnapshot: 3, visitType: "first visit", durationMinutes: 45, firstEverVisit: true },
+        { accountId: "a1", outcomeCode: "INTERESTED", visitType: "first visit", durationMinutes: 45, firstEverVisit: true },
+        { accountId: "a2", outcomeCode: "ORDER_PLACED", visitType: "re-visit", durationMinutes: 90, firstEverVisit: false },
+        { accountId: "a3", outcomeCode: "NOT_AVAILABLE", visitType: "first visit", durationMinutes: 45, firstEverVisit: true },
+        { accountId: null, outcomeCode: null, visitType: "follow-up on a quote", durationMinutes: 45, firstEverVisit: false },
+        { accountId: "a4", outcomeCode: "ACADEMY_SIGNUP", visitType: "first visit", durationMinutes: 45, firstEverVisit: true },
       ],
       runs: [
         { provinceCode: "ON", stopCount: 6, totalDriveMinutes: 90 },
@@ -147,21 +147,19 @@ describe("daily summary", () => {
     expect(s.plannedStops).toBe(7);
     expect(s.plannedDriveMinutes).toBe(110);
     expect(s.provinceCode).toBe("ON");
-    expect(s.avgFitScore).toBe(3.5);
   });
 
   it("empty day yields zeros and nulls", () => {
     const s = buildDailySummary({ visits: [], runs: [] });
     expect(s.visits).toBe(0);
     expect(s.visitSlots).toBe(0);
-    expect(s.avgFitScore).toBeNull();
     expect(s.plannedDriveMinutes).toBeNull();
     expect(s.provinceCode).toBeNull();
   });
 
   it("metricValue and sumMetric read the matching column", () => {
-    const a = buildDailySummary({ visits: [{ accountId: "x", outcomeCode: "ORDER_PLACED", fitScoreSnapshot: 5, visitType: "first visit", durationMinutes: 90, firstEverVisit: true }], runs: [] });
-    const b = buildDailySummary({ visits: [{ accountId: "y", outcomeCode: "ORDER_PLACED", fitScoreSnapshot: 1, visitType: "first visit", durationMinutes: 45, firstEverVisit: false }], runs: [] });
+    const a = buildDailySummary({ visits: [{ accountId: "x", outcomeCode: "ORDER_PLACED", visitType: "first visit", durationMinutes: 90, firstEverVisit: true }], runs: [] });
+    const b = buildDailySummary({ visits: [{ accountId: "y", outcomeCode: "ORDER_PLACED", visitType: "first visit", durationMinutes: 45, firstEverVisit: false }], runs: [] });
     expect(metricValue(a, "ORDERS")).toBe(1);
     expect(sumMetric([a, b], "ORDERS")).toBe(2);
     expect(sumMetric([a, b], "NEW_ACCOUNTS")).toBe(1);

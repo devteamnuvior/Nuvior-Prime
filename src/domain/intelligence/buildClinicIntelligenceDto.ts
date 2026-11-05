@@ -190,7 +190,6 @@ export function buildClinicIntelligenceDto(input: {
   opportunityAnalysis: ProductOpportunityAnalysis | null;
   catalog: NuviorProduct[];
   role: AppRoleName;
-  accountFitScore: number | null;
   researchState: ClinicIntelligenceDto["researchState"];
   failureMessage?: string | null;
   canRefresh?: boolean;
@@ -290,7 +289,6 @@ export function buildClinicIntelligenceDto(input: {
     clinicId: input.profile?.clinicId ?? input.opportunityAnalysis?.clinicId ?? "",
     researchState: input.researchState,
     researchedAt: input.profile?.researchedAt ?? null,
-    accountFitScore: input.accountFitScore,
     offerings,
     primary,
     secondaryOpportunities,
@@ -336,8 +334,6 @@ export function buildBriefIntelligenceSections(
             .join(", ") || "limited public signals"}.`
         : "Limited public service menu — confirm on site.",
     ],
-    accountFitLine:
-      dto.accountFitScore != null ? `Account fit score: ${dto.accountFitScore}/5` : null,
     whatTheyAppearToOffer: dto.offerings.map(
       (o) => `${o.label} (${o.inventoryStateLabel.toLowerCase()})`,
     ),
@@ -359,13 +355,11 @@ export function buildBriefIntelligenceSections(
 /** Empty DTO for not-yet-researched clinics. */
 export function emptyClinicIntelligenceDto(
   clinicId: string,
-  accountFitScore: number | null,
 ): ClinicIntelligenceDto {
   return {
     clinicId,
     researchState: "NOT_RESEARCHED",
     researchedAt: null,
-    accountFitScore,
     offerings: [],
     primary: null,
     secondaryOpportunities: [],

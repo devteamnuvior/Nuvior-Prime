@@ -1,7 +1,6 @@
 "use client";
 
 import Box from "@mui/material/Box";
-import Chip from "@mui/material/Chip";
 import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
@@ -18,12 +17,10 @@ import { clock12 } from "@/lib/format";
 export function PreVisitBriefView({
   brief,
   onClose,
-  fitScore,
   arrivalClock,
 }: {
   brief: PreVisitBriefPayload;
   onClose: () => void;
-  fitScore?: number;
   arrivalClock?: string | null;
 }) {
   const visitTypeLabel =
@@ -69,15 +66,12 @@ export function PreVisitBriefView({
               {brief.leadProductForVisit}
             </Typography>
           </Box>
-          {fitScore != null && (
-            <Chip label={`Fit ${fitScore}`} sx={{ bgcolor: "primary.main", color: "primary.contrastText", fontWeight: 600, borderRadius: 0.75 }} />
-          )}
         </Box>
       </Box>
 
       <Box sx={{ display: "grid", gap: 6, px: { xs: 6, sm: 8 }, py: 6 }}>
         {brief.clinicIntelligence && (
-          <IntelligenceBriefSections intel={brief.clinicIntelligence} fitScore={fitScore} />
+          <IntelligenceBriefSections intel={brief.clinicIntelligence} />
         )}
 
         {brief.generator === "llm_fallback" && brief.llmMeta?.fallbackReason && (
@@ -95,7 +89,7 @@ export function PreVisitBriefView({
           <Section title="What we know">
             <p>{brief.accountSummary}</p>
             <Typography variant="caption" sx={{ display: "block", mt: 1.5, color: "text.faint" }}>
-              AI-assisted summary — product, fit and contact rules remain deterministic.
+              AI-assisted summary — product and contact rules remain deterministic.
             </Typography>
           </Section>
         )}
@@ -249,13 +243,7 @@ function Note({ children }: { children: React.ReactNode }) {
   );
 }
 
-function IntelligenceBriefSections({
-  intel,
-  fitScore,
-}: {
-  intel: NonNullable<PreVisitBriefPayload["clinicIntelligence"]>;
-  fitScore?: number;
-}) {
+function IntelligenceBriefSections({ intel }: { intel: NonNullable<PreVisitBriefPayload["clinicIntelligence"]> }) {
   if (!intel) return null;
   return (
     <Paper variant="outlined" sx={{ display: "grid", gap: 4, p: 4, borderRadius: 1.5, bgcolor: "background.sunken" }}>
@@ -265,17 +253,6 @@ function IntelligenceBriefSections({
 
       <BriefBlock title="Clinic snapshot">
         <DotList gap={1} items={intel.clinicSnapshot} />
-      </BriefBlock>
-
-      <BriefBlock title="Account fit">
-        <p>
-          Should we visit this clinic?
-          {(intel.accountFitLine || fitScore != null) && (
-            <Box component="span" sx={{ ml: 1, fontWeight: 600 }}>
-              {intel.accountFitLine ?? `Fit ${fitScore}/5`}
-            </Box>
-          )}
-        </p>
       </BriefBlock>
 
       {intel.whatTheyAppearToOffer.length > 0 && (

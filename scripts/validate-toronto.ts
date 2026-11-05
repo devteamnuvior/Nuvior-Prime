@@ -27,7 +27,6 @@ async function main() {
     startQuery: "M5V 2T6",
     dailyVisitTarget: 20,
     maxRadiusKm: 40,
-    minFitScore: 3,
     alreadyVisitedRaw: "none",
     revisitsDueRaw: "none",
   });
@@ -83,7 +82,7 @@ async function main() {
       `Revisit (CRM): lastVisit=${crm?.lastVisitDate ?? "—"} due=${crm?.nextRevisitDueDate ?? "—"} listFlag=${e.isRevisit ? "RE-VISIT" : "no"}`,
     );
     console.log(
-      `Final: INCLUDED fit=${e.fitScore} lead=${e.leadProductLabel}${e.isRevisit ? " RE-VISIT" : ""}`,
+      `Final: INCLUDED lead=${e.leadProductLabel}${e.isRevisit ? " RE-VISIT" : ""}`,
     );
     const brief = result.briefByAccountId[e.accountId];
     console.log(

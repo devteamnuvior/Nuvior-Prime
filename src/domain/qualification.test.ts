@@ -103,7 +103,7 @@ describe("qualification", () => {
       threadsOffered: "PDO",
       skincareLines: "UNKNOWN, verify",
     });
-    expect(result.fitScore).toBeGreaterThanOrEqual(4);
+    expect(result.excluded).toBe(false);
     expect(["APTOS", "APTOS_3_LEVEL_CERTIFICATION"]).toContain(result.recommendedLeadProduct);
   });
 });
@@ -209,7 +209,6 @@ describe("visit list", () => {
         startPoint: { lat: 43.65, lng: -79.38 },
         dailyVisitTarget: 20,
         maxRadiusKm: 40,
-        minFitScore: 3,
         alreadyVisitedNames: [],
         revisitNames: ["Far Clinic"],
       },
@@ -226,7 +225,6 @@ describe("visit list", () => {
         startPoint: { lat: 43.65, lng: -79.38 },
         dailyVisitTarget: 20,
         maxRadiusKm: 40,
-        minFitScore: 3,
         alreadyVisitedNames: parseAccountNameList("Near Clinic"),
         revisitNames: [],
       },

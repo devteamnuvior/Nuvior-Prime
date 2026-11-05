@@ -101,9 +101,9 @@ qualification, DNC, CRM or routing rule.
 
 | Area | Change |
 | --- | --- |
-| `VisitRecord` | `outcomeCode VisitOutcome?` (structured), `fitScoreSnapshot Int?` (fit at visit time) and `durationMinutes Int` (45 or 90). `outcome` stays as the free-text note. |
+| `VisitRecord` | `outcomeCode VisitOutcome?` (structured) and `durationMinutes Int` (45, 90, 135 or 180). `outcome` stays as the free-text note. |
 | `SalesTarget` | Per-rep target: `period` (DAY / WEEK / MONTH), `metric`, `value`, `startsOn`, optional `endsOn`. Unique on (user, period, metric, startsOn). |
-| `RepDailySummary` | One row per rep per calendar day: visits, clinic slots (`visitSlots`), new accounts, follow-ups, academy sign-ups, orders, outcome counts, planned stops / drive minutes, average fit. Recomputed after every visit save. |
+| `RepDailySummary` | One row per rep per calendar day: visits, clinic slots (`visitSlots`), new accounts, follow-ups, academy sign-ups, orders, outcome counts, planned stops / drive minutes. Recomputed after every visit save. |
 | Permissions | `performance.view.own` (all roles), `performance.view.team` and `target.manage` (ADMIN). |
 | Visit form | Outcome is a required select; the free-text field became "Outcome note". AI note structuring suggests a code via `inferVisitOutcomeCode` (never overrides a rep's choice). |
 | Visit History | Outcome chips, fit column, and a target strip for the signed-in rep. |
@@ -123,12 +123,7 @@ qualification, DNC, CRM or routing rule.
 | `NOT_INTERESTED` | Not interested | yes |
 | `CLOSED_OR_MOVED` | Closed or moved | no |
 
-`fitScoreSnapshot` feeds the day's average fit. It reads the latest
-`AccountQualification` row when one exists; since prospecting computes
-qualification at run time and does not persist it per account today, it falls
-back to the fit score of the most recent planned stop (`VisitListItem`) for
-that account, preferring the rep's own route. A visit to an account that was
-never on a planned route gets `null`. A **new account** is a visit to an account with no
+A **new account** is a visit to an account with no
 earlier `VisitRecord` by anyone. A **follow-up** is a visit of type
 `re-visit` or `follow-up on a quote`.
 
@@ -191,3 +186,13 @@ Removed in the same release: challenges (the `Challenge` table and the
 `PointEvent.multiplier` / `challengeId` columns; points are now always the base points) and
 the MANAGER role (existing managers became ADMIN). Release SQL:
 `prisma/releases/2026-11-05_clinic_slots.sql`, applied by `scripts/predeploy.ts`.
+
+## Fit score removed (2026-11-05)
+
+The 1–5 account fit score is gone end to end: `scoreFit` and
+`QualificationResult.fitScore`, the planner's minimum-fit filter and fit weight in
+route utility, `VisitRecord.fitScoreSnapshot`, `VisitListItem.fitScore`,
+`VisitListRun.minFitScore`, `AccountQualification.fitScore`,
+`RepDailySummary.avgFitScore`, the "Average fit" tiles and the fit chips. Routing
+ranks by revisit, travel time and schedule; the Visit History tile shows clinic
+slots instead. Release SQL: `prisma/releases/2026-11-05_fit_removed.sql`.

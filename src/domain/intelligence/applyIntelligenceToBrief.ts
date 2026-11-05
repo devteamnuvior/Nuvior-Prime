@@ -42,7 +42,7 @@ export function applyIntelligenceToBrief(
     leadProductWhy: why,
     snapshotThreeLines: [
       sections.clinicSnapshot[0] ?? template.snapshotThreeLines[0],
-      sections.accountFitLine ?? template.snapshotThreeLines[1],
+      template.snapshotThreeLines[1],
       sections.clinicSnapshot[1] ?? template.snapshotThreeLines[2],
     ],
     thinInputWarnings: thinWarnings,

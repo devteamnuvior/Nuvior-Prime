@@ -68,7 +68,6 @@ async function main() {
       startPoint: { lat: 43.64, lng: -79.39 },
       dailyVisitTarget: 10,
       maxRadiusKm: 40,
-      minFitScore: 1,
       alreadyVisitedNames: [],
       revisitNames: [],
     },

@@ -173,7 +173,6 @@ export function ClinicDrawer({
 
       <Box className="nv-scroll" sx={{ minHeight: 0, flex: 1, overflowY: "auto", px: 5, pb: 5 }}>
         <Box sx={{ mt: 3, display: "flex", flexWrap: "wrap", gap: 1.5 }}>
-          <Badge tone="accent">Fit {stop.fitScore}</Badge>
           <Badge tone="neutral">{stop.leadProductLabel}</Badge>
           {stop.isRevisit && <Badge tone="signal">Revisit</Badge>}
           {stop.needsManualVerification && <Badge tone="outline">Verify on site</Badge>}

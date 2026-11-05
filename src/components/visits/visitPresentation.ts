@@ -21,7 +21,6 @@ export type LoggedVisitRow = {
   durationMinutes: number;
   outcomeCode: string | null;
   outcomeLabel: string | null;
-  fitScore: number | null;
   nextAction: string | null;
 };
 

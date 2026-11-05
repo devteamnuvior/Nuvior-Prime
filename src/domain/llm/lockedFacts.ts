@@ -16,7 +16,6 @@ export type LockedBriefFacts = {
   categoryLabel: string;
   organizationTypeLabel: string;
   provinceCode: string;
-  fitScore: number;
   leadProduct: LeadProductCode;
   leadProductLabel: string;
   certificationPathwayFit: CertificationPathwayCode | string;

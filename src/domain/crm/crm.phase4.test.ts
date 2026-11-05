@@ -312,7 +312,6 @@ describe("revisit / already visited", () => {
         startPoint: { lat: 43.64, lng: -79.39 },
         dailyVisitTarget: 10,
         maxRadiusKm: 40,
-        minFitScore: 3,
         alreadyVisitedNames: [],
         revisitNames: [],
         crmRevisitKeys: ["revisit-1"],
@@ -353,7 +352,7 @@ describe("certification / meso / last-order", () => {
     expect(ownershipOf("doNotContact")).toBe("crm");
     expect(ownershipOf("formerMesoesteticCustomer")).toBe("crm");
     expect(ownershipOf("placeId")).toBe("places");
-    expect(ownershipOf("fitScore")).toBe("derived");
+    expect(ownershipOf("recommendedLeadProduct")).toBe("derived");
   });
 
   it("derives last-order status with explicit thresholds", () => {

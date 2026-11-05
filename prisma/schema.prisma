@@ -231,7 +231,6 @@ model AccountQualification {
   id                      String               @id @default(cuid())
   accountId               String
   account                 Account              @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  fitScore                Int
   recommendedLeadProduct  LeadProduct
   certificationPathwayFit CertificationPathway
   openingAngle            String
@@ -256,7 +255,6 @@ model VisitListRun {
   maxDriveMinutes      Int?
   dayStartClock        String?
   dayEndClock          String?
-  minFitScore          Int
   alreadyVisitedRaw    String
   revisitsDueRaw       String
   radiusExhausted      Boolean         @default(false)
@@ -286,7 +284,6 @@ model VisitListItem {
   sortDistanceKm             Float
   postalCodePrefix           String
   isRevisit                  Boolean      @default(false)
-  fitScore                   Int
   leadProduct                LeadProduct
   openingAngle               String
   needsManualVerification    Boolean      @default(false)
@@ -423,8 +420,6 @@ model VisitRecord {
   visitType         String
   /// Structured outcome; `outcome` below stays as the free-text note.
   outcomeCode       VisitOutcome?
-  /// Account fit score at the time of the visit (feeds the day's average fit).
-  fitScoreSnapshot  Int?
   /// Time spent at the clinic in 45-minute slots (45, 90, 135, 180); a 90-minute visit counts two of the day's ten. See src/domain/performance/visitSlots.ts.
   durationMinutes   Int           @default(45)
   outcome           String?
@@ -497,7 +492,6 @@ model RepDailySummary {
   /// Count per VisitOutcome code, e.g. {"INTERESTED": 2}
   outcomeCounts       Json?
   plannedDriveMinutes Float?
-  avgFitScore         Float?
   computedAt          DateTime @default(now())
 
   @@unique([userId, day])

@@ -23,7 +23,6 @@ function day(partial: Partial<DailySummaryRow> & { day: string }): DailySummaryR
     academySignups: 0,
     orders: 0,
     plannedDriveMinutes: null,
-    avgFitScore: null,
     outcomeCounts: null,
     ...partial,
   };
@@ -87,11 +86,11 @@ describe("weekly series", () => {
 });
 
 const visits: VisitRowInput[] = [
-  { id: "1", accountId: "a", day: "2026-11-02", outcomeCode: "INTERESTED", fitScoreSnapshot: 5, followUpDate: "2026-11-05" },
-  { id: "2", accountId: "b", day: "2026-11-02", outcomeCode: "NOT_AVAILABLE", fitScoreSnapshot: 3, followUpDate: null },
-  { id: "3", accountId: "c", day: "2026-11-03", outcomeCode: "ORDER_PLACED", fitScoreSnapshot: 4, followUpDate: null },
-  { id: "4", accountId: "a", day: "2026-11-06", outcomeCode: "QUOTE_REQUESTED", fitScoreSnapshot: 5, followUpDate: "2026-11-20" },
-  { id: "5", accountId: "d", day: "2026-11-03", outcomeCode: null, fitScoreSnapshot: null, followUpDate: "2026-11-04" },
+  { id: "1", accountId: "a", day: "2026-11-02", outcomeCode: "INTERESTED", followUpDate: "2026-11-05" },
+  { id: "2", accountId: "b", day: "2026-11-02", outcomeCode: "NOT_AVAILABLE", followUpDate: null },
+  { id: "3", accountId: "c", day: "2026-11-03", outcomeCode: "ORDER_PLACED", followUpDate: null },
+  { id: "4", accountId: "a", day: "2026-11-06", outcomeCode: "QUOTE_REQUESTED", followUpDate: "2026-11-20" },
+  { id: "5", accountId: "d", day: "2026-11-03", outcomeCode: null, followUpDate: "2026-11-04" },
 ];
 
 describe("funnel and breakdowns", () => {
@@ -108,7 +107,7 @@ describe("funnel and breakdowns", () => {
   });
 
   it("product mix percentages sum to about 100", () => {
-    const m = productMix([{ leadProduct: "DERMACEUTIC", fitScore: 4 }, { leadProduct: "DERMACEUTIC", fitScore: 5 }, { leadProduct: "APTOS", fitScore: 3 }]);
+    const m = productMix([{ leadProduct: "DERMACEUTIC" }, { leadProduct: "DERMACEUTIC" }, { leadProduct: "APTOS" }]);
     expect(m[0]).toEqual({ product: "DERMACEUTIC", count: 2, percent: 67 });
     expect(m[1].percent).toBe(33);
   });
@@ -119,7 +118,6 @@ describe("quality and calendar", () => {
     const q = qualityStats(visits, "2026-11-10");
     // visit 1 (a, due 11-05) is covered by visit 4 on 11-06; visit 5 (d, due 11-04) is not
     expect(q.overdueFollowUps).toBe(1);
-    expect(q.avgFitScore).toBe(4.3);
     expect(q.outcomeCoverage).toBe(80);
   });
 

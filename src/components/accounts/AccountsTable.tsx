@@ -22,7 +22,6 @@ export type AccountRow = {
   address: string;
   city: string;
   provinceCode: string;
-  fitScore: number | null;
   leadProduct: string | null;
   rating: number | null;
   website: string | null;
@@ -69,13 +68,6 @@ export function AccountsTable({ rows, query }: { rows: AccountRow[]; query: stri
       },
       { field: "city", headerName: "City", width: 140 },
       { field: "provinceCode", headerName: "Prov.", width: 90, renderCell: ({ value }) => <CodeChip label={String(value)} /> },
-      {
-        field: "fitScore",
-        headerName: "Fit",
-        type: "number",
-        width: 90,
-        renderCell: ({ value }) => (value == null ? <Typography variant="body2" sx={{ color: "text.disabled" }}>—</Typography> : <StatusChip tone="primary" dot={false} label={`Fit ${value}`} />),
-      },
       { field: "leadProduct", headerName: "Lead product", flex: 1, minWidth: 160, valueFormatter: (v) => (v ? String(v) : "—") },
       {
         field: "rating",
@@ -136,7 +128,7 @@ export function AccountsTable({ rows, query }: { rows: AccountRow[]; query: stri
           </Button>
         </Box>
       }
-      initialSort={[{ field: "fitScore", sort: "desc" }]}
+      initialSort={[{ field: "businessName", sort: "asc" }]}
       emptyState={
         query
           ? { illustration: "search", title: `No accounts match “${query}”`, description: "Try another name or clear the search.", action: <Button component="a" href="/accounts" size="small" variant="outlined">Clear search</Button> }

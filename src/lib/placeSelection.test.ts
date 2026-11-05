@@ -152,7 +152,6 @@ describe("Phase 8.6 — client-selected start bypasses server geocoding", () => 
       startLabel: "Dropped pin (43.65000, -79.38000)",
       dailyVisitTarget: 8,
       maxRadiusKm: 40,
-      minFitScore: 3,
       alreadyVisitedRaw: "none",
       revisitsDueRaw: "none",
     });
@@ -175,7 +174,6 @@ describe("Phase 8.6 — client-selected start bypasses server geocoding", () => 
       startLabel: "128 Spadina Ave, Toronto, ON M5V 2K7",
       dailyVisitTarget: 5,
       maxRadiusKm: 40,
-      minFitScore: 3,
       alreadyVisitedRaw: "none",
       revisitsDueRaw: "none",
     });

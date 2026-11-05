@@ -183,12 +183,6 @@ export function MyDayPanel({ data }: { data: RepDashboardDto }) {
               sub={data.month.visitsDelta == null ? `${data.month.activeDays} active days` : `${data.month.visitsDelta >= 0 ? "+" : ""}${data.month.visitsDelta}% vs last month to date`}
               subTone={data.month.visitsDelta == null ? "neutral" : data.month.visitsDelta >= 0 ? "success" : "danger"}
             />
-            <Mini
-              label="Average fit score"
-              value={data.month.avgFitScore ?? "—"}
-              sub={data.month.teamAvgFitScore != null ? `team ${data.month.teamAvgFitScore}` : undefined}
-              subTone={data.month.teamAvgFitScore != null && data.month.avgFitScore != null ? (data.month.avgFitScore >= data.month.teamAvgFitScore ? "success" : "neutral") : "neutral"}
-            />
             {monthly.map((p) => (
               <Mini
                 key={`${p.period}-${p.metric}`}

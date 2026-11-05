@@ -315,11 +315,7 @@ export function PlanningWorkspace({
               {opportunity.qualified} qualified account{opportunity.qualified === 1 ? "" : "s"}
             </Typography>
             <Typography variant="caption" sx={{ display: "block", mt: 1, color: "text.secondary" }}>
-              {[5, 4, 3, 2, 1]
-                .filter((f) => opportunity.byFit[f as 1 | 2 | 3 | 4 | 5] > 0)
-                .map((f) => `${opportunity.byFit[f as 1 | 2 | 3 | 4 | 5]} Fit ${f}`)
-                .join(" · ")}
-              {opportunity.revisitsDue > 0 ? ` · ${opportunity.revisitsDue} revisit${opportunity.revisitsDue === 1 ? "" : "s"} due` : ""}
+              {opportunity.revisitsDue > 0 ? `${opportunity.revisitsDue} revisit${opportunity.revisitsDue === 1 ? "" : "s"} due` : "Within reach of your start"}
             </Typography>
           </Paper>
         )}

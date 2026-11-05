@@ -11,7 +11,6 @@ import { slotsForDuration } from "./visitSlots";
 export type SummaryVisitInput = {
   accountId: string | null;
   outcomeCode: VisitOutcomeCode | null;
-  fitScoreSnapshot: number | null;
   visitType: string;
   /** Minutes at the clinic (45 or 90); drives `visitSlots`. */
   durationMinutes: number;
@@ -37,7 +36,6 @@ export type DailySummaryValues = {
   orders: number;
   outcomeCounts: Partial<Record<VisitOutcomeCode, number>>;
   plannedDriveMinutes: number | null;
-  avgFitScore: number | null;
 };
 
 const FOLLOW_UP_TYPES = new Set(["re-visit", "follow-up on a quote", "RE_VISIT", "FOLLOW_UP_ON_A_QUOTE"]);
@@ -52,8 +50,6 @@ export function buildDailySummary(input: {
   let followUpsDone = 0;
   let academySignups = 0;
   let orders = 0;
-  let fitSum = 0;
-  let fitCount = 0;
 
   for (const v of input.visits) {
     if (v.outcomeCode) outcomeCounts[v.outcomeCode] = (outcomeCounts[v.outcomeCode] ?? 0) + 1;
@@ -62,10 +58,6 @@ export function buildDailySummary(input: {
     if (FOLLOW_UP_TYPES.has(v.visitType)) followUpsDone += 1;
     if (v.outcomeCode === "ACADEMY_SIGNUP") academySignups += 1;
     if (v.outcomeCode === "ORDER_PLACED") orders += 1;
-    if (typeof v.fitScoreSnapshot === "number") {
-      fitSum += v.fitScoreSnapshot;
-      fitCount += 1;
-    }
   }
 
   // Latest run of the day wins for province; stops/drive are summed across rebuilds
@@ -83,7 +75,6 @@ export function buildDailySummary(input: {
     orders,
     outcomeCounts,
     plannedDriveMinutes: lastRun?.totalDriveMinutes ?? null,
-    avgFitScore: fitCount ? Math.round((fitSum / fitCount) * 10) / 10 : null,
   };
 }
 

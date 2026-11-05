@@ -13,7 +13,6 @@ export async function persistVisitRun(opts: {
     maxDriveMinutes?: number | null;
     dayStartClock?: string | null;
     dayEndClock?: string | null;
-    minFitScore: number;
     alreadyVisitedRaw: string;
     revisitsDueRaw: string;
   };
@@ -58,7 +57,6 @@ export async function persistVisitRun(opts: {
         maxDriveMinutes: opts.input.maxDriveMinutes ?? null,
         dayStartClock: opts.input.dayStartClock ?? null,
         dayEndClock: opts.input.dayEndClock ?? null,
-        minFitScore: opts.input.minFitScore,
         alreadyVisitedRaw: opts.input.alreadyVisitedRaw,
         revisitsDueRaw: opts.input.revisitsDueRaw,
         radiusExhausted: opts.radiusExhausted,
@@ -94,7 +92,6 @@ export async function persistVisitRun(opts: {
           sortDistanceKm: e.distanceKm,
           postalCodePrefix: e.postalCodePrefix,
           isRevisit: e.isRevisit,
-          fitScore: e.fitScore,
           leadProduct: e.leadProduct as LeadProduct,
           openingAngle: e.openingAngle,
           needsManualVerification: e.needsManualVerification,
@@ -148,38 +145,9 @@ export async function createVisitRecord(input: {
 }): Promise<{ id: string } | { error: string }> {
   try {
     let accountId: string | null = null;
-    let fitScoreSnapshot: number | null = null;
     if (input.placeId) {
-      const account = await prisma.account.findFirst({
-        where: { placeId: input.placeId },
-        select: {
-          id: true,
-          qualifications: { orderBy: { computedAt: "desc" }, take: 1, select: { fitScore: true } },
-        },
-      });
+      const account = await prisma.account.findFirst({ where: { placeId: input.placeId }, select: { id: true } });
       accountId = account?.id ?? null;
-      fitScoreSnapshot = account?.qualifications[0]?.fitScore ?? null;
-
-      // Qualification is computed at prospecting time and not persisted per
-      // account today, so fall back to the fit score of the most recent planned
-      // stop for this account — preferring the rep's own route.
-      if (fitScoreSnapshot == null && accountId) {
-        const own = input.createdByUserId
-          ? await prisma.visitListItem.findFirst({
-              where: { accountId, run: { createdByUserId: input.createdByUserId } },
-              orderBy: { run: { createdAt: "desc" } },
-              select: { fitScore: true },
-            })
-          : null;
-        const any =
-          own ??
-          (await prisma.visitListItem.findFirst({
-            where: { accountId },
-            orderBy: { run: { createdAt: "desc" } },
-            select: { fitScore: true },
-          }));
-        fitScoreSnapshot = any?.fitScore ?? null;
-      }
     }
 
     const row = await prisma.visitRecord.create({
@@ -192,7 +160,6 @@ export async function createVisitRecord(input: {
         visitDate: new Date(input.visitDate),
         visitType: input.visitType,
         outcomeCode: isVisitOutcomeCode(input.outcomeCode) ? (input.outcomeCode as VisitOutcome) : null,
-        fitScoreSnapshot,
         durationMinutes: input.durationMinutes ?? 45,
         outcome: input.outcome ?? null,
         peopleMet: input.peopleMet ?? null,

@@ -26,7 +26,6 @@ export type ClinicIntelligenceRequest = {
   segmentNumber: number;
   categoryLabel: string;
   websiteUrl: string | null;
-  fitScore?: number | null;
   enrichment?: EnrichmentResult | null;
   crm?: CrmOverlaySnapshot | null;
   forceRefresh?: boolean;
@@ -100,7 +99,6 @@ async function buildPipelineInput(req: ClinicIntelligenceRequest): Promise<Clini
     rawPages,
     crm: gapCrmFromOverlay(req.crm),
     crmExtensions: opportunityCrmExtensionsFromOverlay(req.crm),
-    accountFitScore: req.fitScore ?? null,
     catalog: snapshot.products,
     catalogVersion: snapshot.metadata.catalogVersion,
     forceRefresh: req.forceRefresh,
@@ -127,7 +125,6 @@ export async function runClinicIntelligenceResearch(
     opportunityAnalysis: result.ok ? result.opportunityAnalysis : null,
     catalog: input.catalog,
     role: req.role,
-    accountFitScore: input.accountFitScore ?? null,
     researchState: result.dto.researchState,
     failureMessage: result.ok ? null : result.error,
     canRefresh: result.ok,

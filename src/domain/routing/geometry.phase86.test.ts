@@ -165,7 +165,6 @@ describe("Phase 8.6 — pipeline geometry fallback (mock provider)", () => {
       startQuery: "M5V 2T6",
       dailyVisitTarget: 8,
       maxRadiusKm: 40,
-      minFitScore: 3,
       alreadyVisitedRaw: "none",
       revisitsDueRaw: "none",
     });

@@ -39,7 +39,7 @@ export async function recomputeRepDailySummary(userId: string, day: string): Pro
       prisma.visitRecord.findMany({
         where: { createdByUserId: userId, visitDate: { gte: dayStart, lt: dayEnd } },
         orderBy: { createdAt: "asc" },
-        select: { id: true, accountId: true, outcomeCode: true, fitScoreSnapshot: true, visitType: true, durationMinutes: true, createdAt: true },
+        select: { id: true, accountId: true, outcomeCode: true, visitType: true, durationMinutes: true, createdAt: true },
       }),
       prisma.visitListRun.findMany({
         where: { createdByUserId: userId, createdAt: { gte: dayStart, lt: dayEnd } },
@@ -64,7 +64,6 @@ export async function recomputeRepDailySummary(userId: string, day: string): Pro
       visitInputs.push({
         accountId: v.accountId,
         outcomeCode: isVisitOutcomeCode(v.outcomeCode) ? v.outcomeCode : null,
-        fitScoreSnapshot: v.fitScoreSnapshot,
         visitType: v.visitType,
         durationMinutes: v.durationMinutes,
         firstEverVisit,
@@ -92,7 +91,6 @@ export async function recomputeRepDailySummary(userId: string, day: string): Pro
       orders: values.orders,
       outcomeCounts: values.outcomeCounts as Prisma.InputJsonValue,
       plannedDriveMinutes: values.plannedDriveMinutes,
-      avgFitScore: values.avgFitScore,
       computedAt: new Date(),
     };
 

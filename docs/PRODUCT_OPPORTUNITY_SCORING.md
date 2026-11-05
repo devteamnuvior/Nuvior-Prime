@@ -17,7 +17,7 @@ ClinicCapabilityProfile → ProductGapAnalysis → scoreProductOpportunities()
 
 Claude does **not** calculate or override scores.
 
-Account Fit (`fitScore`) remains separate — it answers “should we visit?” Product Opportunity answers “what should we lead with?”
+Product Opportunity answers “what should we lead with?”
 
 ---
 
@@ -38,7 +38,6 @@ Account Fit (`fitScore`) remains separate — it answers “should we visit?” 
 | noRecommendationReasons[] | Why no primary when applicable |
 | blockedOpportunities[] | Hard-gated products |
 | evidenceRefs[] | Linked profile evidence |
-| accountFitScore | Optional passthrough — **not used in scoring** |
 
 ---
 
