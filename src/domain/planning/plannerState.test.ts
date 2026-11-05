@@ -24,8 +24,6 @@ const base: PlannerInputs = {
   provinceCode: "ON",
   provinceError: null,
   area: { kind: "none" },
-  alreadyVisited: "none",
-  revisitsDue: "none",
   allowedProvinces: ["ON"],
 };
 

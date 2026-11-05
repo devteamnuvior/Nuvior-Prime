@@ -94,6 +94,9 @@ const initial: ActionState = { status: "idle" };
 /** The rep only shares a location; the day is the nearest clinics within this radius unless they draw an area or change it under Edit plan. */
 const DEFAULT_AREA: AreaStrategy = defaultArea();
 
+/** Pre-visit brief is hidden for now — the brief is still generated; flip to true to show the buttons again. */
+const SHOW_PRE_VISIT_BRIEF = false;
+
 const PROVINCE_CENTERS: Record<string, { lat: number; lng: number }> = {
   ON: { lat: 43.6532, lng: -79.3832 },
   QC: { lat: 45.5019, lng: -73.5674 },
@@ -143,8 +146,6 @@ export function TodayRoute({
   const [draftArea, setDraftArea] = useState<GeoPoint[]>([]);
   const [area, setArea] = useState<AreaStrategy>(DEFAULT_AREA);
 
-  const [alreadyVisited, setAlreadyVisited] = useState("none");
-  const [revisitsDue, setRevisitsDue] = useState("none");
 
   const [editPlanOpen, setEditPlanOpen] = useState(false);
   const [newPlanConfirmOpen, setNewPlanConfirmOpen] = useState(false);
@@ -202,8 +203,6 @@ export function TodayRoute({
       setStartText(saved.startText);
       setTextCommitted(saved.textCommitted);
       setArea(saved.area.kind === "none" ? DEFAULT_AREA : saved.area);
-      setAlreadyVisited(saved.alreadyVisited);
-      setRevisitsDue(saved.revisitsDue);
       if (saved.province) setProvince(saved.province);
     }
     sessionHydrated.current = true;
@@ -216,8 +215,6 @@ export function TodayRoute({
       startText,
       textCommitted,
       area,
-      alreadyVisited,
-      revisitsDue,
       province,
     });
   }, [
@@ -225,8 +222,6 @@ export function TodayRoute({
     startText,
     textCommitted,
     area,
-    alreadyVisited,
-    revisitsDue,
     province,
   ]);
 
@@ -273,8 +268,6 @@ export function TodayRoute({
     provinceCode: provinceError ? null : province,
     provinceError,
     area,
-    alreadyVisited,
-    revisitsDue,
     allowedProvinces: provinces.map((p) => p.code),
   };
 
@@ -660,14 +653,13 @@ export function TodayRoute({
     // Desktop: the workspace fills the viewport below the header so the planner / itinerary panel
     // scrolls on its own; phones scroll the page (map on top, sheet below).
     <Box sx={{ display: "flex", minHeight: 0, flex: 1, flexDirection: "column", maxHeight: { md: `calc(100dvh - ${LAYOUT.headerHeight}px)` } }}>
-      {/* Action bar — route summary and plan actions; empty before a route unless a provider chip applies. */}
-      {(data || mode.showChips) && (
+      {/* Provider chips — only when a provider is not live (dev / mock). Edit plan and Rebuild live in the side panel. */}
+      {mode.showChips && (
         <Box
           sx={{
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
-            gap: 3,
+            gap: 2.5,
             borderBottom: 1,
             borderColor: "divider",
             bgcolor: "background.default",
@@ -675,35 +667,9 @@ export function TodayRoute({
             py: 2.5,
           }}
         >
-          <Box sx={{ display: "flex", minWidth: 0, alignItems: "center", gap: 2.5 }}>
-            {mode.showChips &&
-              mode.chips.map((chip) => (
-                <ModeChip key={chip.label} label={chip.label} tone={chip.tone} title={chip.detail} />
-              ))}
-            {data && (
-              <Typography variant="body2" noWrap sx={{ color: "text.secondary", display: { xs: "none", sm: "block" } }}>
-                Today · {displayStops.length} stop{displayStops.length === 1 ? "" : "s"}
-              </Typography>
-            )}
-          </Box>
-          <Box sx={{ display: "flex", flexShrink: 0, alignItems: "center", gap: 2 }}>
-            {data && !editPlanOpen && (
-              <Button
-                variant="outlined"
-                onClick={() => {
-                  setEditPlanOpen(true);
-                  setSheetExpanded(true);
-                }}
-              >
-                Edit plan
-              </Button>
-            )}
-            {data && (phase === "stale" || editPlanOpen) && (
-              <Button variant="outlined" onClick={() => formRef.current?.requestSubmit()} disabled={pending || !buildEnabled}>
-                {pending ? "Rebuilding…" : "Rebuild route"}
-              </Button>
-            )}
-          </Box>
+          {mode.chips.map((chip) => (
+            <ModeChip key={chip.label} label={chip.label} tone={chip.tone} title={chip.detail} />
+          ))}
         </Box>
       )}
 
@@ -799,7 +765,7 @@ export function TodayRoute({
               isProfiling={profilingId === selectedStop.accountId}
               onProfile={() => void loadWebProfile(selectedStop.accountId, true)}
               onClose={() => setSelectedId(null)}
-              onViewBrief={() => setBriefId(selectedStop.accountId)}
+              onViewBrief={SHOW_PRE_VISIT_BRIEF ? () => setBriefId(selectedStop.accountId) : undefined}
             />
           )}
         </Box>
@@ -903,14 +869,6 @@ export function TodayRoute({
               onResolvedStart={onResolvedStart}
               onRequestDropPin={beginDropPin}
               area={area}
-              onSearchRadiusKm={(km) => {
-                if (area.kind === "drawn") return;
-                setArea(km != null && km > 0 ? { kind: "radius", km } : DEFAULT_AREA);
-              }}
-              alreadyVisited={alreadyVisited}
-              onAlreadyVisited={setAlreadyVisited}
-              revisitsDue={revisitsDue}
-              onRevisitsDue={setRevisitsDue}
               blockedReason={blockedReason}
               opportunity={opportunity}
               ctaLabel={ctaLabel}
@@ -961,10 +919,14 @@ export function TodayRoute({
                 startLabel={start?.label ?? startText}
                 selectedId={selectedId}
                 onSelect={setSelectedId}
-                onViewBrief={(id) => {
-                  setSelectedId(id);
-                  setBriefId(id);
-                }}
+                onViewBrief={
+                  SHOW_PRE_VISIT_BRIEF
+                    ? (id) => {
+                        setSelectedId(id);
+                        setBriefId(id);
+                      }
+                    : undefined
+                }
                 hoveredId={hoveredId}
                 onHover={setHoveredId}
                 adjusted={planAdjusted}

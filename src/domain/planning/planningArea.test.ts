@@ -21,8 +21,6 @@ const base: PlannerInputs = {
   provinceCode: "ON",
   provinceError: null,
   area: { kind: "none" },
-  alreadyVisited: "none",
-  revisitsDue: "none",
   allowedProvinces: ["ON"],
 };
 
@@ -185,8 +183,6 @@ describe("session memory", () => {
       startText: start.label,
       textCommitted: true,
       area: radiusArea(25),
-      alreadyVisited: "none",
-      revisitsDue: "none",
       province: "ON",
     };
     const parsed = parsePlannerSession(serializePlannerSession(snap));

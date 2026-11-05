@@ -6,16 +6,14 @@
 import type { StartSelection } from "@/lib/placeSelection";
 import type { AreaStrategy } from "./area";
 
-/** v2: no day hours, clinic count or drive limit — every day is ten clinics. */
-export const PLANNER_SESSION_KEY = "nuvior.today.planner.v2";
+/** v3: just the start, the area and the province — no day hours, clinic count, drive limit or pasted lists. */
+export const PLANNER_SESSION_KEY = "nuvior.today.planner.v3";
 
 export type PlannerSessionSnapshot = {
   start: StartSelection | null;
   startText: string;
   textCommitted: boolean;
   area: AreaStrategy;
-  alreadyVisited: string;
-  revisitsDue: string;
   province: string;
 };
 

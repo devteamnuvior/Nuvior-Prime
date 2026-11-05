@@ -9,7 +9,6 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import { Disclosure } from "@/components/feedback/Disclosure";
 import type { CANADIAN_PROVINCES } from "@/domain/scopeOfPractice";
 import type { GeoPoint } from "@/domain/geo";
 import { serializeWorkingArea, validateDrawnArea } from "@/domain/geo/workingArea";
@@ -20,7 +19,7 @@ import {
   type StartSelection,
 } from "@/lib/placeSelection";
 import { requestBrowserLocation } from "@/lib/browserGeolocation";
-import { DEFAULT_SEARCH_RADIUS_KM, type AreaStrategy } from "@/domain/planning/area";
+import type { AreaStrategy } from "@/domain/planning/area";
 import { DAILY_CLINIC_SLOTS, SLOT_MINUTES } from "@/domain/performance/visitSlots";
 import type { PlannerPhase } from "@/domain/planning/plannerState";
 import type { OpportunitySummary } from "@/domain/planning/opportunity";
@@ -30,8 +29,9 @@ type ProvinceOption = (typeof CANADIAN_PROVINCES)[number];
 /**
  * Location-first planning panel. The rep shares where they are and the day is
  * built around it: the ten nearest qualified clinics, skipping any the team
- * visited recently. The count and the hours are not theirs to set; the search
- * radius and the pasted lists live under "Edit plan".
+ * visited recently. Nothing about the day is theirs to set: the count, the
+ * hours and the search radius are fixed; drawing an outline on the map is the
+ * one way to narrow where the clinics come from.
  */
 export function PlanningWorkspace({
   phase,
@@ -51,11 +51,6 @@ export function PlanningWorkspace({
   onResolvedStart,
   onRequestDropPin,
   area,
-  onSearchRadiusKm,
-  alreadyVisited,
-  onAlreadyVisited,
-  revisitsDue,
-  onRevisitsDue,
   blockedReason,
   opportunity,
   ctaLabel,
@@ -85,12 +80,6 @@ export function PlanningWorkspace({
   onResolvedStart: (selection: StartSelection | null) => void;
   onRequestDropPin: () => void;
   area: AreaStrategy;
-  /** Radius mode only: a new km value, or null to go back to the default. */
-  onSearchRadiusKm: (km: number | null) => void;
-  alreadyVisited: string;
-  onAlreadyVisited: (v: string) => void;
-  revisitsDue: string;
-  onRevisitsDue: (v: string) => void;
   blockedReason: string | null;
   opportunity: OpportunitySummary | null;
   ctaLabel: string;
@@ -106,7 +95,6 @@ export function PlanningWorkspace({
 }) {
   const [geoError, setGeoError] = useState<string | null>(null);
   const [geoPending, setGeoPending] = useState(false);
-  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   const useMyLocation = async () => {
     setGeoError(null);
@@ -180,8 +168,6 @@ export function PlanningWorkspace({
       <input type="hidden" name="provinceCode" value={province} />
       <input type="hidden" name="workingAreaJson" value={workingAreaJson} />
       <input type="hidden" name="maxRadiusKm" value={submitRadiusKm} />
-      <input type="hidden" name="alreadyVisitedRaw" value={alreadyVisited} />
-      <input type="hidden" name="revisitsDueRaw" value={revisitsDue} />
 
       <Box className="nv-scroll" sx={{ flex: 1, overflowY: "auto", px: { xs: 4, sm: 5 }, py: 4, display: "flex", flexDirection: "column", gap: 5 }}>
         {/* ---- Start ---- */}
@@ -264,45 +250,6 @@ export function PlanningWorkspace({
               {opportunity.revisitsDue > 0 ? `${opportunity.revisitsDue} revisit${opportunity.revisitsDue === 1 ? "" : "s"} due` : "Within reach of your start"}
             </Typography>
           </Paper>
-        )}
-
-        {hasStart && (
-          <Disclosure label="Advanced planning" open={advancedOpen} onToggle={setAdvancedOpen} contentSx={{ pt: 3 }}>
-            <Stack spacing={3}>
-              {area.kind === "drawn" ? (
-                <Typography variant="caption" sx={{ color: "text.secondary", lineHeight: 1.6 }}>
-                  Today&rsquo;s area is drawn on the map and the search covers that outline. Clear it to plan around your start instead.
-                </Typography>
-              ) : (
-                <TextField
-                  label="Search radius (km)"
-                  type="number"
-                  value={area.kind === "radius" ? area.km : ""}
-                  placeholder={String(DEFAULT_SEARCH_RADIUS_KM)}
-                  helperText={`Clinics are picked from this far around your start (default ${DEFAULT_SEARCH_RADIUS_KM} km).`}
-                  onChange={(e) => onSearchRadiusKm(e.target.value === "" ? null : Number(e.target.value))}
-                  slotProps={{ htmlInput: { min: 1, max: 500 }, inputLabel: { shrink: true } }}
-                />
-              )}
-              <TextField
-                label="Already visited / not due"
-                multiline
-                minRows={2}
-                value={alreadyVisited}
-                onChange={(e) => onAlreadyVisited(e.target.value)}
-              />
-              <TextField
-                label="Revisits due today"
-                multiline
-                minRows={2}
-                value={revisitsDue}
-                onChange={(e) => onRevisitsDue(e.target.value)}
-              />
-              <Typography variant="caption" sx={{ color: "text.faint", lineHeight: 1.6 }}>
-                Each clinic is planned as a {SLOT_MINUTES}-minute slot.
-              </Typography>
-            </Stack>
-          </Disclosure>
         )}
 
         {error && (

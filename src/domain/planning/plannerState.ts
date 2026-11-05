@@ -26,8 +26,6 @@ export type PlannerInputs = {
   provinceCode: string | null;
   provinceError: string | null;
   area: AreaStrategy;
-  alreadyVisited: string;
-  revisitsDue: string;
   allowedProvinces: string[];
 };
 
@@ -60,8 +58,6 @@ export function materialFingerprint(inputs: PlannerInputs): string {
     inputs.provinceCode ?? "",
     area,
     radius,
-    inputs.alreadyVisited.trim().toUpperCase(),
-    inputs.revisitsDue.trim().toUpperCase(),
   ].join("|");
 }
 
