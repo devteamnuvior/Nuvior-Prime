@@ -46,13 +46,18 @@ export function ClinicWebProfileSection({
   dto,
   isRunning,
   onRun,
+  knownEmails = [],
 }: {
   dto: ClinicWebProfileDto | null;
   isRunning: boolean;
   onRun: () => void;
+  /** Emails the drawer already shows in Contact; the same address is not repeated here. */
+  knownEmails?: string[];
 }) {
   const state = dto?.state ?? "NOT_RESEARCHED";
   const profile = dto?.profile ?? null;
+  const known = new Set(knownEmails.map((e) => e.trim().toLowerCase()));
+  const emails = (profile?.emails ?? []).filter((e) => !known.has(e.address.trim().toLowerCase()));
   // While Claude works the button itself carries the loader; nothing else changes.
   const spinner = <CircularProgress size={16} color="inherit" aria-hidden />;
 
@@ -96,10 +101,10 @@ export function ClinicWebProfileSection({
         </Typography>
       )}
 
-      {profile.emails.length > 0 && (
+      {emails.length > 0 && (
         <Row label="Email">
           <PlainList gap={0.5}>
-            {profile.emails.map((e) => (
+            {emails.map((e) => (
               <li key={e.address}>
                 <Link href={`mailto:${e.address}`} color="text.primary">
                   {e.address}
@@ -113,7 +118,7 @@ export function ClinicWebProfileSection({
       )}
 
       {profile.socialProfiles.length > 0 && (
-        <Row label="Social">
+        <Row label="Social" prominent>
           <PlainList gap={1}>
             {profile.socialProfiles.map((s) => (
               <Box component="li" key={s.url} sx={{ display: "flex", alignItems: "center", gap: 2, minWidth: 0 }}>
@@ -134,7 +139,7 @@ export function ClinicWebProfileSection({
       )}
 
       {profile.people.length > 0 && (
-        <Row label="People">
+        <Row label="People" prominent>
           <PlainList gap={0.5}>
             {profile.people.map((p) => (
               <li key={`${p.name}-${p.role}`}>
@@ -150,7 +155,7 @@ export function ClinicWebProfileSection({
       )}
 
       {profile.services.length > 0 && (
-        <Row label="Services">
+        <Row label="Services" prominent>
           <PlainList gap={0.5}>
             {profile.services.map((svc) => (
               <li key={svc}>{svc}</li>

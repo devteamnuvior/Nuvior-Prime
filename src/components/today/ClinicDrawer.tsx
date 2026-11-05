@@ -339,6 +339,7 @@ export function ClinicDrawer({
           dto={webProfile ?? null}
           isRunning={isProfiling}
           onRun={onProfile ?? (() => {})}
+          knownEmails={contact.email ? [contact.email] : []}
         />
 
         <Box sx={{ mt: 4, display: "flex", gap: 2 }}>
