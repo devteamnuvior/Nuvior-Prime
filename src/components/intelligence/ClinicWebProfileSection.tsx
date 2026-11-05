@@ -128,7 +128,7 @@ export function ClinicWebProfileSection({
                 >
                   {SOCIAL_ICON[s.platform]}
                 </Box>
-                <ExternalLink url={s.url} label={s.handle ?? undefined} />
+                <ExternalLink url={s.url} label={s.handle ?? undefined} quiet />
               </Box>
             ))}
           </PlainList>
@@ -277,9 +277,16 @@ function SourceLink({ url }: { url: string | null }) {
   );
 }
 
-function ExternalLink({ url, label }: { url: string; label?: string }) {
+/** `quiet`: reads as body text and only turns green on hover (social handles). */
+function ExternalLink({ url, label, quiet = false }: { url: string; label?: string; quiet?: boolean }) {
   return (
-    <Link href={url} target="_blank" rel="noreferrer" color="primary.main" sx={{ overflowWrap: "anywhere" }}>
+    <Link
+      href={url}
+      target="_blank"
+      rel="noreferrer"
+      color={quiet ? "text.primary" : "primary.main"}
+      sx={{ overflowWrap: "anywhere", ...(quiet ? { "&:hover, &:focus-visible": { color: "primary.main" } } : {}) }}
+    >
       {label ?? url.replace(/^https?:\/\//, "").replace(/\/$/, "")}
     </Link>
   );
