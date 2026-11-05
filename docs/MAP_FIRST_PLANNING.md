@@ -149,7 +149,6 @@ Primary (visible once an area exists):
 
 - Target visits
 - Day start / Day end — **12-hour labels** (`9:00 AM`, `5:00 PM`)
-- Minimum fit
 
 Secondary, collapsed under **Advanced planning**:
 

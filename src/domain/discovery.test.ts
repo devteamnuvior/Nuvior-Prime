@@ -259,6 +259,7 @@ describe("focused queries", () => {
 describe("end-to-end mock prospect search", () => {
   it("runs Toronto-shaped search on mock provider", async () => {
     process.env.PLACES_PROVIDER = "mock";
+    process.env.ROUTING_PROVIDER = "mock";
     const result = await runProspectSearch({
       provinceCode: "ON",
       startQuery: "M5V 2T6",

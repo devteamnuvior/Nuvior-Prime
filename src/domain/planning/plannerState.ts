@@ -34,7 +34,6 @@ export type PlannerInputs = {
   dayStart: string;
   dayEnd: string;
   target: number;
-  minFit: number;
   radiusOverride: number | null;
   driveOverride: number | null;
   alreadyVisited: string;
@@ -82,7 +81,6 @@ export function materialFingerprint(inputs: PlannerInputs): string {
     inputs.dayStart,
     inputs.dayEnd,
     inputs.target,
-    inputs.minFit,
     drive ?? "",
     radius ?? "",
     inputs.alreadyVisited.trim().toUpperCase(),
@@ -192,6 +190,6 @@ export function collapsedRouteCopy(opts: {
  * the planner sheet does not change PlannerInputs, so the fingerprint is stable.
  */
 export function sessionMemoryIsPlanningState(keys: string[]): boolean {
-  const required = ["start", "area", "dayStart", "dayEnd", "target", "minFit"];
+  const required = ["start", "area", "dayStart", "dayEnd", "target"];
   return required.every((k) => keys.includes(k));
 }

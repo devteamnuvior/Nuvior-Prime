@@ -27,7 +27,6 @@ const base: PlannerInputs = {
   dayStart: "09:00",
   dayEnd: "17:00",
   target: 20,
-  minFit: 3,
   radiusOverride: null,
   driveOverride: null,
   alreadyVisited: "none",
@@ -217,7 +216,7 @@ describe("Phase 8.8 — planner state machine", () => {
   it("does not treat brief/drawer UI as a material planning change", () => {
     const inputs = { ...base, area: { kind: "travel-reach" as const, minutes: 45 as const } };
     expect(materialFingerprint(inputs)).toBe(materialFingerprint({ ...inputs }));
-    expect(sessionMemoryIsPlanningState(["start", "area", "dayStart", "dayEnd", "target", "minFit", "briefId"])).toBe(
+    expect(sessionMemoryIsPlanningState(["start", "area", "dayStart", "dayEnd", "target", "briefId"])).toBe(
       true,
     );
   });

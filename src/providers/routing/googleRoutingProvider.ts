@@ -24,6 +24,10 @@ export type GoogleRoutingConfig = {
 };
 
 const MATRIX_URL = "https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix";
+/** Routes API limits: 625 elements per request (100 when traffic-aware), at most 50 origins or destinations. */
+const MATRIX_MAX_ELEMENTS = 625;
+const MATRIX_MAX_ELEMENTS_TRAFFIC = 100;
+const MATRIX_MAX_SIDE = 50;
 
 export class GoogleRoutingProvider implements RoutingProvider {
   readonly name = "google";
@@ -96,54 +100,53 @@ export class GoogleRoutingProvider implements RoutingProvider {
       return { points, cells, apiCalls, provider: this.name, warnings };
     }
 
-    // Prefer one matrix call for all points when n is small
-    try {
-      const body = {
-        origins: points.map((p) => waypoint(p)),
-        destinations: points.map((p) => waypoint(p)),
-        travelMode: "DRIVE",
-        routingPreference: trafficAware ? "TRAFFIC_AWARE" : "TRAFFIC_UNAWARE",
-      };
+    // Google caps a route-matrix request at MATRIX_MAX_ELEMENTS (origins × destinations)
+    // and 50 per side, so origins are sent in chunks against every destination.
+    const elementLimit = trafficAware ? MATRIX_MAX_ELEMENTS_TRAFFIC : MATRIX_MAX_ELEMENTS;
+    const chunk = Math.max(1, Math.min(MATRIX_MAX_SIDE, Math.floor(elementLimit / Math.min(n, MATRIX_MAX_SIDE))));
+    const destinations = points.slice(0, MATRIX_MAX_SIDE);
+    if (n > MATRIX_MAX_SIDE) warnings.push(`Google Routes matrix limited to the first ${MATRIX_MAX_SIDE} of ${n} points`);
 
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), opts.timeoutMs);
-      const res = await fetch(MATRIX_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Goog-Api-Key": this.config.apiKey,
-          "X-Goog-FieldMask":
-            "originIndex,destinationIndex,duration,distanceMeters,status,condition",
-        },
-        body: JSON.stringify(body),
-        signal: controller.signal,
-      });
-      clearTimeout(timer);
-      apiCalls += 1;
-      this.apiCalls += 1;
-
-      if (!res.ok) {
-        warnings.push(`Google Routes matrix HTTP ${res.status}`);
-        return { points, cells, apiCalls, provider: this.name, warnings };
+    for (let from = 0; from < destinations.length; from += chunk) {
+      if (apiCalls + 1 > opts.maxApiCalls) {
+        warnings.push("Routing API budget exhausted before the matrix was complete");
+        break;
       }
+      const originIdx = Array.from({ length: Math.min(chunk, destinations.length - from) }, (_, k) => from + k);
+      const needed = originIdx.some((i) => destinations.some((_, j) => i !== j && !cells[i]![j]));
+      if (!needed) continue;
+      try {
+        const body = {
+          origins: originIdx.map((i) => waypoint(points[i]!)),
+          destinations: destinations.map((p) => waypoint(p)),
+          travelMode: "DRIVE",
+          routingPreference: trafficAware ? "TRAFFIC_AWARE" : "TRAFFIC_UNAWARE",
+        };
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), opts.timeoutMs);
+        const res = await fetch(MATRIX_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Goog-Api-Key": this.config.apiKey,
+            "X-Goog-FieldMask": "originIndex,destinationIndex,duration,distanceMeters,status,condition",
+          },
+          body: JSON.stringify(body),
+          signal: controller.signal,
+        });
+        clearTimeout(timer);
+        apiCalls += 1;
+        this.apiCalls += 1;
 
-      // Response is NDJSON stream of elements
-      const text = await res.text();
-      const lines = text
-        .split("\n")
-        .map((l) => l.trim())
-        .filter(Boolean);
+        if (!res.ok) {
+          const detail = (await res.text().catch(() => "")).replace(/\s+/g, " ").slice(0, 200);
+          warnings.push(`Google Routes matrix HTTP ${res.status}${detail ? `: ${detail}` : ""}`);
+          console.warn(`[routing:google] matrix HTTP ${res.status} ${detail}`);
+          break;
+        }
 
-      for (const line of lines) {
-        try {
-          const el = JSON.parse(line) as {
-            originIndex?: number;
-            destinationIndex?: number;
-            duration?: string;
-            distanceMeters?: number;
-            condition?: string;
-          };
-          const i = el.originIndex ?? -1;
+        for (const el of parseRouteMatrixElements(await res.text())) {
+          const i = originIdx[el.originIndex ?? -1] ?? -1;
           const j = el.destinationIndex ?? -1;
           if (i < 0 || j < 0 || i === j) continue;
           if (el.condition && el.condition !== "ROUTE_EXISTS") continue;
@@ -161,14 +164,13 @@ export class GoogleRoutingProvider implements RoutingProvider {
           };
           cells[i]![j] = leg;
           await writeRouteCache(points[i]!, points[j]!, modeKey, leg, this.config.cacheTtlSeconds);
-        } catch {
-          // skip malformed line
         }
+      } catch (e) {
+        const message = e instanceof Error ? e.message : String(e);
+        warnings.push(`Google Routes matrix failed: ${message}`);
+        console.warn(`[routing:google] matrix failed: ${message}`);
+        break;
       }
-    } catch (e) {
-      warnings.push(
-        `Google Routes matrix failed: ${e instanceof Error ? e.message : String(e)}`,
-      );
     }
 
     return { points, cells, apiCalls, provider: this.name, warnings };
@@ -279,6 +281,42 @@ function waypoint(p: GeoPoint) {
       },
     },
   };
+}
+
+export type RouteMatrixElement = {
+  originIndex?: number;
+  destinationIndex?: number;
+  duration?: string;
+  distanceMeters?: number;
+  condition?: string;
+};
+
+/**
+ * computeRouteMatrix answers with one JSON array of elements (pretty-printed over
+ * many lines). Some proxies stream it as newline-delimited objects instead, so
+ * both shapes are accepted; anything unparsable yields no elements.
+ */
+export function parseRouteMatrixElements(text: string): RouteMatrixElement[] {
+  const trimmed = text.trim();
+  if (!trimmed) return [];
+  try {
+    const parsed = JSON.parse(trimmed) as unknown;
+    if (Array.isArray(parsed)) return parsed.filter((e): e is RouteMatrixElement => !!e && typeof e === "object");
+    if (parsed && typeof parsed === "object") return [parsed as RouteMatrixElement];
+  } catch {
+    /* fall through to NDJSON */
+  }
+  const out: RouteMatrixElement[] = [];
+  for (const line of trimmed.split("\n")) {
+    const l = line.trim().replace(/^\[|,$|\]$/g, "");
+    if (!l) continue;
+    try {
+      out.push(JSON.parse(l) as RouteMatrixElement);
+    } catch {
+      /* skip */
+    }
+  }
+  return out;
 }
 
 function parseDurationSeconds(d: string | undefined): number | null {

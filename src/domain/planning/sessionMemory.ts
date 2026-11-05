@@ -16,7 +16,6 @@ export type PlannerSessionSnapshot = {
   dayStart: string;
   dayEnd: string;
   target: number;
-  minFit: number;
   radiusOverride: number | null;
   driveOverride: number | null;
   alreadyVisited: string;

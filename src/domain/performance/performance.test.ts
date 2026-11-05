@@ -174,10 +174,14 @@ describe("clinic slots", () => {
   it("a 45-minute visit is one slot, a 90-minute visit two; the default day is ten", () => {
     expect(slotsForDuration(45)).toBe(1);
     expect(slotsForDuration(90)).toBe(2);
+    expect(slotsForDuration(135)).toBe(3);
+    expect(slotsForDuration(180)).toBe(4);
     expect(slotsForDuration(null)).toBe(1);
     expect(DAILY_CLINIC_SLOTS).toBe(10);
     expect(isVisitDuration(90)).toBe(true);
+    expect(isVisitDuration(180)).toBe(true);
     expect(isVisitDuration(60)).toBe(false);
+    expect(isVisitDuration(225)).toBe(false);
   });
 
   it("the daily clinic target falls back to ten slots and yields to an admin-set one", () => {

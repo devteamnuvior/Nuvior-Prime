@@ -261,8 +261,10 @@ export async function planVisitRoute(input: PlanRouteInput): Promise<RoutePlanRe
       const visitMin = item.entry.isRevisit
         ? cfg.revisitVisitMinutes
         : cfg.defaultVisitMinutes;
+      // Running past the day end is reported, never used to drop a clinic: the ten
+      // clinics are the target, the clock is advice.
       const departure = arrival + visitMin;
-      if (departure > dayEnd) schedulePenalty += 1000;
+      if (departure > dayEnd) schedulePenalty += 5;
 
       const hours = assessOpeningHours(
         input.openingHoursByAccountId[item.entry.accountId],
@@ -298,28 +300,19 @@ export async function planVisitRoute(input: PlanRouteInput): Promise<RoutePlanRe
     }
 
     if (!best || best.utility < -500) {
+      // Everything left is closed at the planned arrival; nothing sensible to add.
       scheduleExhausted = true;
       for (const r of remaining) {
         excluded.push({
           accountId: r.entry.accountId,
           businessName: r.entry.businessName,
-          reason: "workday capacity exceeded",
+          reason: "closed at planned arrival",
         });
       }
       break;
     }
 
     const departure = best.arrival + best.visitMin;
-    if (departure > dayEnd && stops.length > 0) {
-      scheduleExhausted = true;
-      excluded.push({
-        accountId: best.item.entry.accountId,
-        businessName: best.item.entry.businessName,
-        reason: "workday capacity exceeded",
-      });
-      remaining.splice(remaining.indexOf(best.item), 1);
-      continue;
-    }
 
     const hours = assessOpeningHours(
       input.openingHoursByAccountId[best.item.entry.accountId],
@@ -369,6 +362,12 @@ export async function planVisitRoute(input: PlanRouteInput): Promise<RoutePlanRe
   if (stops.some((s) => s.durationIsGeodesicEstimate)) {
     planWarnings.push(
       "Some travel times are geodesic estimates — not labeled as verified drive times",
+    );
+  }
+  const overrun = stops.filter((s) => parseClockToMinutes(s.departureClock, dayEnd) > dayEnd).length;
+  if (overrun > 0) {
+    planWarnings.push(
+      `${overrun} stop${overrun === 1 ? " ends" : "s end"} after ${minutesToClock(dayEnd)} — the ten clinics come first; shorten visits or start earlier to finish on time`,
     );
   }
 

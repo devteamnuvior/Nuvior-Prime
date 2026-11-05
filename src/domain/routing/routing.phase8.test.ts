@@ -260,7 +260,7 @@ describe("route optimization", () => {
     expect(plan.summary.excludedForRouting.some((e) => e.reason === "closed today")).toBe(true);
   });
 
-  it("respects workday capacity", async () => {
+  it("plans the full target even past the day end and says so", async () => {
     const pool = Array.from({ length: 8 }, (_, i) =>
       entry({
         accountId: `s${i}`,
@@ -285,11 +285,12 @@ describe("route optimization", () => {
       routing: new MockRoutingProvider(),
       config: { ...baseCfg(), defaultVisitMinutes: 25 },
     });
-    expect(plan.stops.length).toBeLessThan(8);
-    expect(
-      plan.summary.scheduleCapacityExhausted ||
-        plan.summary.excludedForRouting.some((e) => e.reason.includes("workday")),
-    ).toBe(true);
+    // The clinics are the target; the clock only warns. Eight 25-minute visits do not fit
+    // 16:00–17:00, yet all eight are planned and the overrun is reported.
+    expect(plan.stops.length).toBe(8);
+    expect(plan.summary.scheduleCapacityExhausted).toBe(false);
+    expect(plan.summary.excludedForRouting.some((e) => e.reason.includes("workday"))).toBe(false);
+    expect(plan.summary.warnings.some((w) => w.includes("after 17:00"))).toBe(true);
   });
 
   it("legacy mode preserves nearest order when optimization off", async () => {

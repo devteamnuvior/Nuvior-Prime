@@ -36,7 +36,7 @@ import {
 import { getClinicProfileProvider } from "@/providers/clinicProfile";
 import { getClinicProfileConfig } from "@/lib/clinicProfileConfig";
 import { recomputeRepDailySummary, upsertSalesTarget, deleteSalesTarget, type SalesTargetRow } from "@/lib/performance";
-import { TARGET_METRICS, TARGET_PERIODS, VISIT_OUTCOME_CODES, VISIT_DURATIONS } from "@/domain/performance";
+import { TARGET_METRICS, TARGET_PERIODS, VISIT_OUTCOME_CODES, VISIT_DURATIONS, isVisitDuration } from "@/domain/performance";
 import { awardAfterVisit } from "@/lib/xp";
 
 const provinceCodes = CANADIAN_PROVINCES.map((p) => p.code) as [string, ...string[]];
@@ -64,7 +64,6 @@ const schema = z.object({
   ),
   dayStartClock: z.string().optional().nullable(),
   dayEndClock: z.string().optional().nullable(),
-  minFitScore: z.coerce.number().int().min(1).max(5).default(3),
   alreadyVisitedRaw: z.string().default("none"),
   revisitsDueRaw: z.string().default("none"),
 });
@@ -102,7 +101,6 @@ export async function generateVisitListAction(
       maxDriveMinutes: formData.get("maxDriveMinutes"),
       dayStartClock: formData.get("dayStartClock") || null,
       dayEndClock: formData.get("dayEndClock") || null,
-      minFitScore: formData.get("minFitScore"),
       alreadyVisitedRaw: formData.get("alreadyVisitedRaw") || "none",
       revisitsDueRaw: formData.get("revisitsDueRaw") || "none",
     });
@@ -133,6 +131,8 @@ export async function generateVisitListAction(
 
     const result = await runProspectSearch({
       ...parsed.data,
+      // No minimum-fit filter: the ten nearest qualified clinics, whatever their fit.
+      minFitScore: 1,
       startCoords,
       workingArea,
       actorUserId: user.id,
@@ -232,7 +232,7 @@ export async function recordVisitAction(input: {
   visitDate: string;
   visitType: string;
   outcomeCode?: string | null;
-  /** 45 (one clinic slot) or 90 (counts as two). */
+  /** Minutes at the clinic in 45-minute slots: 45, 90, 135 or 180 (one to four clinics). */
   durationMinutes?: number;
   outcome?: string;
   peopleMet?: string;
@@ -248,7 +248,11 @@ export async function recordVisitAction(input: {
 
     const visitDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Visit date must be YYYY-MM-DD").parse(input.visitDate);
     const outcomeCode = z.enum(VISIT_OUTCOME_CODES).nullable().optional().parse(input.outcomeCode || null);
-    const durationMinutes = z.union([z.literal(VISIT_DURATIONS[0]), z.literal(VISIT_DURATIONS[1])]).default(45).parse(input.durationMinutes);
+    const durationMinutes = z
+      .number()
+      .refine(isVisitDuration, { message: `Time at clinic must be one of ${VISIT_DURATIONS.join(", ")} minutes` })
+      .default(45)
+      .parse(input.durationMinutes);
 
     const result = await createVisitRecord({
       ...input,

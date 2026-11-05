@@ -50,7 +50,9 @@ export function getRoutingConfig(): RoutingConfig {
       (process.env.ROUTING_ALLOW_GEODESIC_FALLBACK ?? "true").toLowerCase() !== "false",
     defaultVisitMinutes: num(process.env.ROUTING_DEFAULT_VISIT_MINUTES, 45),
     revisitVisitMinutes: num(process.env.ROUTING_REVISIT_VISIT_MINUTES, 45),
-    lunchEnabled: (process.env.ROUTING_LUNCH_ENABLED ?? "true").toLowerCase() !== "false",
+    // Off by default: when and how long a rep breaks is their own call, and a blocked
+    // window must never cost them clinics. ROUTING_LUNCH_ENABLED=true restores it.
+    lunchEnabled: (process.env.ROUTING_LUNCH_ENABLED ?? "false").toLowerCase() === "true",
     lunchStartMinutes: parseHm(process.env.ROUTING_LUNCH_START ?? "12:00", 12 * 60),
     lunchEndMinutes: parseHm(process.env.ROUTING_LUNCH_END ?? "14:00", 14 * 60),
     avoidAfterOpenMinutes: num(process.env.ROUTING_AVOID_AFTER_OPEN_MINUTES, 60),

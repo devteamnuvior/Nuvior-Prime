@@ -563,6 +563,15 @@ export async function runProspectSearch(
     candidates,
   );
 
+  // A drive-time limit is only enforceable with real drive times. With the geodesic or
+  // mock routing provider the optimizer would honestly exclude every stop as
+  // "drive-time unverified", which would empty the default (travel-reach) plan.
+  const canVerifyDriveTime = routing.name === "google";
+  const maxDriveMinutes = canVerifyDriveTime ? (input.maxDriveMinutes ?? null) : null;
+  if (!canVerifyDriveTime && input.maxDriveMinutes != null) {
+    result.excludedDebug.push(`routing: ${input.maxDriveMinutes}-min drive limit not enforced — ${routing.name} routing cannot verify drive times`);
+  }
+
   const routePlan = await planVisitRoute({
     startPoint,
     qualifiedPool: result.qualifiedPool,
@@ -570,7 +579,7 @@ export async function runProspectSearch(
     openingHoursByAccountId,
     dailyVisitTarget: input.dailyVisitTarget,
     maxRadiusKm: input.maxRadiusKm,
-    maxDriveMinutes: input.maxDriveMinutes ?? null,
+    maxDriveMinutes,
     dayStartClock: input.dayStartClock,
     dayEndClock: input.dayEndClock,
     routing,

@@ -285,6 +285,7 @@ describe("fixture enrichment + qualification", () => {
 describe("end-to-end with enrichment fixtures", () => {
   it("runs mock Toronto search with enrichment and verification queue", async () => {
     process.env.PLACES_PROVIDER = "mock";
+    process.env.ROUTING_PROVIDER = "mock";
     process.env.ENRICHMENT_ENABLED = "true";
     process.env.ENRICHMENT_MAX_ACCOUNTS = "5";
     const result = await runProspectSearch({

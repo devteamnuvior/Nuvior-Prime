@@ -66,8 +66,6 @@ export function PlanningWorkspace({
   onDayEnd,
   target,
   onTarget,
-  minFit,
-  onMinFit,
   radiusOverride,
   onRadiusOverride,
   driveOverride,
@@ -114,8 +112,6 @@ export function PlanningWorkspace({
   onDayEnd: (v: string) => void;
   target: number;
   onTarget: (n: number) => void;
-  minFit: number;
-  onMinFit: (n: number) => void;
   radiusOverride: number | null;
   onRadiusOverride: (n: number | null) => void;
   driveOverride: number | null;
@@ -214,7 +210,6 @@ export function PlanningWorkspace({
       <input type="hidden" name="provinceCode" value={province} />
       <input type="hidden" name="workingAreaJson" value={workingAreaJson} />
       <input type="hidden" name="dailyVisitTarget" value={target} />
-      <input type="hidden" name="minFitScore" value={minFit} />
       <input type="hidden" name="dayStartClock" value={dayStart} />
       <input type="hidden" name="dayEndClock" value={dayEnd} />
       <input type="hidden" name="maxDriveMinutes" value={submitDriveMinutes ?? ""} />
@@ -311,15 +306,6 @@ export function PlanningWorkspace({
               onChange={(e) => onTarget(Number(e.target.value))}
               slotProps={{ htmlInput: { min: 1, max: 50 } }}
             />
-            <Box>
-              <FieldLabel>Minimum fit</FieldLabel>
-              <Segmented
-                ariaLabel="Minimum fit"
-                value={minFit}
-                options={[1, 2, 3, 4, 5].map((n) => ({ value: n, label: `${n}+` }))}
-                onChange={onMinFit}
-              />
-            </Box>
           </Box>
         )}
 

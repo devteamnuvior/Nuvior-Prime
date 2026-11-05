@@ -148,7 +148,6 @@ export function TodayRoute({
   const [dayStart, setDayStart] = useState("09:00");
   const [dayEnd, setDayEnd] = useState("17:00");
   const [target, setTarget] = useState(DAILY_CLINIC_SLOTS);
-  const [minFit, setMinFit] = useState(3);
   const [radiusOverride, setRadiusOverride] = useState<number | null>(null);
   const [driveOverride, setDriveOverride] = useState<number | null>(null);
   const [alreadyVisited, setAlreadyVisited] = useState("none");
@@ -213,7 +212,6 @@ export function TodayRoute({
       setDayStart(saved.dayStart);
       setDayEnd(saved.dayEnd);
       setTarget(saved.target);
-      setMinFit(saved.minFit);
       setRadiusOverride(saved.radiusOverride);
       setDriveOverride(saved.driveOverride);
       setAlreadyVisited(saved.alreadyVisited);
@@ -233,7 +231,6 @@ export function TodayRoute({
       dayStart,
       dayEnd,
       target,
-      minFit,
       radiusOverride,
       driveOverride,
       alreadyVisited,
@@ -248,7 +245,6 @@ export function TodayRoute({
     dayStart,
     dayEnd,
     target,
-    minFit,
     radiusOverride,
     driveOverride,
     alreadyVisited,
@@ -302,7 +298,6 @@ export function TodayRoute({
     dayStart,
     dayEnd,
     target,
-    minFit,
     radiusOverride,
     driveOverride,
     alreadyVisited,
@@ -943,8 +938,6 @@ export function TodayRoute({
               onDayEnd={setDayEnd}
               target={target}
               onTarget={setTarget}
-              minFit={minFit}
-              onMinFit={setMinFit}
               radiusOverride={radiusOverride}
               onRadiusOverride={(n) => {
                 setRadiusOverride(n);

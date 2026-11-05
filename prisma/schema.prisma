@@ -425,7 +425,7 @@ model VisitRecord {
   outcomeCode       VisitOutcome?
   /// Account fit score at the time of the visit (feeds the day's average fit).
   fitScoreSnapshot  Int?
-  /// Time spent at the clinic: 45 (one slot) or 90 (counts as two of the day's ten). See src/domain/performance/visitSlots.ts.
+  /// Time spent at the clinic in 45-minute slots (45, 90, 135, 180); a 90-minute visit counts two of the day's ten. See src/domain/performance/visitSlots.ts.
   durationMinutes   Int           @default(45)
   outcome           String?
   peopleMet         String?
