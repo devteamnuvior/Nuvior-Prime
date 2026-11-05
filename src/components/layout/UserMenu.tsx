@@ -121,9 +121,6 @@ export function UserMenu({ user, signOutAction }: { user: ShellUser; signOutActi
                 <Typography variant="body2" sx={{ fontWeight: 600, color: "inherit", lineHeight: 1.3 }}>
                   Sign out
                 </Typography>
-                <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>
-                  End this session on this device
-                </Typography>
               </Box>
             </MenuItem>
           </form>
