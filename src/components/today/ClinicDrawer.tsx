@@ -9,6 +9,10 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import CloseOutlined from "@mui/icons-material/CloseOutlined";
+import Instagram from "@mui/icons-material/Instagram";
+import MailOutlined from "@mui/icons-material/MailOutlined";
+import LanguageOutlined from "@mui/icons-material/LanguageOutlined";
+import PhoneOutlined from "@mui/icons-material/PhoneOutlined";
 import type { PlannedRouteStop } from "@/domain/routing/optimize";
 import type { ProspectSearchSuccess } from "@/lib/prospecting";
 import { CrmStatusPanel } from "@/components/CrmStatusPanel";
@@ -27,6 +31,8 @@ import type { ClinicWebProfileDto } from "@/domain/clinicProfile/runClinicProfil
 import { SHOW_TAXONOMY_VERIFICATION, TAXONOMY_VERIFY_FIELD_LABEL } from "@/domain/taxonomy";
 
 const SWIPE_CLOSE_PX = 90;
+/** Facts shown in the Contact block, so Signals does not repeat them. */
+const CONTACT_FIELDS = new Set(["website", "generalEmail", "instagramHandle"]);
 const DRAWER_WIDTH = 370;
 
 export function ClinicDrawer({
@@ -66,10 +72,20 @@ export function ClinicDrawer({
 }) {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const crm = data.crmByAccountId[stop.accountId];
-  const contact = data.contactByAccountId[stop.accountId];
   const origins = data.fieldOriginsByAccountId[stop.accountId];
+  const facts = data.enrichmentByAccountId[stop.accountId]?.facts;
+  const places = data.contactByAccountId[stop.accountId];
+  const contact = {
+    phone: places?.phone ?? null,
+    website: places?.website ?? data.enrichmentByAccountId[stop.accountId]?.website ?? null,
+    email: facts?.generalEmail ?? null,
+    instagram: facts?.instagramHandle ?? null,
+  };
+  const hasContact = Boolean(contact.phone || contact.website || contact.email || contact.instagram);
 
-  const verified = (origins?.enrichedFields ?? []).slice(0, 3);
+  const verified = (origins?.enrichedFields ?? [])
+    .filter((f) => !CONTACT_FIELDS.has(f.split("=")[0] ?? ""))
+    .slice(0, 3);
   const toVerify = (origins?.verifyFields ?? [])
     .filter((f) => SHOW_TAXONOMY_VERIFICATION || f !== TAXONOMY_VERIFY_FIELD_LABEL)
     .slice(0, 3);
@@ -213,27 +229,43 @@ export function ClinicDrawer({
           )}
         </Section>
 
-        {(contact?.phone || contact?.website) && (
+        {hasContact && (
           <Section title="Contact">
-            <PlainList gap={0.5}>
+            <PlainList gap={1}>
               {contact.phone && (
-                <li>
+                <ContactRow icon={<PhoneOutlined fontSize="inherit" />}>
                   <Link href={`tel:${contact.phone.replace(/[^+\d]/g, "")}`} color="text.primary">
                     {contact.phone}
                   </Link>
-                </li>
+                </ContactRow>
               )}
               {contact.website && (
-                <li>
+                <ContactRow icon={<LanguageOutlined fontSize="inherit" />}>
                   <Link href={contact.website} target="_blank" rel="noreferrer" color="primary.main" sx={{ overflowWrap: "anywhere" }}>
                     {contact.website.replace(/^https?:\/\//, "").replace(/\/$/, "")}
                   </Link>
-                </li>
+                </ContactRow>
+              )}
+              {contact.email && (
+                <ContactRow icon={<MailOutlined fontSize="inherit" />}>
+                  <Link href={`mailto:${contact.email}`} color="text.primary" sx={{ overflowWrap: "anywhere" }}>
+                    {contact.email}
+                  </Link>
+                </ContactRow>
+              )}
+              {contact.instagram && (
+                <ContactRow icon={<Instagram fontSize="inherit" />}>
+                  <Link
+                    href={`https://instagram.com/${contact.instagram.replace(/^@/, "")}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    color="text.primary"
+                  >
+                    {contact.instagram.startsWith("@") ? contact.instagram : `@${contact.instagram}`}
+                  </Link>
+                </ContactRow>
               )}
             </PlainList>
-            <Typography variant="caption" sx={{ display: "block", mt: 1, color: "text.faint" }}>
-              From Google Places
-            </Typography>
           </Section>
         )}
 
@@ -342,6 +374,19 @@ export function ClinicDrawer({
         </Disclosure>
       </Box>
     </Paper>
+  );
+}
+
+function ContactRow({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <Box component="li" sx={{ display: "flex", alignItems: "center", gap: 2, minWidth: 0 }}>
+      <Box component="span" aria-hidden sx={{ display: "flex", flexShrink: 0, fontSize: 16, color: "text.secondary" }}>
+        {icon}
+      </Box>
+      <Box component="span" sx={{ minWidth: 0 }}>
+        {children}
+      </Box>
+    </Box>
   );
 }
 
