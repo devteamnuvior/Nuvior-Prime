@@ -5,6 +5,7 @@ import { APIProvider } from "@vis.gl/react-google-maps";
 import { keyframes } from "@emotion/react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Paper from "@mui/material/Paper";
 import FormControl from "@mui/material/FormControl";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
@@ -15,7 +16,9 @@ import type { GeoPoint } from "@/domain/geo";
 import { countByStatus, isRecent, sortReps, type LiveRepDto } from "@/domain/live/positions";
 import { getBrowserMapsConfig } from "@/lib/mapsConfig";
 import { avatarHue, initialsOf } from "@/components/admin/userPresentation";
+import { EmptyState } from "@/components/feedback/EmptyState";
 import { StatusChip } from "@/components/feedback/StatusChip";
+import { MAP_Z } from "@/components/today/mapChrome";
 import { LAYOUT } from "@/theme/tokens";
 import { LiveMapCanvas } from "./LiveMapCanvas";
 import { RepPanel } from "./RepPanel";
@@ -179,6 +182,7 @@ export function LiveMap({
       <Box sx={{ display: "flex", minHeight: 0, flex: 1, flexDirection: { xs: "column", md: "row" } }}>
         <Box sx={{ position: "relative", minHeight: 280, height: { xs: "52dvh", md: "auto" }, flex: 1 }}>
           <LiveMapCanvas markers={markers} selectedId={selectedId} onSelect={(id) => (id ? focusRep(id) : setSelectedId(null))} fitNonce={fitNonce} focus={focus} fallbackCenter={fallbackCenter} />
+          {located.length === 0 && <NoPositionsOverlay provinceName={provinceCode === "*" ? null : (provinceOptions.find((p) => p.code === provinceCode)?.name ?? provinceCode)} />}
         </Box>
         <Box
           component="aside"
@@ -207,5 +211,34 @@ export function LiveMap({
     </APIProvider>
   ) : (
     content
+  );
+}
+
+
+/**
+ * Shown over the basemap while nobody has a position. Positions only exist once a rep
+ * turns on "Share location" on Today's Route, so an empty map is the expected first state
+ * of a fresh deployment rather than a fault.
+ */
+function NoPositionsOverlay({ provinceName }: { provinceName: string | null }) {
+  return (
+    <Box sx={{ position: "absolute", inset: 0, zIndex: MAP_Z.overlay, display: "flex", alignItems: "center", justifyContent: "center", p: 4, pointerEvents: "none" }}>
+      <Paper variant="outlined" sx={{ maxWidth: 400, borderRadius: 3, boxShadow: 3, bgcolor: "background.paper", pointerEvents: "auto" }}>
+        <EmptyState
+          compact
+          illustration="map"
+          title="No live positions yet"
+          description={
+            <>
+              {provinceName ? `No rep in ${provinceName} has shared a location yet.` : "No rep has shared a location yet."} Reps appear here within seconds of turning on{" "}
+              <Box component="strong" sx={{ color: "text.primary", fontWeight: 600 }}>
+                Share location
+              </Box>{" "}
+              on their Today&apos;s Route.
+            </>
+          }
+        />
+      </Paper>
+    </Box>
   );
 }
