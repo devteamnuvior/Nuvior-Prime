@@ -150,8 +150,12 @@ export function ClinicWebProfileSection({
       )}
 
       {profile.services.length > 0 && (
-        <Row label="Services on site">
-          <p>{profile.services.join(" · ")}</p>
+        <Row label="Services">
+          <PlainList gap={0.5}>
+            {profile.services.map((svc) => (
+              <li key={svc}>{svc}</li>
+            ))}
+          </PlainList>
         </Row>
       )}
 
