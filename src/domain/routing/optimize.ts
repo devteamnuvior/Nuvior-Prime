@@ -284,7 +284,7 @@ export async function planVisitRoute(input: PlanRouteInput): Promise<RoutePlanRe
       const reasons: string[] = [];
       if (item.entry.isRevisit) reasons.push("due revisit");
       if (travelMin <= 15) reasons.push("low detour");
-      if (hours.state === "unknown") reasons.push("hours UNKNOWN, verify");
+      // Unknown hours are not a reason the rep can act on; the drawer and itinerary stay quiet about them too.
       else if (hours.state === "open") reasons.push("open during planned arrival");
       if (isGeo) reasons.push("travel estimate geodesic (not drive time)");
 

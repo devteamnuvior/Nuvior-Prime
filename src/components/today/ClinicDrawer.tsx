@@ -80,6 +80,7 @@ export function ClinicDrawer({
   onCheckOut?: () => Promise<CheckInDto | null>;
 }) {
   const [visitOpen, setVisitOpen] = useState(false);
+  const hoursKnown = stop.openingHoursState !== "unknown";
   // The check-in that Check Out just closed: the visit form links to it and suggests a duration from the stay.
   const [closedCheckIn, setClosedCheckIn] = useState<CheckInDto | null>(null);
   const [presenceBusy, setPresenceBusy] = useState(false);
@@ -242,17 +243,18 @@ export function ClinicDrawer({
         )}
 
         <Section title="Arrival & opening">
+          {/* No hours on Google: say nothing rather than "UNKNOWN, verify". */}
           {timesValid ? (
             <p>
-              Planned {clock12(stop.arrivalClock)}–{clock12(stop.departureClock)} ·{" "}
-              {stop.openingHoursLabel}
+              Planned {clock12(stop.arrivalClock)}–{clock12(stop.departureClock)}
+              {hoursKnown && ` · ${stop.openingHoursLabel}`}
             </p>
           ) : (
             <p>
               <Box component="span" sx={{ color: "warning.main" }}>
                 Times recalculate on rebuild
-              </Box>{" "}
-              · {stop.openingHoursLabel}
+              </Box>
+              {hoursKnown && ` · ${stop.openingHoursLabel}`}
             </p>
           )}
           {stop.suggestedDropInWindow && (

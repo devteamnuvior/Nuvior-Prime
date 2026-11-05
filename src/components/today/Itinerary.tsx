@@ -106,7 +106,6 @@ export function Itinerary({
           const selected = s.accountId === selectedId;
           const hovered = s.accountId === hoveredId;
           const warn = s.openingHoursState !== "open" && s.openingHoursState !== "unknown";
-          const unknownHours = s.openingHoursState === "unknown";
           // In an adjusted plan the optimized leg only holds for legs whose
           // predecessor is unchanged; we keep it simple and honest: hide all.
           const legValid = !adjusted;
@@ -207,7 +206,6 @@ export function Itinerary({
                     <IntelligenceItineraryBadge intelligence={intelligenceByAccountId?.[s.accountId]} />
                     {s.isRevisit && <Badge tone="signal">Revisit</Badge>}
                     {warn && <Badge tone="signal">{s.openingHoursLabel}</Badge>}
-                    {unknownHours && <Badge tone="outline">Hours unknown</Badge>}
                     {s.needsManualVerification && <Badge tone="outline">Verify</Badge>}
                   </Box>
 
