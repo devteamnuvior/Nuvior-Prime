@@ -178,14 +178,8 @@ export function ClinicWebProfileSection({
         </Row>
       )}
 
-      {profile.unknowns.length > 0 && (
-        <Row label="Not found">
-          <Muted>{profile.unknowns.join(", ")}</Muted>
-        </Row>
-      )}
-
       {profile.notes.length > 0 && (
-        <Row label="Notes">
+        <Row label="Notes" prominent>
           <PlainList gap={0.5} sx={{ color: "text.secondary" }}>
             {profile.notes.map((n) => (
               <li key={n}>{n}</li>
@@ -203,6 +197,12 @@ export function ClinicWebProfileSection({
               </Box>
             ))}
           </PlainList>
+        </Row>
+      )}
+
+      {profile.unknowns.length > 0 && (
+        <Row label="Not Found" prominent>
+          <Muted>{profile.unknowns.join(", ")}</Muted>
         </Row>
       )}
 
