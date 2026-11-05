@@ -41,42 +41,42 @@ export function SummaryStrip({
         display: "flex",
         flexWrap: "wrap",
         alignItems: "center",
-        columnGap: 6,
-        rowGap: 2,
+        columnGap: 4,
+        rowGap: 1.5,
         borderBottom: 1,
         borderColor: "divider",
         bgcolor: "background.paper",
         px: { xs: 4, md: 6 },
-        py: 2.5,
+        py: 1.5,
       }}
     >
-      <Metric value={`${shownStops} / ${summary.target}`} label="visits" />
+      <Metric value={`${shownStops} / ${summary.target}`} label="Visits" />
       {!manuallyAdjusted && summary.totalDriveMinutes != null && (
-        <Metric value={duration(summary.totalDriveMinutes)} label="driving" />
+        <Metric value={duration(summary.totalDriveMinutes)} label="Driving" />
       )}
       {!manuallyAdjusted && totalKm > 0 && <Metric value={km(totalKm)} label="" />}
       {!manuallyAdjusted && summary.estimatedDayMinutes != null && (
-        <Metric value={duration(summary.estimatedDayMinutes)} label="planned" />
+        <Metric value={duration(summary.estimatedDayMinutes)} label="Planned" />
       )}
       {!manuallyAdjusted && finish && <Metric value={`Finish ${finish}`} label="" />}
 
       <Box sx={{ ml: "auto", display: "flex", flexWrap: "wrap", alignItems: "center", gap: 2 }}>
-        {manuallyAdjusted && <Status tone="signal">Manually adjusted — rebuild to recalculate</Status>}
-        {summary.trafficAware && !manuallyAdjusted && <Status>Traffic aware</Status>}
+        {manuallyAdjusted && <Status tone="signal">Manually Adjusted — Rebuild To Recalculate</Status>}
+        {summary.trafficAware && !manuallyAdjusted && <Status>Traffic Aware</Status>}
         <Status>{providerLabel(summary.routingProvider)} routing</Status>
         {!manuallyAdjusted && data.routeGeometry ? (
           <Status>Road route{data.routeGeometry.trafficAware ? " · traffic" : ""}</Status>
         ) : (
           stops.length > 0 && <Status tone="signal">Route line schematic</Status>
         )}
-        {anyGeodesic && <Status tone="signal">Drive times estimated</Status>}
+        {anyGeodesic && <Status tone="signal">Drive Times Estimated</Status>}
         {verifyCount > 0 && (
           <Status tone="signal">
-            {verifyCount} stop{verifyCount === 1 ? "" : "s"} need verification
+            {verifyCount} Stop{verifyCount === 1 ? "" : "s"} Need Verification
           </Status>
         )}
         {summary.driveTimeConstraintWarning && (
-          <Status tone="signal">Drive limit not verified</Status>
+          <Status tone="signal">Drive Limit Not Verified</Status>
         )}
       </Box>
     </Box>
@@ -85,7 +85,7 @@ export function SummaryStrip({
 
 function Metric({ value, label }: { value: string; label: string }) {
   return (
-    <Typography variant="body2" component="span" sx={{ whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" }}>
+    <Typography variant="caption" component="span" sx={{ whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums", fontSize: "0.8125rem" }}>
       <Box component="span" sx={{ fontWeight: 600 }}>
         {value}
       </Box>
@@ -105,7 +105,13 @@ function Status({
   children: React.ReactNode;
   tone?: "neutral" | "signal";
 }) {
-  return <StatusChip tone={tone === "signal" ? "warning" : "neutral"} label={children} sx={{ fontWeight: 500 }} />;
+  return (
+    <StatusChip
+      tone={tone === "signal" ? "warning" : "neutral"}
+      label={children}
+      sx={{ fontWeight: 500, height: 22, fontSize: "0.75rem" }}
+    />
+  );
 }
 
 export function providerLabel(provider: string): string {
