@@ -88,6 +88,7 @@ import { clock12 } from "@/lib/format";
 import type { ProspectSearchSuccess } from "@/lib/prospecting";
 import type { ClinicIntelligenceDto } from "@/domain/intelligence/clinicIntelligenceDto";
 import { applyIntelligenceToBrief } from "@/domain/intelligence/applyIntelligenceToBrief";
+import { SHOW_CLINIC_INTELLIGENCE } from "@/lib/featureFlags";
 
 const initial: ActionState = { status: "idle" };
 
@@ -441,6 +442,8 @@ export function TodayRoute({
   }
 
   useEffect(() => {
+    // Clinic intelligence is hidden for now: nothing is loaded, so nothing can show.
+    if (!SHOW_CLINIC_INTELLIGENCE) return;
     if (!selectedId || !data) return;
     if (intelligenceByAccountId[selectedId]) return;
     void loadIntelligence(selectedId);

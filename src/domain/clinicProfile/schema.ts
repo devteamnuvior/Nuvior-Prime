@@ -3,13 +3,15 @@
  * by the research provider from public web sources. Every fact carries the
  * URL it was read from; anything not found stays out (or lands in `unknowns`).
  *
- * This is contact/identity research only. No product recommendations, no
- * qualification, no CRM/DNC decisions.
+ * It also records the products, brands and devices the clinic itself says it
+ * uses or sells — as published, never inferred. No product recommendations,
+ * no qualification, no CRM/DNC decisions.
  */
 
 import { z } from "zod";
 
-export const CLINIC_PROFILE_PROMPT_VERSION = "clinic-profile-v1";
+/** v2 adds `products` (brands, devices, skincare lines the clinic publishes). Older rows show as stale. */
+export const CLINIC_PROFILE_PROMPT_VERSION = "clinic-profile-v2";
 
 const url = z.string().min(1).max(2000);
 const shortText = z.string().min(1).max(300);
@@ -71,6 +73,17 @@ export const clinicHoursSchema = z.object({
   ...sourced,
 });
 
+export const PRODUCT_KINDS = ["injectable", "device", "skincare", "treatment", "other"] as const;
+
+/** A product, brand or device the clinic publishes that it uses or sells. */
+export const clinicProductSchema = z.object({
+  name: shortText,
+  kind: z.enum(PRODUCT_KINDS).default("other"),
+  /** Where it was mentioned, e.g. "listed under Injectables", "Botox page". */
+  context: z.string().max(300).nullable().default(null),
+  ...sourced,
+});
+
 export const clinicSourceSchema = z.object({
   url: url,
   title: z.string().max(300).nullable().default(null),
@@ -92,6 +105,7 @@ export const clinicWebProfileSchema = z
     people: z.array(clinicPersonSchema).max(12).default([]),
     openingHours: z.array(clinicHoursSchema).max(10).default([]),
     services: z.array(z.string().min(1).max(120)).max(30).default([]),
+    products: z.array(clinicProductSchema).max(40).default([]),
     websiteSummary: z.string().max(1500).nullable().default(null),
     notes: z.array(z.string().min(1).max(300)).max(10).default([]),
     unknowns: z.array(z.string().min(1).max(200)).max(20).default([]),
@@ -100,6 +114,7 @@ export const clinicWebProfileSchema = z
   .strict();
 
 export type ClinicWebProfile = z.infer<typeof clinicWebProfileSchema>;
+export type ClinicProduct = z.infer<typeof clinicProductSchema>;
 
 const FORBIDDEN_KEYS = /recommend|nuviorProduct|opportunityScore|leadProduct|fitScore/i;
 

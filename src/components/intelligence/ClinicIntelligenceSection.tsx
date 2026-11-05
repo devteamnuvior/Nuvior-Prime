@@ -12,6 +12,7 @@ import type { ClinicIntelligenceDto, EvidenceItem } from "@/domain/intelligence/
 import { Badge } from "@/components/today/Itinerary";
 import { Disclosure } from "@/components/feedback/Disclosure";
 import { DotList, PlainList } from "@/components/feedback/DotList";
+import { SHOW_CLINIC_INTELLIGENCE } from "@/lib/featureFlags";
 
 export function ClinicIntelligenceSection({
   intelligence,
@@ -28,6 +29,8 @@ export function ClinicIntelligenceSection({
 }) {
   const [secondaryOpen, setSecondaryOpen] = useState(false);
   const [evidenceOpen, setEvidenceOpen] = useState(false);
+
+  if (!SHOW_CLINIC_INTELLIGENCE) return null;
 
   if (!intelligence) {
     return (
@@ -210,6 +213,7 @@ export function IntelligenceItineraryBadge({
 }: {
   intelligence: ClinicIntelligenceDto | null | undefined;
 }) {
+  if (!SHOW_CLINIC_INTELLIGENCE) return null;
   if (!intelligence) {
     return <Badge tone="outline">Research clinic</Badge>;
   }
@@ -322,6 +326,7 @@ function DiagnosticsPanel({
 }
 
 export function intelligenceItineraryLabel(intelligence: ClinicIntelligenceDto | null | undefined): string | null {
+  if (!SHOW_CLINIC_INTELLIGENCE) return null;
   if (!intelligence || intelligence.researchState === "NOT_RESEARCHED") return "Research clinic";
   if (intelligence.primary && !intelligence.blockedDnc) {
     return `Best opportunity · ${intelligence.primary.productName.split(" ")[0]}`;

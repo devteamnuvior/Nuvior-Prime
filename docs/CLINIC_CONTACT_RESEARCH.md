@@ -8,14 +8,18 @@ server-side web search and web fetch. Separate from Stage C clinic research
 
 For one clinic on the Today route: address, phone numbers, public emails, official website,
 social profiles, leadership roles (owner, clinic manager, medical director, lead injector),
-opening hours, services listed on the clinic's own site, and a short factual website summary.
+opening hours, services listed on the clinic's own site, the **products, brands and devices the
+clinic itself publishes** (injectable brands, lasers and energy devices, skincare lines, named
+treatment systems — each with a kind and the page it appears on; added in prompt v2, 2026-11-05),
+and a short factual website summary.
 
 Every fact carries the `sourceUrl` it was read from. Facts without a source are rejected by the
 schema. Anything not found is listed under `unknowns`, never guessed.
 
 ## What it never does
 
-- Recommend products, score fit, or judge opportunity (schema rejects such keys).
+- Recommend products, score fit, or judge opportunity (schema rejects such keys). Listing what
+  the clinic publishes it uses is allowed; inferring a brand from a treatment name is not.
 - Override CRM, DNC, qualification, or scope rules.
 - Collect personal data beyond names and professional roles.
 - Follow instructions embedded in web pages (treated as untrusted data).

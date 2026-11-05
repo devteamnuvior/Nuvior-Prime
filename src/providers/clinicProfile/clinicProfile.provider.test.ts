@@ -26,6 +26,7 @@ describe("ClinicProfileProvider — mock", () => {
       expect(validateClinicWebProfile(r.profile).ok).toBe(true);
       expect(r.profile.sources.length).toBeGreaterThan(0);
       expect(r.profile.matchConfidence).toBe("LOW");
+      expect(r.profile.products.map((p) => p.kind)).toEqual(["injectable", "device", "skincare"]);
     }
   });
 
@@ -101,7 +102,19 @@ describe("clinic profile schema", () => {
     if (r.ok) {
       expect(r.value.phones).toEqual([]);
       expect(r.value.website).toBeNull();
+      expect(r.value.products).toEqual([]);
     }
+  });
+
+  it("accepts published products with a kind and a source, rejects unknown kinds", () => {
+    const base = { clinicName: "X", matchConfidence: "HIGH" };
+    const ok = validateClinicWebProfile({ ...base, products: [{ name: "Sculptra", kind: "injectable", context: "Injectables page", sourceUrl: "https://clinic.example/injectables" }] });
+    expect(ok.ok).toBe(true);
+    if (ok.ok) expect(ok.value.products[0]?.kind).toBe("injectable");
+    const defaulted = validateClinicWebProfile({ ...base, products: [{ name: "Something" }] });
+    expect(defaulted.ok).toBe(true);
+    if (defaulted.ok) expect(defaulted.value.products[0]?.kind).toBe("other");
+    expect(validateClinicWebProfile({ ...base, products: [{ name: "X", kind: "furniture" }] }).ok).toBe(false);
   });
 
   it("extracts JSON from prose and code fences", () => {
@@ -117,6 +130,8 @@ describe("clinic profile prompts", () => {
     expect(s).toMatch(/UNTRUSTED/);
     expect(s).toMatch(/Do not recommend products/);
     expect(s).toMatch(/sourceUrl/);
+    expect(s).toMatch(/never infer a brand/);
+    expect(s).toMatch(/"products": \[/);
   });
 
   it("include the clinic identity and strip secrets", () => {

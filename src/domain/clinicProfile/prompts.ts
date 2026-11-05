@@ -3,7 +3,7 @@
  */
 
 import { stripSecretsFromText } from "@/domain/research/sanitize";
-import { SOCIAL_PLATFORMS } from "./schema";
+import { PRODUCT_KINDS, SOCIAL_PLATFORMS } from "./schema";
 
 export type ClinicProfileRequest = {
   clinicId: string;
@@ -40,7 +40,7 @@ export function provinceName(code: string): string {
 export function buildClinicProfileSystemPrompt(): string {
   return stripSecretsFromText(`You research Canadian medical-aesthetics clinics for NUVIOR Prime field reps.
 
-Goal: find the clinic's PUBLIC business contact and identity details and report them as JSON.
+Goal: find the clinic's PUBLIC business contact and identity details, and the products it says it uses or sells, and report them as JSON.
 
 What to find (only if publicly published):
 - Street address, city, province, postal code
@@ -50,6 +50,7 @@ What to find (only if publicly published):
 - People in leadership or clinical-lead roles: owner, clinic manager, medical director, lead injector. Public professional roles only.
 - Opening hours
 - Services listed on the clinic's own site
+- Products, brands and devices the clinic itself publishes that it uses or sells: injectable brands (neuromodulators, fillers, biostimulators), energy devices and lasers (brand and model), skincare lines, named treatment systems. Record each with the kind (${PRODUCT_KINDS.join(", ")}) and the page it appears on. Only what the clinic's own site or official social profiles state; never infer a brand from a treatment name.
 
 How to work:
 - Use web_search to locate the clinic (search the name with the city/province). Use web_fetch to read the clinic's own website and its contact/about/team pages. Prefer the clinic's own site over directories.
@@ -73,6 +74,7 @@ Output: reply with ONE JSON object and nothing else. No markdown fences, no comm
   "people": [{ "name": string, "role": string, "snippet": string|null, "sourceUrl": string|null }],
   "openingHours": [{ "label": string, "hours": string, "sourceUrl": string|null }],
   "services": [string],
+  "products": [{ "name": string, "kind": ${PRODUCT_KINDS.map((k) => `"${k}"`).join("|")}, "context": string|null, "sourceUrl": string|null }],
   "websiteSummary": string | null,
   "notes": [string],
   "unknowns": [string],

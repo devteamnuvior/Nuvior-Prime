@@ -57,6 +57,11 @@ export class MockClinicProfileProvider implements ClinicProfileProvider {
       people: [{ name: "Mock Clinic Manager", role: "Clinic manager (mock)", snippet: null, sourceUrl: site }],
       openingHours: [{ label: "Mon–Fri", hours: "9:00 AM – 5:00 PM (mock)", sourceUrl: site }],
       services: ["Mock injectables", "Mock skin treatments"],
+      products: [
+        { name: "Mock Neuromodulator", kind: "injectable", context: "listed under Injectables (mock)", sourceUrl: site },
+        { name: "Mock Laser 3000", kind: "device", context: "device page (mock)", sourceUrl: site },
+        { name: "Mock Skincare Line", kind: "skincare", context: "shop page (mock)", sourceUrl: site },
+      ],
       websiteSummary: "Mock summary — set CLINIC_PROFILE_PROVIDER=claude and ANTHROPIC_API_KEY for real research.",
       notes: ["This profile is fixture data from the mock provider."],
       unknowns: ["medical director"],

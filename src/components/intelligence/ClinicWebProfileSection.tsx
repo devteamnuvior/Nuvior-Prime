@@ -7,13 +7,22 @@ import LinearProgress from "@mui/material/LinearProgress";
 import Link from "@mui/material/Link";
 import Typography from "@mui/material/Typography";
 import type { ClinicWebProfileDto } from "@/domain/clinicProfile/runClinicProfile";
-import type { ClinicWebProfile } from "@/domain/clinicProfile/schema";
+import type { ClinicProduct, ClinicWebProfile } from "@/domain/clinicProfile/schema";
 import { Badge } from "@/components/today/Itinerary";
 import { PlainList } from "@/components/feedback/DotList";
 
+const PRODUCT_KIND_LABEL: Record<ClinicProduct["kind"], string> = {
+  injectable: "Injectable",
+  device: "Device",
+  skincare: "Skincare",
+  treatment: "Treatment",
+  other: "Other",
+};
+
 /**
- * Public contact & identity facts about the clinic, researched by Claude from
- * public web sources. Every fact links to the page it was read from.
+ * Public contact & identity facts about the clinic, plus the products and
+ * devices it publishes, researched by Claude from public web sources. Every
+ * fact links to the page it was read from.
  */
 export function ClinicWebProfileSection({
   dto,
@@ -47,8 +56,8 @@ export function ClinicWebProfileSection({
           </Typography>
         ) : (
           <Muted>
-            Look up this clinic&apos;s address, phone numbers, website, social profiles and leadership
-            from public sources.
+            Look up this clinic&apos;s address, phone numbers, website, social profiles, leadership and the
+            products and devices it publishes, from public sources.
           </Muted>
         )}
         <Button variant="contained" size="large" fullWidth onClick={onRun} disabled={state === "UNAVAILABLE"} sx={{ mt: 3, fontWeight: 600 }}>
@@ -167,6 +176,23 @@ export function ClinicWebProfileSection({
       {profile.services.length > 0 && (
         <Row label="Services on site">
           <p>{profile.services.join(" · ")}</p>
+        </Row>
+      )}
+
+      {profile.products.length > 0 && (
+        <Row label="Products & devices they publish">
+          <PlainList gap={0.5}>
+            {profile.products.map((p) => (
+              <li key={`${p.kind}-${p.name}`}>
+                <Box component="span" sx={{ fontWeight: 500 }}>
+                  {p.name}
+                </Box>
+                <MutedSpan> · {PRODUCT_KIND_LABEL[p.kind]}</MutedSpan>
+                {p.context && <MutedSpan> · {p.context}</MutedSpan>}
+                <SourceLink url={p.sourceUrl} />
+              </li>
+            ))}
+          </PlainList>
         </Row>
       )}
 

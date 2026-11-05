@@ -9,6 +9,7 @@ import { Disclosure } from "@/components/feedback/Disclosure";
 import { DotList, PlainList } from "@/components/feedback/DotList";
 import type { PreVisitBriefPayload } from "@/domain/brief";
 import { clock12 } from "@/lib/format";
+import { SHOW_CLINIC_INTELLIGENCE } from "@/lib/featureFlags";
 
 /**
  * Two-minute field briefing card. Lead product is deterministic (locked from
@@ -244,7 +245,7 @@ function Note({ children }: { children: React.ReactNode }) {
 }
 
 function IntelligenceBriefSections({ intel }: { intel: NonNullable<PreVisitBriefPayload["clinicIntelligence"]> }) {
-  if (!intel) return null;
+  if (!SHOW_CLINIC_INTELLIGENCE || !intel) return null;
   return (
     <Paper variant="outlined" sx={{ display: "grid", gap: 4, p: 4, borderRadius: 1.5, bgcolor: "background.sunken" }}>
       <Typography variant="eyebrow" sx={{ color: "primary.main" }}>
