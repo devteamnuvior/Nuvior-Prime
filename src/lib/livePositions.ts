@@ -6,12 +6,15 @@
 import { prisma } from "@/lib/prisma";
 import type { AuthUser } from "@/domain/auth/permissions";
 import { CANADIAN_PROVINCES } from "@/domain/scopeOfPractice";
+import { dayKey } from "@/domain/performance/targets";
+import { getTeamTargetProgress } from "@/lib/performance";
 import {
   AT_CLINIC_RADIUS_M,
   boundingBox,
   deriveStatus,
   nearestClinic,
   type LiveRepDto,
+  type LiveSnapshot,
   type PositionReport,
   type RepPositionDto,
 } from "@/domain/live/positions";
@@ -126,4 +129,23 @@ export async function listLiveReps(viewer: AuthUser, provinceCode: string): Prom
       status: deriveStatus(position, now),
     };
   });
+}
+
+/**
+ * The live map payload: reps plus their target progress for today. A target
+ * failure must never blank the map, so it degrades to an empty target map.
+ */
+export async function loadLiveSnapshot(viewer: AuthUser, provinceCode: string): Promise<LiveSnapshot> {
+  const reps = await listLiveReps(viewer, provinceCode);
+  const day = dayKey(new Date());
+  let targets: LiveSnapshot["targets"] = {};
+  try {
+    targets = await getTeamTargetProgress(
+      reps.map((r) => r.id),
+      day,
+    );
+  } catch (e) {
+    console.warn("[live] targets unavailable:", e instanceof Error ? e.message : e);
+  }
+  return { reps, targets, day };
 }

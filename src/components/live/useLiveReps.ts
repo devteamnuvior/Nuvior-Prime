@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { GeoPoint } from "@/domain/geo";
-import { POLL_INTERVAL_MS, type LiveRepDto } from "@/domain/live/positions";
+import { POLL_INTERVAL_MS, type LiveSnapshot } from "@/domain/live/positions";
 import { easeOutCubic, prefersReducedMotion } from "@/lib/motion";
 
 export type LiveConnection = "live" | "reconnecting" | "paused";
@@ -12,8 +12,8 @@ export type LiveConnection = "live" | "reconnecting" | "paused";
  * Keeps the last good payload on errors and reports the connection state so the
  * header can say "Reconnecting" instead of silently showing stale dots.
  */
-export function useLiveReps(initial: LiveRepDto[], provinceCode: string) {
-  const [reps, setReps] = useState<LiveRepDto[]>(initial);
+export function useLiveReps(initial: LiveSnapshot, provinceCode: string) {
+  const [snapshot, setSnapshot] = useState<LiveSnapshot>(initial);
   const [fetchedAt, setFetchedAt] = useState<number>(() => Date.now());
   const [connection, setConnection] = useState<LiveConnection>("live");
   const [now, setNow] = useState<number>(() => Date.now());
@@ -26,8 +26,8 @@ export function useLiveReps(initial: LiveRepDto[], provinceCode: string) {
     try {
       const res = await fetch(`/api/live/reps?province=${encodeURIComponent(provinceCode)}`, { signal: ctrl.signal, cache: "no-store" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const body = (await res.json()) as { reps: LiveRepDto[] };
-      setReps(body.reps);
+      const body = (await res.json()) as LiveSnapshot;
+      setSnapshot({ reps: body.reps, targets: body.targets ?? {}, day: body.day });
       setFetchedAt(Date.now());
       setNow(Date.now());
       setConnection("live");
@@ -72,7 +72,7 @@ export function useLiveReps(initial: LiveRepDto[], provinceCode: string) {
     return () => clearInterval(t);
   }, []);
 
-  return { reps, fetchedAt, connection, refresh, now };
+  return { reps: snapshot.reps, targets: snapshot.targets, day: snapshot.day, fetchedAt, connection, refresh, now };
 }
 
 const TWEEN_MS = 1400;

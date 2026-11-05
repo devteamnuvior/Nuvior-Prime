@@ -4,6 +4,7 @@
  */
 
 import { haversineKm, type GeoPoint } from "@/domain/geo";
+import type { TargetProgress } from "@/domain/performance/targets";
 
 /** A rep counts as "at" a clinic when their fix lands within this radius of it. */
 export const AT_CLINIC_RADIUS_M = 120;
@@ -110,3 +111,14 @@ const STATUS_ORDER: Record<RepLiveStatus, number> = { at_clinic: 0, travelling: 
 export function sortReps<T extends { name: string; status: RepLiveStatus }>(rows: T[]): T[] {
   return [...rows].sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status] || a.name.localeCompare(b.name));
 }
+
+/**
+ * What the live map polls: every visible rep with their latest fix, plus each
+ * rep's target progress for `day` (YYYY-MM-DD, the server's calendar day) so the
+ * cards above the map stay in step with the markers.
+ */
+export type LiveSnapshot = {
+  reps: LiveRepDto[];
+  targets: Record<string, TargetProgress[]>;
+  day: string;
+};

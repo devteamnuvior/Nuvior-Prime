@@ -185,15 +185,16 @@ export async function deleteSalesTarget(id: string): Promise<SalesTargetRow | nu
   return toTargetRow(existing);
 }
 
+type SummaryRow = { day: Date; visitSlots: number; newAccounts: number; followUpsDone: number; academySignups: number; orders: number };
+const SUMMARY_SELECT = { day: true, visitSlots: true, newAccounts: true, followUpsDone: true, academySignups: true, orders: true } as const;
+
 /**
- * Progress for every target active on `day` for one rep, computed from
- * RepDailySummary rows over each target's period. Targets with no summary rows
+ * Progress for every target active on `day`, from the rep's targets and their
+ * RepDailySummary rows for the month around `day`. Targets with no summary rows
  * still appear with actual = 0. The daily clinic target is always present: the
  * admin-set DAY/VISITS row, or the ten-slot default.
  */
-export async function getTargetProgress(userId: string, day: string): Promise<TargetProgress[]> {
-  const targets = await listSalesTargets(userId);
-
+function progressFromRows(targets: readonly SalesTargetLike[], summaries: readonly SummaryRow[], day: string): TargetProgress[] {
   const active: SalesTargetLike[] = [];
   for (const period of TARGET_PERIODS) {
     const metrics = new Set(targets.filter((t) => t.period === period).map((t) => t.metric));
@@ -203,13 +204,6 @@ export async function getTargetProgress(userId: string, day: string): Promise<Ta
     }
   }
   if (!active.some((t) => t.period === "DAY" && t.metric === "VISITS")) active.unshift(resolveDailyVisitsTarget(targets, day));
-
-  // One query covers the widest period (month) and we slice per target.
-  const month = periodRange("MONTH", day);
-  const summaries = await prisma.repDailySummary.findMany({
-    where: { userId, day: { gte: parseDayKey(month.start), lte: parseDayKey(month.end) } },
-    select: { day: true, visitSlots: true, newAccounts: true, followUpsDone: true, academySignups: true, orders: true },
-  });
 
   return active.map((t) => {
     const { start, end } = periodRange(t.period, day);
@@ -225,4 +219,44 @@ export async function getTargetProgress(userId: string, day: string): Promise<Ta
       day,
     });
   });
+}
+
+/** Progress for every target active on `day` for one rep. One query covers the widest period (month) and we slice per target. */
+export async function getTargetProgress(userId: string, day: string): Promise<TargetProgress[]> {
+  const month = periodRange("MONTH", day);
+  const [targets, summaries] = await Promise.all([
+    listSalesTargets(userId),
+    prisma.repDailySummary.findMany({
+      where: { userId, day: { gte: parseDayKey(month.start), lte: parseDayKey(month.end) } },
+      select: SUMMARY_SELECT,
+    }),
+  ]);
+  return progressFromRows(targets, summaries, day);
+}
+
+/**
+ * The same progress for many reps at once (the live map polls this every few
+ * seconds): two queries for the whole team instead of two per rep. Every id
+ * gets an entry, so a rep with no targets still shows the default clinic target.
+ */
+export async function getTeamTargetProgress(userIds: readonly string[], day: string): Promise<Record<string, TargetProgress[]>> {
+  const ids = Array.from(new Set(userIds));
+  if (!ids.length) return {};
+  const month = periodRange("MONTH", day);
+  const [targetRows, summaryRows] = await Promise.all([
+    prisma.salesTarget.findMany({ where: { userId: { in: ids } }, orderBy: [{ period: "asc" }, { metric: "asc" }, { startsOn: "desc" }] }),
+    prisma.repDailySummary.findMany({
+      where: { userId: { in: ids }, day: { gte: parseDayKey(month.start), lte: parseDayKey(month.end) } },
+      select: { userId: true, ...SUMMARY_SELECT },
+    }),
+  ]);
+  const targetsBy = new Map<string, SalesTargetRow[]>();
+  for (const t of targetRows) {
+    const row = toTargetRow(t);
+    targetsBy.set(row.userId, [...(targetsBy.get(row.userId) ?? []), row]);
+  }
+  const summariesBy = new Map<string, SummaryRow[]>();
+  for (const s of summaryRows) summariesBy.set(s.userId, [...(summariesBy.get(s.userId) ?? []), s]);
+
+  return Object.fromEntries(ids.map((id) => [id, progressFromRows(targetsBy.get(id) ?? [], summariesBy.get(id) ?? [], day)]));
 }

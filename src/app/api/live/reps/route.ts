@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { requireSessionUser } from "@/lib/session";
 import { AuthError, requirePermission } from "@/lib/authz";
-import { listLiveReps } from "@/lib/livePositions";
+import { loadLiveSnapshot } from "@/lib/livePositions";
 
-/** Polled by the live map: every rep the viewer may see with their latest position. */
+/** Polled by the live map: every rep the viewer may see with their latest position and today's target progress. */
 export async function GET(req: Request) {
   let user;
   try {
@@ -15,6 +15,6 @@ export async function GET(req: Request) {
   }
 
   const province = new URL(req.url).searchParams.get("province") ?? "*";
-  const reps = await listLiveReps(user, province);
-  return NextResponse.json({ reps, serverTime: new Date().toISOString() }, { headers: { "Cache-Control": "no-store" } });
+  const snapshot = await loadLiveSnapshot(user, province);
+  return NextResponse.json({ ...snapshot, serverTime: new Date().toISOString() }, { headers: { "Cache-Control": "no-store" } });
 }

@@ -13,7 +13,7 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import CropFreeOutlined from "@mui/icons-material/CropFreeOutlined";
 import type { GeoPoint } from "@/domain/geo";
-import { countByStatus, isRecent, sortReps, type LiveRepDto } from "@/domain/live/positions";
+import { countByStatus, isRecent, sortReps, type LiveSnapshot } from "@/domain/live/positions";
 import { getBrowserMapsConfig } from "@/lib/mapsConfig";
 import { avatarHue, initialsOf } from "@/components/admin/userPresentation";
 import { EmptyState } from "@/components/feedback/EmptyState";
@@ -22,6 +22,7 @@ import { MAP_Z } from "@/components/today/mapChrome";
 import { LAYOUT } from "@/theme/tokens";
 import { LiveMapCanvas } from "./LiveMapCanvas";
 import { RepPanel } from "./RepPanel";
+import { TargetStrip } from "./TargetStrip";
 import type { FocusRequest, LiveMarker } from "./liveTypes";
 import { useAnimatedPositions, useLiveReps } from "./useLiveReps";
 
@@ -48,17 +49,17 @@ const REDUCED = "@media (prefers-reduced-motion: reduce)";
 const PANEL_WIDTH = 340;
 
 export function LiveMap({
-  initialReps,
+  initial,
   provinceCode: initialProvince,
   provinceOptions,
 }: {
-  initialReps: LiveRepDto[];
+  initial: LiveSnapshot;
   provinceCode: string;
   provinceOptions: { code: string; name: string }[];
 }) {
   const mapsCfg = getBrowserMapsConfig();
   const [provinceCode, setProvinceCode] = useState(initialProvince);
-  const { reps, connection, now } = useLiveReps(initialReps, provinceCode);
+  const { reps, targets: targetProgress, day, connection, now } = useLiveReps(initial, provinceCode);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [focus, setFocus] = useState<FocusRequest>(null);
   const [fitNonce, setFitNonce] = useState(0);
@@ -180,9 +181,13 @@ export function LiveMap({
       </Box>
 
       <Box sx={{ display: "flex", minHeight: 0, flex: 1, flexDirection: { xs: "column", md: "row" } }}>
-        <Box sx={{ position: "relative", minHeight: 280, height: { xs: "52dvh", md: "auto" }, flex: 1 }}>
-          <LiveMapCanvas markers={markers} selectedId={selectedId} onSelect={(id) => (id ? focusRep(id) : setSelectedId(null))} fitNonce={fitNonce} focus={focus} fallbackCenter={fallbackCenter} />
-          {located.length === 0 && <NoPositionsOverlay provinceName={provinceCode === "*" ? null : (provinceOptions.find((p) => p.code === provinceCode)?.name ?? provinceCode)} />}
+        <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0, minHeight: 0 }}>
+          {/* Target cards: team totals, or the focused rep's own targets. */}
+          <TargetStrip reps={reps} targets={targetProgress} day={day} selectedId={selectedId} onShowTeam={() => setSelectedId(null)} />
+          <Box sx={{ position: "relative", minHeight: 280, height: { xs: "52dvh", md: "auto" }, flex: 1 }}>
+            <LiveMapCanvas markers={markers} selectedId={selectedId} onSelect={(id) => (id ? focusRep(id) : setSelectedId(null))} fitNonce={fitNonce} focus={focus} fallbackCenter={fallbackCenter} />
+            {located.length === 0 && <NoPositionsOverlay provinceName={provinceCode === "*" ? null : (provinceOptions.find((p) => p.code === provinceCode)?.name ?? provinceCode)} />}
+          </Box>
         </Box>
         <Box
           component="aside"
