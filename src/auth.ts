@@ -33,8 +33,13 @@ declare module "next-auth/jwt" {
     status?: "ACTIVE" | "DISABLED";
     provinces?: string[];
     territories?: string[];
+    /** When the DB was last asked whether this user is still active (ms since epoch). */
+    checkedAt?: number;
   }
 }
+
+/** How long a session may go without re-checking the user row (disabled / role change). */
+const USER_RECHECK_MS = 5 * 60 * 1000;
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -112,8 +117,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.provinces = user.provinces;
         token.territories = user.territories;
       }
-      // Re-check disabled status periodically via DB when id present
-      if (token.id && !user) {
+      // Re-check disabled status via DB, but not on every request: auth() runs in the
+      // layout and again in each page, so an unconditional lookup cost two round trips
+      // per navigation. Five minutes is the longest a disabled user stays signed in.
+      const due = typeof token.checkedAt !== "number" || Date.now() - token.checkedAt > USER_RECHECK_MS;
+      if (token.id && !user && due) {
+        token.checkedAt = Date.now();
         const fresh = await prisma.user.findUnique({
           where: { id: token.id },
           select: { status: true, role: true, provinces: true, territories: true, displayName: true, email: true },

@@ -1,11 +1,13 @@
 "use client";
 
 import { SessionProvider } from "next-auth/react";
+import type { Session } from "next-auth";
 import { ThemeRegistry } from "@/theme/ThemeRegistry";
 
-export function Providers({ children }: { children: React.ReactNode }) {
+/** `session` comes from the server render, so useSession() has it at once and skips the mount-time /api/auth/session fetch. */
+export function Providers({ session, children }: { session: Session | null; children: React.ReactNode }) {
   return (
-    <SessionProvider>
+    <SessionProvider session={session}>
       <ThemeRegistry>{children}</ThemeRegistry>
     </SessionProvider>
   );
