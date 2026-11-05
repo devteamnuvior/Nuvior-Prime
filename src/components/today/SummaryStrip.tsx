@@ -85,7 +85,7 @@ export function SummaryStrip({
 
 function Metric({ value, label }: { value: string; label: string }) {
   return (
-    <Typography variant="caption" component="span" sx={{ whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums", fontSize: "0.8125rem" }}>
+    <Typography variant="caption" component="span" sx={{ whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums", fontSize: "0.75rem" }}>
       <Box component="span" sx={{ fontWeight: 600 }}>
         {value}
       </Box>
@@ -109,7 +109,7 @@ function Status({
     <StatusChip
       tone={tone === "signal" ? "warning" : "neutral"}
       label={children}
-      sx={{ fontWeight: 500, height: 22, fontSize: "0.75rem" }}
+      sx={{ fontWeight: 500, height: 20, fontSize: "0.6875rem" }}
     />
   );
 }
