@@ -6,10 +6,28 @@ import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import Link from "@mui/material/Link";
 import Typography from "@mui/material/Typography";
+import Facebook from "@mui/icons-material/Facebook";
+import Instagram from "@mui/icons-material/Instagram";
+import LinkedIn from "@mui/icons-material/LinkedIn";
+import MusicNote from "@mui/icons-material/MusicNote";
+import PublicOutlined from "@mui/icons-material/PublicOutlined";
+import X from "@mui/icons-material/X";
+import YouTube from "@mui/icons-material/YouTube";
 import type { ClinicWebProfileDto } from "@/domain/clinicProfile/runClinicProfile";
 import type { ClinicProduct, ClinicWebProfile } from "@/domain/clinicProfile/schema";
 import { Badge } from "@/components/today/Itinerary";
 import { PlainList } from "@/components/feedback/DotList";
+
+/** One icon per platform; MUI has no TikTok glyph, so a note stands in. */
+const SOCIAL_ICON: Record<ClinicWebProfile["socialProfiles"][number]["platform"], React.ReactNode> = {
+  instagram: <Instagram fontSize="inherit" />,
+  facebook: <Facebook fontSize="inherit" />,
+  tiktok: <MusicNote fontSize="inherit" />,
+  linkedin: <LinkedIn fontSize="inherit" />,
+  youtube: <YouTube fontSize="inherit" />,
+  x: <X fontSize="inherit" />,
+  other: <PublicOutlined fontSize="inherit" />,
+};
 
 const PRODUCT_KIND_LABEL: Record<ClinicProduct["kind"], string> = {
   injectable: "Injectable",
@@ -98,12 +116,20 @@ export function ClinicWebProfileSection({
 
       {profile.socialProfiles.length > 0 && (
         <Row label="Social">
-          <PlainList gap={0.5}>
+          <PlainList gap={1}>
             {profile.socialProfiles.map((s) => (
-              <li key={s.url}>
-                <MutedSpan sx={{ textTransform: "capitalize" }}>{s.platform}</MutedSpan>{" "}
+              <Box component="li" key={s.url} sx={{ display: "flex", alignItems: "center", gap: 2, minWidth: 0 }}>
+                <Box
+                  component="span"
+                  role="img"
+                  aria-label={s.platform}
+                  title={s.platform}
+                  sx={{ display: "flex", flexShrink: 0, fontSize: 16, color: "text.secondary" }}
+                >
+                  {SOCIAL_ICON[s.platform]}
+                </Box>
                 <ExternalLink url={s.url} label={s.handle ?? undefined} />
-              </li>
+              </Box>
             ))}
           </PlainList>
         </Row>
