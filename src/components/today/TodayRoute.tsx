@@ -26,7 +26,7 @@ import {
 } from "@/app/actions";
 import type { ClinicWebProfileDto } from "@/domain/clinicProfile/runClinicProfile";
 import { CANADIAN_PROVINCES } from "@/domain/scopeOfPractice";
-import { accessibleProvinces, hasPermission } from "@/domain/auth/permissions";
+import { accessibleProvinces } from "@/domain/auth/permissions";
 import type { GeoPoint } from "@/domain/geo";
 import { decodePolyline } from "@/domain/routing/polyline";
 import { getBrowserMapsConfig, resolveExperienceMode } from "@/lib/mapsConfig";
@@ -75,7 +75,7 @@ import {
 import { PreVisitBriefView } from "@/components/PreVisitBriefView";
 import { PlanningWorkspace } from "./PlanningWorkspace";
 import { MyDayPanel } from "./MyDayPanel";
-import { LiveLocationToggle } from "./LiveLocationToggle";
+import { MonthStrip } from "./MonthStrip";
 import type { RepDashboardDto } from "@/lib/repDashboard";
 import { Itinerary } from "./Itinerary";
 import { ClinicDrawer } from "./ClinicDrawer";
@@ -660,51 +660,52 @@ export function TodayRoute({
     // Desktop: the workspace fills the viewport below the header so the planner / itinerary panel
     // scrolls on its own; phones scroll the page (map on top, sheet below).
     <Box sx={{ display: "flex", minHeight: 0, flex: 1, flexDirection: "column", maxHeight: { md: `calc(100dvh - ${LAYOUT.headerHeight}px)` } }}>
-      {/* Action bar */}
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 3,
-          borderBottom: 1,
-          borderColor: "divider",
-          bgcolor: "background.default",
-          px: { xs: 4, md: 6 },
-          py: 2.5,
-        }}
-      >
-        <Box sx={{ display: "flex", minWidth: 0, alignItems: "center", gap: 2.5 }}>
-          {mode.showChips &&
-            mode.chips.map((chip) => (
-              <ModeChip key={chip.label} label={chip.label} tone={chip.tone} title={chip.detail} />
-            ))}
-          <Typography variant="body2" noWrap sx={{ color: "text.secondary", display: { xs: "none", sm: "block" } }}>
-            {data
-              ? `Today · ${displayStops.length} stop${displayStops.length === 1 ? "" : "s"}`
-              : "Share your location to line up today's clinics"}
-          </Typography>
+      {/* Action bar — route summary and plan actions; empty before a route unless a provider chip applies. */}
+      {(data || mode.showChips) && (
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 3,
+            borderBottom: 1,
+            borderColor: "divider",
+            bgcolor: "background.default",
+            px: { xs: 4, md: 6 },
+            py: 2.5,
+          }}
+        >
+          <Box sx={{ display: "flex", minWidth: 0, alignItems: "center", gap: 2.5 }}>
+            {mode.showChips &&
+              mode.chips.map((chip) => (
+                <ModeChip key={chip.label} label={chip.label} tone={chip.tone} title={chip.detail} />
+              ))}
+            {data && (
+              <Typography variant="body2" noWrap sx={{ color: "text.secondary", display: { xs: "none", sm: "block" } }}>
+                Today · {displayStops.length} stop{displayStops.length === 1 ? "" : "s"}
+              </Typography>
+            )}
+          </Box>
+          <Box sx={{ display: "flex", flexShrink: 0, alignItems: "center", gap: 2 }}>
+            {data && !editPlanOpen && (
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  setEditPlanOpen(true);
+                  setSheetExpanded(true);
+                }}
+              >
+                Edit plan
+              </Button>
+            )}
+            {data && (phase === "stale" || editPlanOpen) && (
+              <Button variant="outlined" onClick={() => formRef.current?.requestSubmit()} disabled={pending || !buildEnabled}>
+                {pending ? "Rebuilding…" : "Rebuild route"}
+              </Button>
+            )}
+          </Box>
         </Box>
-        <Box sx={{ display: "flex", flexShrink: 0, alignItems: "center", gap: 2 }}>
-          {role && hasPermission(role, "position.report") && <LiveLocationToggle />}
-          {data && !editPlanOpen && (
-            <Button
-              variant="outlined"
-              onClick={() => {
-                setEditPlanOpen(true);
-                setSheetExpanded(true);
-              }}
-            >
-              Edit plan
-            </Button>
-          )}
-          {data && (phase === "stale" || editPlanOpen) && (
-            <Button variant="outlined" onClick={() => formRef.current?.requestSubmit()} disabled={pending || !buildEnabled}>
-              {pending ? "Rebuilding…" : "Rebuild route"}
-            </Button>
-          )}
-        </Box>
-      </Box>
+      )}
 
       {errorMessage && data && (
         <Alert severity="error" icon={false} sx={{ borderRadius: 0, borderBottom: 1, borderColor: "divider", px: { xs: 4, md: 6 }, py: 0.5 }}>
@@ -716,6 +717,8 @@ export function TodayRoute({
           Start or area changed — travel times need rebuilding.
         </Alert>
       )}
+
+      {dashboard && <MonthStrip dashboard={dashboard} />}
 
       {data && <SummaryStrip data={data} manuallyAdjusted={planAdjusted} displayStopCount={displayStops.length} />}
 

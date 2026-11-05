@@ -27,7 +27,6 @@ const TONE: Record<RepDashboardDto["message"]["tone"], { bg: string; fg: string;
 };
 
 const dayFmt = new Intl.DateTimeFormat("en-CA", { weekday: "long", month: "short", day: "numeric", timeZone: "UTC" });
-const sparkFmt = new Intl.DateTimeFormat("en-CA", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
 
 function TargetBar({ p }: { p: TargetProgress }) {
   const color = p.status === "met" ? "success" : p.status === "behind" ? "warning" : "primary";
@@ -50,27 +49,10 @@ function TargetBar({ p }: { p: TargetProgress }) {
   );
 }
 
-function Mini({ label, value, sub, subTone }: { label: string; value: React.ReactNode; sub?: React.ReactNode; subTone?: "success" | "danger" | "neutral" }) {
-  return (
-    <Box sx={{ display: "grid", gap: 0.25, minWidth: 0 }}>
-      <Typography variant="caption" noWrap sx={{ color: "text.secondary" }}>
-        {label}
-      </Typography>
-      <Typography variant="h3" component="span" sx={{ fontVariantNumeric: "tabular-nums", lineHeight: 1.2 }}>
-        {value}
-      </Typography>
-      {sub && (
-        <Typography variant="caption" noWrap sx={{ color: subTone === "success" ? "success.main" : subTone === "danger" ? "error.main" : "text.secondary" }}>
-          {sub}
-        </Typography>
-      )}
-    </Box>
-  );
-}
-
 /**
  * The rep's own day at a glance, shown at the top of the planner panel on
- * Today's Route: today's targets, what reaching them does, the month so far.
+ * Today's Route: today's targets, what reaching them does, streak and XP.
+ * The month's numbers live in the MonthStrip above the map.
  */
 export function MyDayPanel({ data }: { data: RepDashboardDto }) {
   const [open, setOpen] = React.useState(true);
@@ -93,10 +75,8 @@ export function MyDayPanel({ data }: { data: RepDashboardDto }) {
   };
 
   const daily = data.progress.filter((p) => p.period === "DAY");
-  const monthly = data.progress.filter((p) => p.period === "MONTH" || p.period === "WEEK");
   const tone = TONE[data.message.tone];
   const dailyVisits = daily.find((p) => p.metric === "VISITS");
-  const sparkMax = Math.max(1, ...data.spark.map((s) => s.visits));
 
   return (
     <Box component="section" aria-label="My day" sx={{ borderBottom: 1, borderColor: "divider", bgcolor: "background.paper" }}>
@@ -142,65 +122,6 @@ export function MyDayPanel({ data }: { data: RepDashboardDto }) {
               ))}
             </Box>
           )}
-
-          <Box sx={{ display: "grid", gap: 1 }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-              <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                Last 14 days
-              </Typography>
-              <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                {data.spark.reduce((a, s) => a + s.visits, 0)} visits
-              </Typography>
-            </Box>
-            <Box role="img" aria-label={`Visits per day for the last 14 days: ${data.spark.map((s) => s.visits).join(", ")}`} sx={{ display: "flex", alignItems: "flex-end", gap: "3px", height: 44 }}>
-              {data.spark.map((s) => {
-                const weekend = [0, 6].includes(new Date(`${s.day}T00:00:00.000Z`).getUTCDay());
-                const h = s.visits === 0 ? 3 : Math.max(6, Math.round((s.visits / sparkMax) * 44));
-                return (
-                  <Tooltip key={s.day} title={`${sparkFmt.format(new Date(`${s.day}T00:00:00.000Z`))}: ${s.visits} visit${s.visits === 1 ? "" : "s"}`} placement="top" arrow>
-                    <Box
-                      sx={{
-                        flex: 1,
-                        height: h,
-                        borderRadius: "3px 3px 0 0",
-                        bgcolor: s.visits === 0 ? (weekend ? "transparent" : "background.sunken") : s.day === data.today ? "primary.main" : "rgba(var(--nv-palette-primary-mainChannel) / 0.55)",
-                        border: s.visits === 0 && weekend ? 1 : 0,
-                        borderColor: "divider",
-                        transition: (t) => t.transitions.create("background-color"),
-                        "&:hover": { bgcolor: "primary.main" },
-                      }}
-                    />
-                  </Tooltip>
-                );
-              })}
-            </Box>
-          </Box>
-
-          <Box sx={{ display: "grid", gap: 3, gridTemplateColumns: "repeat(2, minmax(0, 1fr))", pt: 3, borderTop: 1, borderColor: "divider" }}>
-            <Mini
-              label={`Visits in ${data.month.label}`}
-              value={data.month.visits}
-              sub={data.month.visitsDelta == null ? `${data.month.activeDays} active days` : `${data.month.visitsDelta >= 0 ? "+" : ""}${data.month.visitsDelta}% vs last month to date`}
-              subTone={data.month.visitsDelta == null ? "neutral" : data.month.visitsDelta >= 0 ? "success" : "danger"}
-            />
-            {monthly.map((p) => (
-              <Mini
-                key={`${p.period}-${p.metric}`}
-                label={TARGET_METRIC_LABELS[p.metric]}
-                value={
-                  <>
-                    {p.actual}
-                    <Box component="span" sx={{ color: "text.secondary", fontWeight: 400, fontSize: "0.875rem" }}>
-                      {" "}
-                      / {p.target}
-                    </Box>
-                  </>
-                }
-                sub={p.status === "met" ? "Target met" : p.actual > 0 && p.dayIndex >= 3 ? `${p.remaining} to go · pace ${p.forecast}` : `${p.remaining} to go ${p.period === "WEEK" ? "this week" : "this month"}`}
-                subTone={p.status === "met" || p.status === "ahead" ? "success" : p.status === "behind" ? "danger" : "neutral"}
-              />
-            ))}
-          </Box>
 
           {data.competition && (
             <Box sx={{ display: "grid", gap: 3, pt: 3, borderTop: 1, borderColor: "divider" }}>

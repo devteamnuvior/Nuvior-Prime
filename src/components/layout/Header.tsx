@@ -16,6 +16,7 @@ import { LAYOUT } from "@/theme/tokens";
 import { BrandMark } from "./BrandMark";
 import { CommandSearch } from "./CommandSearch";
 import { UserMenu } from "./UserMenu";
+import { LiveLocationToggle } from "@/components/today/LiveLocationToggle";
 import { breadcrumbsFor, type NavGroup } from "./nav";
 import { useShell } from "./shell-context";
 
@@ -66,78 +67,86 @@ export function Header({
           <BrandMark size={32} />
         </Box>
 
-        {/* Keyed on the route so the entrance replays on every navigation. */}
-        <Box component="nav" aria-label="breadcrumb" key={pathname} sx={{ minWidth: 0, flex: 1 }}>
-          <Box component="ol" sx={{ display: "flex", alignItems: "center", m: 0, mx: { md: -1 }, p: 0, listStyle: "none", minWidth: 0 }}>
-            {all.map((c, i) => {
-              const last = i === all.length - 1;
-              return (
-                <Box
-                  component="li"
-                  key={c.href}
-                  sx={{
-                    display: last ? "flex" : { xs: "none", sm: "flex" },
-                    alignItems: "center",
-                    minWidth: 0,
-                    animation: `${crumbIn} 360ms ${EASE} both`,
-                    animationDelay: `${i * 70}ms`,
-                    [REDUCED]: { animation: "none" },
-                  }}
-                >
-                  {i > 0 && <ChevronRightRounded aria-hidden sx={{ fontSize: 18, color: "text.disabled", display: { xs: "none", sm: "block" } }} />}
-                  {last ? (
-                    <Typography
-                      variant="body2"
-                      component="span"
-                      noWrap
-                      aria-current="page"
-                      sx={{
-                        position: "relative",
-                        px: 1,
-                        py: 0.5,
-                        fontWeight: 600,
-                        color: "text.primary",
-                        "&::after": {
-                          content: '""',
-                          position: "absolute",
-                          left: 4,
-                          right: 4,
-                          bottom: -2,
-                          height: 2,
+        <Box sx={{ display: "flex", alignItems: "center", gap: 3, minWidth: 0, flex: 1 }}>
+          {/* Keyed on the route so the entrance replays on every navigation. */}
+          <Box component="nav" aria-label="breadcrumb" key={pathname} sx={{ minWidth: 0 }}>
+            <Box component="ol" sx={{ display: "flex", alignItems: "center", m: 0, mx: { md: -1 }, p: 0, listStyle: "none", minWidth: 0 }}>
+              {all.map((c, i) => {
+                const last = i === all.length - 1;
+                return (
+                  <Box
+                    component="li"
+                    key={c.href}
+                    sx={{
+                      display: last ? "flex" : { xs: "none", sm: "flex" },
+                      alignItems: "center",
+                      minWidth: 0,
+                      animation: `${crumbIn} 360ms ${EASE} both`,
+                      animationDelay: `${i * 70}ms`,
+                      [REDUCED]: { animation: "none" },
+                    }}
+                  >
+                    {i > 0 && <ChevronRightRounded aria-hidden sx={{ fontSize: 18, color: "text.disabled", display: { xs: "none", sm: "block" } }} />}
+                    {last ? (
+                      <Typography
+                        variant="body2"
+                        component="span"
+                        noWrap
+                        aria-current="page"
+                        sx={{
+                          position: "relative",
+                          px: 1,
+                          py: 0.5,
+                          fontWeight: 600,
+                          color: "text.primary",
+                          "&::after": {
+                            content: '""',
+                            position: "absolute",
+                            left: 4,
+                            right: 4,
+                            bottom: -2,
+                            height: 2,
+                            borderRadius: 1,
+                            bgcolor: "primary.main",
+                            transformOrigin: "left center",
+                            animation: `${underline} 420ms ${EASE} both`,
+                            animationDelay: `${i * 70 + 180}ms`,
+                            [REDUCED]: { animation: "none" },
+                          },
+                        }}
+                      >
+                        {c.label}
+                      </Typography>
+                    ) : (
+                      <Typography
+                        component={Link}
+                        href={c.href}
+                        variant="body2"
+                        noWrap
+                        sx={{
+                          px: 1,
+                          py: 0.5,
                           borderRadius: 1,
-                          bgcolor: "primary.main",
-                          transformOrigin: "left center",
-                          animation: `${underline} 420ms ${EASE} both`,
-                          animationDelay: `${i * 70 + 180}ms`,
-                          [REDUCED]: { animation: "none" },
-                        },
-                      }}
-                    >
-                      {c.label}
-                    </Typography>
-                  ) : (
-                    <Typography
-                      component={Link}
-                      href={c.href}
-                      variant="body2"
-                      noWrap
-                      sx={{
-                        px: 1,
-                        py: 0.5,
-                        borderRadius: 1,
-                        color: "text.secondary",
-                        textDecoration: "none",
-                        transition: (t) => t.transitions.create(["color", "background-color"], { duration: t.transitions.duration.short }),
-                        "&:hover": { color: "text.primary", bgcolor: "action.hover" },
-                      }}
-                    >
-                      {c.label}
-                    </Typography>
-                  )}
-                </Box>
-              );
-            })}
+                          color: "text.secondary",
+                          textDecoration: "none",
+                          transition: (t) => t.transitions.create(["color", "background-color"], { duration: t.transitions.duration.short }),
+                          "&:hover": { color: "text.primary", bgcolor: "action.hover" },
+                        }}
+                      >
+                        {c.label}
+                      </Typography>
+                    )}
+                  </Box>
+                );
+              })}
+            </Box>
           </Box>
+          {/* Today's Route: the rep's live-location switch sits beside the page title. */}
+          {pathname === "/" && user && hasPermission(user.role as AppRoleName, "position.report") && (
+            <Box sx={{ flexShrink: 0, animation: `${settle} 420ms ${EASE} both`, animationDelay: "240ms", [REDUCED]: { animation: "none" } }}>
+              <LiveLocationToggle />
+            </Box>
+          )}
         </Box>
 
         <Box

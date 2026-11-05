@@ -45,8 +45,6 @@ export type RepDashboardDto = {
     newAccounts: number;
     activeDays: number;
   };
-  /** Visits per day for the last 14 days, oldest first. */
-  spark: { day: string; visits: number }[];
   overdueFollowUps: number;
   dueTodayFollowUps: number;
   competition: RepCompetition | null;
@@ -79,7 +77,6 @@ export async function loadRepDashboard(user: AuthUser): Promise<RepDashboardDto>
   const dayIndex = periodDayIndex("MONTH", today);
   const prevMonth = periodRange("MONTH", addDays(month.start, -1));
   const prevCut = addDays(prevMonth.start, Math.min(dayIndex, Number(prevMonth.end.slice(8))) - 1);
-  const sparkStart = addDays(today, -13);
   const streakStart = addDays(today, -90);
   const since = parseDayKey(streakStart < prevMonth.start ? streakStart : prevMonth.start);
 
@@ -121,10 +118,6 @@ export async function loadRepDashboard(user: AuthUser): Promise<RepDashboardDto>
   const message = buildDayMessage({ progress, streak, overdueFollowUps, dueTodayFollowUps, isWorkingDay });
   const competition = await loadCompetition(user, today);
 
-  const byDay = new Map(rows.map((r) => [r.day, r.visits] as const));
-  const spark: { day: string; visits: number }[] = [];
-  for (let d = sparkStart; d <= today; d = addDays(d, 1)) spark.push({ day: d, visits: byDay.get(d) ?? 0 });
-
   return {
     today,
     isWorkingDay,
@@ -140,7 +133,6 @@ export async function loadRepDashboard(user: AuthUser): Promise<RepDashboardDto>
       newAccounts,
       activeDays,
     },
-    spark,
     overdueFollowUps,
     dueTodayFollowUps,
     competition,
