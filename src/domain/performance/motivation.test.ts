@@ -54,11 +54,10 @@ describe("streak", () => {
 describe("day message", () => {
   const day = "2026-11-04";
   const daily = (actual: number) => targetProgress({ metric: "VISITS", period: "DAY", target: 7, actual, day });
-  const quality = (actual: number) => targetProgress({ metric: "QUALITY_VISITS", period: "DAY", target: 4, actual, day });
 
   it("explains what reaching the target does", () => {
     const m = buildDayMessage({
-      progress: [daily(5), quality(3)],
+      progress: [daily(5)],
       streak: { days: 6, atRisk: true, todayCounted: false },
       overdueFollowUps: 0,
       dueTodayFollowUps: 0,
@@ -66,13 +65,12 @@ describe("day message", () => {
     });
     expect(m.headline).toBe("2 more visits to hit today's target");
     expect(m.detail).toContain("keeps your 6-day streak alive");
-    expect(m.detail).toContain("1 fit-4+ clinic among them also closes the quality target");
     expect(m.tone).toBe("warning");
   });
 
   it("celebrates a met target and mentions the streak", () => {
     const m = buildDayMessage({
-      progress: [daily(7), quality(4)],
+      progress: [daily(7)],
       streak: { days: 3, atRisk: false, todayCounted: true },
       overdueFollowUps: 2,
       dueTodayFollowUps: 0,

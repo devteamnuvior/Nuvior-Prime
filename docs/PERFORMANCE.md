@@ -18,8 +18,7 @@ ledger existed (idempotent).
 
 | Reason | Base | When |
 | --- | --- | --- |
-| `QUALITY_VISIT` | 20 | Logged visit, fit 4–5 (one per clinic per day) |
-| `VISIT` | 8 | Logged visit, fit 1–3 or unknown (one per clinic per day) |
+| `VISIT` | 10 | Logged visit (one per clinic per day) |
 | `OUTCOME_SAME_DAY` | 5 | Structured outcome recorded on the visit day |
 | `FOLLOW_UP_ON_TIME` | 10 | Visit on or before a follow-up date set by an earlier visit to that account |
 | `ACADEMY_SIGNUP` | 40 | Outcome `ACADEMY_SIGNUP` |
@@ -35,8 +34,7 @@ because they never reach a route.
 
 Levels by total XP: Associate 0 · Specialist 500 · Senior 1 500 · Elite 3 500 ·
 Master 7 000. Levels never go down. Badges are code-defined (`BADGES`) and
-stored in `UserBadge` when earned: First steps, Century, Quality focus, Route
-master, On a roll (5-day streak), Unstoppable (20), Academy builder, Opener,
+stored in `UserBadge` when earned: First steps, Century, Route master, On a roll (5-day streak), Unstoppable (20), Academy builder, Opener,
 Closer, Follow-through.
 
 ### Leaderboard
@@ -55,7 +53,7 @@ Collapsible; the collapsed state is remembered per browser.
 
 | Block | Source | Notes |
 | --- | --- | --- |
-| Message | `buildDayMessage` | Deterministic "if you reach it" copy: remaining visits, streak at risk, quality target, month pace, follow-ups due. Weekend and no-target fallbacks. Tone: encouraging, never absolute. |
+| Message | `buildDayMessage` | Deterministic "if you reach it" copy: remaining visits, streak at risk, month pace, follow-ups due. Weekend and no-target fallbacks. Tone: encouraging, never absolute. |
 | Daily target bars | `getTargetProgress` | One bar per DAY target. |
 | Last 14 days | `RepDailySummary` | Visits per day, today highlighted, weekends outlined. |
 | Month so far | `RepDailySummary` | Visits vs last month to the same day, average fit vs team (reps in the same provinces, aggregate only), WEEK/MONTH targets with pace. |
@@ -82,7 +80,7 @@ provinces, admins reach everyone. Range switch `?range=30|90|365` (default 90).
 | Funnel | `funnel` | Planned stops → visited → decision maker reached → interested or better → orders, with step-to-step conversion. |
 | Lead product mix | `productMix` over `VisitListItem` of the rep's runs | Share of planned stops by recommended lead product. |
 | Activity | `activityCalendar` | GitHub-style grid, one cell per day. |
-| Quality | `qualityStats` | Avg fit, quality share, outcome coverage, overdue follow-ups (follow-up date passed with no later visit to that account). |
+| Quality | `qualityStats` | Avg fit, outcome coverage, overdue follow-ups (follow-up date passed with no later visit to that account). |
 | Targets | `TargetsEditor` | Progress cards for active targets; list with Active / Superseded / Upcoming / Ended; set and remove form for `target.manage`. |
 | Recent visits / routes / history | Prisma | Latest 25 visits, 20 routes, 30 audit events by or about the user (including `target.*` events whose metadata names them). |
 
@@ -105,11 +103,11 @@ qualification, DNC, CRM or routing rule.
 | --- | --- |
 | `VisitRecord` | `outcomeCode VisitOutcome?` (structured), `fitScoreSnapshot Int?` (fit at visit time) and `durationMinutes Int` (45 or 90). `outcome` stays as the free-text note. |
 | `SalesTarget` | Per-rep target: `period` (DAY / WEEK / MONTH), `metric`, `value`, `startsOn`, optional `endsOn`. Unique on (user, period, metric, startsOn). |
-| `RepDailySummary` | One row per rep per calendar day: visits, clinic slots (`visitSlots`), quality visits, new accounts, follow-ups, academy sign-ups, orders, outcome counts, planned stops / drive minutes, average fit. Recomputed after every visit save. |
+| `RepDailySummary` | One row per rep per calendar day: visits, clinic slots (`visitSlots`), new accounts, follow-ups, academy sign-ups, orders, outcome counts, planned stops / drive minutes, average fit. Recomputed after every visit save. |
 | Permissions | `performance.view.own` (all roles), `performance.view.team` and `target.manage` (ADMIN). |
 | Visit form | Outcome is a required select; the free-text field became "Outcome note". AI note structuring suggests a code via `inferVisitOutcomeCode` (never overrides a rep's choice). |
 | Visit History | Outcome chips, fit column, and a target strip for the signed-in rep. |
-| Seed | Default targets for seed reps (10 clinic slots/day, 4 quality visits/day, 5 follow-ups/week, 4 new accounts/month, 2 academy sign-ups/month). |
+| Seed | Default targets for seed reps (10 clinic slots/day, 5 follow-ups/week, 4 new accounts/month, 2 academy sign-ups/month). |
 
 ## Outcome codes
 
@@ -125,13 +123,12 @@ qualification, DNC, CRM or routing rule.
 | `NOT_INTERESTED` | Not interested | yes |
 | `CLOSED_OR_MOVED` | Closed or moved | no |
 
-A **quality visit** is any logged visit whose `fitScoreSnapshot` is 4 or 5
-(`QUALITY_VISIT_MIN_FIT`). The snapshot reads the latest `AccountQualification`
-row when one exists; since prospecting computes qualification at run time and
-does not persist it per account today, it falls back to the fit score of the
-most recent planned stop (`VisitListItem`) for that account, preferring the
-rep's own route. A visit to an account that was never on a planned route gets
-`null` and does not count as a quality visit. A **new account** is a visit to an account with no
+`fitScoreSnapshot` feeds the day's average fit. It reads the latest
+`AccountQualification` row when one exists; since prospecting computes
+qualification at run time and does not persist it per account today, it falls
+back to the fit score of the most recent planned stop (`VisitListItem`) for
+that account, preferring the rep's own route. A visit to an account that was
+never on a planned route gets `null`. A **new account** is a visit to an account with no
 earlier `VisitRecord` by anyone. A **follow-up** is a visit of type
 `re-visit` or `follow-up on a quote`.
 
@@ -151,7 +148,7 @@ in phase 2.
 
 | Path | Role |
 | --- | --- |
-| `src/domain/performance/visitOutcome.ts` | Codes, labels, quality threshold, free-text inference |
+| `src/domain/performance/visitOutcome.ts` | Codes, labels, free-text inference |
 | `src/domain/performance/targets.ts` | Period ranges, active target, progress maths |
 | `src/domain/performance/dailySummary.ts` | Pure summary builder and metric readers |
 | `src/lib/performance.ts` | Prisma: recompute summary, target CRUD, progress per rep |

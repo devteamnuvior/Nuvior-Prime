@@ -53,7 +53,7 @@ export function ActivityCalendar({ cells }: { cells: CalendarCell[] }) {
             {weeks.map((w, col) => {
               const c = w[row];
               if (!c) return <Box key={col} sx={{ width: 12, height: 12 }} />;
-              const title = `${fmt.format(parseDayKey(c.day))}: ${c.visits} visit${c.visits === 1 ? "" : "s"}${c.qualityVisits ? ` · ${c.qualityVisits} quality` : ""}`;
+              const title = `${fmt.format(parseDayKey(c.day))}: ${c.visits} visit${c.visits === 1 ? "" : "s"}`;
               return (
                 <Tooltip key={col} title={title} placement="top" arrow>
                   <Box role="img" aria-label={title} sx={{ width: 12, height: 12, borderRadius: 0.5, bgcolor: colors[level(c.visits)] }} />

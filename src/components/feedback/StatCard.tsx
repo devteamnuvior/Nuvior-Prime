@@ -77,10 +77,13 @@ export function StatCard({
   animate,
   aside,
   footer,
+  format = String,
 }: {
   index: number;
   label: string;
   value: number;
+  /** Renders the (animated) number; defaults to the plain integer. */
+  format?: (n: number) => string;
   icon: SvgIconComponent;
   tone: StatTone;
   animate: boolean;
@@ -124,10 +127,10 @@ export function StatCard({
       </Box>
       <Box sx={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 3 }}>
         <Typography variant="h1" component="span" sx={{ fontSize: "2rem", lineHeight: 1, fontVariantNumeric: "tabular-nums", color: tone === "primary" ? "primary.main" : "text.primary" }}>
-          {shown}
+          {format(shown)}
           {/* Keep the real value in the tree for screen readers while the count animates. */}
           <Box component="span" sx={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>
-            {value}
+            {format(value)}
           </Box>
         </Typography>
         {aside}

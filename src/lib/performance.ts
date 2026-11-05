@@ -86,7 +86,6 @@ export async function recomputeRepDailySummary(userId: string, day: string): Pro
       plannedStops: values.plannedStops,
       visits: values.visits,
       visitSlots: values.visitSlots,
-      qualityVisits: values.qualityVisits,
       newAccounts: values.newAccounts,
       followUpsDone: values.followUpsDone,
       academySignups: values.academySignups,
@@ -209,7 +208,7 @@ export async function getTargetProgress(userId: string, day: string): Promise<Ta
   const month = periodRange("MONTH", day);
   const summaries = await prisma.repDailySummary.findMany({
     where: { userId, day: { gte: parseDayKey(month.start), lte: parseDayKey(month.end) } },
-    select: { day: true, visitSlots: true, qualityVisits: true, newAccounts: true, followUpsDone: true, academySignups: true, orders: true },
+    select: { day: true, visitSlots: true, newAccounts: true, followUpsDone: true, academySignups: true, orders: true },
   });
 
   return active.map((t) => {

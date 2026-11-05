@@ -186,7 +186,7 @@ export function MyDayPanel({ data }: { data: RepDashboardDto }) {
             <Mini
               label="Average fit score"
               value={data.month.avgFitScore ?? "—"}
-              sub={data.month.teamAvgFitScore != null ? `team ${data.month.teamAvgFitScore}` : data.month.qualityShare != null ? `${data.month.qualityShare}% quality visits` : undefined}
+              sub={data.month.teamAvgFitScore != null ? `team ${data.month.teamAvgFitScore}` : undefined}
               subTone={data.month.teamAvgFitScore != null && data.month.avgFitScore != null ? (data.month.avgFitScore >= data.month.teamAvgFitScore ? "success" : "neutral") : "neutral"}
             />
             {monthly.map((p) => (

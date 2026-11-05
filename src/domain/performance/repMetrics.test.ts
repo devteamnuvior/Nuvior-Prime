@@ -18,7 +18,6 @@ function day(partial: Partial<DailySummaryRow> & { day: string }): DailySummaryR
     plannedStops: 0,
     visits: 0,
     visitSlots: partial.visits ?? 0,
-    qualityVisits: 0,
     newAccounts: 0,
     followUpsDone: 0,
     academySignups: 0,
@@ -67,7 +66,7 @@ describe("rep KPIs", () => {
 describe("weekly series", () => {
   it("buckets Monday-based weeks and derives a weekly target from the daily one", () => {
     const pts = weeklySeries(
-      [day({ day: "2026-11-03", visits: 4, qualityVisits: 2 }), day({ day: "2026-11-09", visits: 7 })],
+      [day({ day: "2026-11-03", visits: 4 }), day({ day: "2026-11-09", visits: 7 })],
       targets,
       "2026-11-01",
       "2026-11-14",
@@ -75,7 +74,6 @@ describe("weekly series", () => {
     // 2026-11-01 is a Sunday → first week starts Mon 2026-10-26
     expect(pts.map((p) => p.weekStart)).toEqual(["2026-10-26", "2026-11-02", "2026-11-09"]);
     expect(pts[1].visits).toBe(4);
-    expect(pts[1].qualityVisits).toBe(2);
     expect(pts[2].visits).toBe(7);
     expect(pts[0].target).toBe(25);
     expect(pts[0].label).toBe("Oct 26");
@@ -123,13 +121,11 @@ describe("quality and calendar", () => {
     expect(q.overdueFollowUps).toBe(1);
     expect(q.avgFitScore).toBe(4.3);
     expect(q.outcomeCoverage).toBe(80);
-    expect(q.qualityShare).toBe(60);
   });
 
   it("calendar fills every day in range", () => {
-    const c = activityCalendar([day({ day: "2026-11-02", visits: 3, qualityVisits: 1 })], "2026-11-01", "2026-11-03");
+    const c = activityCalendar([day({ day: "2026-11-02", visits: 3 })], "2026-11-01", "2026-11-03");
     expect(c.map((x) => x.visits)).toEqual([0, 3, 0]);
-    expect(c[1].qualityVisits).toBe(1);
   });
 
   it("rangeFor spans the requested number of days ending today", () => {

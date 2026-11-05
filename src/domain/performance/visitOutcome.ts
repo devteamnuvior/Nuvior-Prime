@@ -62,13 +62,6 @@ export function isVisitOutcomeCode(value: unknown): value is VisitOutcomeCode {
   return typeof value === "string" && (VISIT_OUTCOME_CODES as readonly string[]).includes(value);
 }
 
-/** Fit score at or above this value makes a logged visit a "quality visit". */
-export const QUALITY_VISIT_MIN_FIT = 4;
-
-export function isQualityVisit(fitScore: number | null | undefined): boolean {
-  return typeof fitScore === "number" && fitScore >= QUALITY_VISIT_MIN_FIT;
-}
-
 /**
  * Best-effort mapping of free text (legacy `outcome` notes, LLM-structured notes)
  * to a structured code. Returns null when nothing matches — never guesses.

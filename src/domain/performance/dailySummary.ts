@@ -4,7 +4,7 @@
  * land in `RepDailySummary`. Persistence lives in src/lib/performance.ts.
  */
 
-import { isQualityVisit, type VisitOutcomeCode } from "./visitOutcome";
+import type { VisitOutcomeCode } from "./visitOutcome";
 import type { TargetMetric } from "./targets";
 import { slotsForDuration } from "./visitSlots";
 
@@ -31,7 +31,6 @@ export type DailySummaryValues = {
   visits: number;
   /** 45-minute slots over the day's visits; a 90-minute visit counts 2. The VISITS metric reads this. */
   visitSlots: number;
-  qualityVisits: number;
   newAccounts: number;
   followUpsDone: number;
   academySignups: number;
@@ -49,7 +48,6 @@ export function buildDailySummary(input: {
 }): DailySummaryValues {
   const outcomeCounts: Partial<Record<VisitOutcomeCode, number>> = {};
   let visitSlots = 0;
-  let qualityVisits = 0;
   let newAccounts = 0;
   let followUpsDone = 0;
   let academySignups = 0;
@@ -60,7 +58,6 @@ export function buildDailySummary(input: {
   for (const v of input.visits) {
     if (v.outcomeCode) outcomeCounts[v.outcomeCode] = (outcomeCounts[v.outcomeCode] ?? 0) + 1;
     visitSlots += slotsForDuration(v.durationMinutes);
-    if (isQualityVisit(v.fitScoreSnapshot)) qualityVisits += 1;
     if (v.firstEverVisit && v.accountId) newAccounts += 1;
     if (FOLLOW_UP_TYPES.has(v.visitType)) followUpsDone += 1;
     if (v.outcomeCode === "ACADEMY_SIGNUP") academySignups += 1;
@@ -80,7 +77,6 @@ export function buildDailySummary(input: {
     plannedStops: lastRun?.stopCount ?? 0,
     visits: input.visits.length,
     visitSlots,
-    qualityVisits,
     newAccounts,
     followUpsDone,
     academySignups,
@@ -91,15 +87,13 @@ export function buildDailySummary(input: {
   };
 }
 
-export type MetricSummary = Pick<DailySummaryValues, "visitSlots" | "qualityVisits" | "newAccounts" | "followUpsDone" | "academySignups" | "orders">;
+export type MetricSummary = Pick<DailySummaryValues, "visitSlots" | "newAccounts" | "followUpsDone" | "academySignups" | "orders">;
 
 /** Which summary column a target metric reads. VISITS is measured in clinic slots, so a 90-minute visit counts twice. */
 export function metricValue(summary: MetricSummary, metric: TargetMetric): number {
   switch (metric) {
     case "VISITS":
       return summary.visitSlots;
-    case "QUALITY_VISITS":
-      return summary.qualityVisits;
     case "NEW_ACCOUNTS":
       return summary.newAccounts;
     case "FOLLOW_UPS":

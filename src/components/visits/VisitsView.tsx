@@ -69,7 +69,7 @@ function AccountTile({ name }: { name: string }) {
   );
 }
 
-/** Five dots, filled up to the fit score; green from 4 (a quality visit). */
+/** Five dots, filled up to the fit score. */
 function FitMeter({ score }: { score: number | null }) {
   if (score == null)
     return (
@@ -77,12 +77,11 @@ function FitMeter({ score }: { score: number | null }) {
         —
       </Typography>
     );
-  const quality = score >= 4;
   return (
-    <Tooltip title={`Fit ${score} of 5${quality ? " · quality visit" : ""}`}>
+    <Tooltip title={`Fit ${score} of 5`}>
       <Box role="img" aria-label={`Fit ${score} of 5`} sx={{ display: "inline-flex", alignItems: "center", gap: "3px" }}>
         {Array.from({ length: 5 }).map((_, i) => (
-          <Box key={i} sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: i < score ? (quality ? "success.main" : "primary.light") : "grey.200" }} />
+          <Box key={i} sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: i < score ? "primary.main" : "grey.200" }} />
         ))}
       </Box>
     </Tooltip>
@@ -353,7 +352,7 @@ export function VisitsView({
     <>
       <PageHeader
         title="Visit History"
-        description="Routes you planned and visits you logged, most recent first. Quality visits and written next actions are what move the leaderboard."
+        description="Routes you planned and visits you logged, most recent first. Outcomes and written next actions are what move the leaderboard."
         actions={
           canPlan ? (
             <HeroButton component={Link} href="/" startIcon={<RouteOutlined />}>

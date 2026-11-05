@@ -57,7 +57,6 @@ export async function awardPointsForVisit(visitId: string): Promise<number> {
       visitDate: true,
       createdAt: true,
       outcomeCode: true,
-      fitScoreSnapshot: true,
       account: { select: { provinceCode: true } },
     },
   });
@@ -84,7 +83,6 @@ export async function awardPointsForVisit(visitId: string): Promise<number> {
     createdDay: dayKey(v.createdAt),
     accountId: v.accountId,
     outcomeCode: v.outcomeCode,
-    fitScoreSnapshot: v.fitScoreSnapshot,
     firstVisitToAccountToday: sameDayEarlier === 0,
     earlierOrderOnAccount: earlierOrder > 0,
     pendingFollowUpDueOn: pendingFollowUp?.followUpDate ? dayKey(pendingFollowUp.followUpDate) : null,
@@ -130,7 +128,6 @@ export async function badgeStatsFor(userId: string): Promise<BadgeStats> {
   const longestStreak = streakRows.reduce((m, r) => Math.max(m, Number(r.sourceId.split(":")[1] ?? 0)), 0);
   return {
     visits,
-    qualityVisits: count("QUALITY_VISIT"),
     academySignups: count("ACADEMY_SIGNUP"),
     firstOrders: count("FIRST_ORDER"),
     followUpsOnTime: count("FOLLOW_UP_ON_TIME"),
@@ -230,7 +227,7 @@ export type LeaderboardPeriod = Extract<TargetPeriod, "WEEK" | "MONTH">;
 
 /**
  * Period points per active rep in a province ("*" = everyone), ranked.
- * Visits and quality visits come from RepDailySummary over the same range.
+ * Visit counts come from RepDailySummary over the same range.
  */
 export async function getLeaderboard(opts: { period: LeaderboardPeriod; day: string; provinceCode: string }): Promise<{ ranked: RankedEntry[]; range: { start: string; end: string } }> {
   const range = periodRange(opts.period, opts.day);
@@ -245,7 +242,7 @@ export async function getLeaderboard(opts: { period: LeaderboardPeriod; day: str
   const [points, totals, summaries] = await Promise.all([
     prisma.pointEvent.groupBy({ by: ["userId"], where: { userId: { in: ids }, day: { gte: start, lte: end } }, _sum: { points: true } }),
     prisma.pointEvent.groupBy({ by: ["userId"], where: { userId: { in: ids } }, _sum: { points: true } }),
-    prisma.repDailySummary.groupBy({ by: ["userId"], where: { userId: { in: ids }, day: { gte: start, lte: end } }, _sum: { visits: true, qualityVisits: true } }),
+    prisma.repDailySummary.groupBy({ by: ["userId"], where: { userId: { in: ids }, day: { gte: start, lte: end } }, _sum: { visits: true } }),
   ]);
   const entries: LeaderboardEntry[] = users.map((u) => ({
     userId: u.id,
@@ -254,7 +251,6 @@ export async function getLeaderboard(opts: { period: LeaderboardPeriod; day: str
     points: points.find((p) => p.userId === u.id)?._sum.points ?? 0,
     totalXp: totals.find((p) => p.userId === u.id)?._sum.points ?? 0,
     visits: summaries.find((s) => s.userId === u.id)?._sum.visits ?? 0,
-    qualityVisits: summaries.find((s) => s.userId === u.id)?._sum.qualityVisits ?? 0,
   }));
   return { ranked: rankEntries(entries), range };
 }

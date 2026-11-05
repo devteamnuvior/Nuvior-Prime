@@ -423,7 +423,7 @@ model VisitRecord {
   visitType         String
   /// Structured outcome; `outcome` below stays as the free-text note.
   outcomeCode       VisitOutcome?
-  /// Account fit score at the time of the visit (quality-visit metric).
+  /// Account fit score at the time of the visit (feeds the day's average fit).
   fitScoreSnapshot  Int?
   /// Time spent at the clinic: 45 (one slot) or 90 (counts as two of the day's ten). See src/domain/performance/visitSlots.ts.
   durationMinutes   Int           @default(45)
@@ -451,7 +451,6 @@ enum TargetPeriod {
 
 enum TargetMetric {
   VISITS
-  QUALITY_VISITS
   NEW_ACCOUNTS
   FOLLOW_UPS
   ACADEMY_SIGNUPS
@@ -491,7 +490,6 @@ model RepDailySummary {
   visits              Int      @default(0)
   /// Sum of 45-minute slots over the day's visits (a 90-minute visit counts 2). The daily VISITS target reads this.
   visitSlots          Int      @default(0)
-  qualityVisits       Int      @default(0)
   newAccounts         Int      @default(0)
   followUpsDone       Int      @default(0)
   academySignups      Int      @default(0)
@@ -510,7 +508,6 @@ model RepDailySummary {
 /// src/domain/performance/xp.ts.
 enum PointReason {
   VISIT
-  QUALITY_VISIT
   OUTCOME_SAME_DAY
   FOLLOW_UP_ON_TIME
   ACADEMY_SIGNUP

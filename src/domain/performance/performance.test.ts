@@ -3,7 +3,6 @@ import {
   VISIT_OUTCOMES,
   VISIT_OUTCOME_CODES,
   inferVisitOutcomeCode,
-  isQualityVisit,
   visitOutcomeLabel,
 } from "./visitOutcome";
 import {
@@ -25,13 +24,6 @@ describe("visit outcomes", () => {
     for (const o of VISIT_OUTCOMES) expect(o.label.length).toBeGreaterThan(3);
     expect(visitOutcomeLabel("ORDER_PLACED")).toBe("Order placed");
     expect(visitOutcomeLabel("nope")).toBeNull();
-  });
-
-  it("quality visit threshold is fit >= 4", () => {
-    expect(isQualityVisit(4)).toBe(true);
-    expect(isQualityVisit(5)).toBe(true);
-    expect(isQualityVisit(3)).toBe(false);
-    expect(isQualityVisit(null)).toBe(false);
   });
 
   it("infers codes from free text, strongest commitment first", () => {
@@ -131,7 +123,7 @@ describe("target progress", () => {
 });
 
 describe("daily summary", () => {
-  it("counts visits, quality visits, outcomes, new accounts and follow-ups", () => {
+  it("counts visits, outcomes, new accounts and follow-ups", () => {
     const s = buildDailySummary({
       visits: [
         { accountId: "a1", outcomeCode: "INTERESTED", fitScoreSnapshot: 5, visitType: "first visit", durationMinutes: 45, firstEverVisit: true },
@@ -147,7 +139,6 @@ describe("daily summary", () => {
     });
     expect(s.visits).toBe(5);
     expect(s.visitSlots).toBe(6);
-    expect(s.qualityVisits).toBe(2);
     expect(s.newAccounts).toBe(3);
     expect(s.followUpsDone).toBe(2);
     expect(s.academySignups).toBe(1);
@@ -171,7 +162,7 @@ describe("daily summary", () => {
   it("metricValue and sumMetric read the matching column", () => {
     const a = buildDailySummary({ visits: [{ accountId: "x", outcomeCode: "ORDER_PLACED", fitScoreSnapshot: 5, visitType: "first visit", durationMinutes: 90, firstEverVisit: true }], runs: [] });
     const b = buildDailySummary({ visits: [{ accountId: "y", outcomeCode: "ORDER_PLACED", fitScoreSnapshot: 1, visitType: "first visit", durationMinutes: 45, firstEverVisit: false }], runs: [] });
-    expect(metricValue(a, "QUALITY_VISITS")).toBe(1);
+    expect(metricValue(a, "ORDERS")).toBe(1);
     expect(sumMetric([a, b], "ORDERS")).toBe(2);
     expect(sumMetric([a, b], "NEW_ACCOUNTS")).toBe(1);
     // VISITS is measured in clinic slots: the 90-minute visit counts twice.

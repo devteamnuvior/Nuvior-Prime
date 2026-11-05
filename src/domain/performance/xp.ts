@@ -3,19 +3,17 @@
  * badges and ranking. Persistence lives in src/lib/xp.ts.
  *
  * Design rules:
- * - Points reward quality and follow-through, never raw volume: a fit-4+
- *   visit is worth 2.5× a low-fit one, and strategic outcomes (academy,
- *   first order) dwarf both.
+ * - Points reward follow-through, never raw volume: a logged visit is a
+ *   small base, and strategic outcomes (academy, first order) dwarf it.
  * - Every point is a ledger row tied to a source, so totals are auditable.
  * - A DNC account never earns points (such visits must not exist; callers
  *   skip them).
  */
 
-import { isQualityVisit, type VisitOutcomeCode } from "./visitOutcome";
+import type { VisitOutcomeCode } from "./visitOutcome";
 
 export const POINT_REASONS = [
   "VISIT",
-  "QUALITY_VISIT",
   "OUTCOME_SAME_DAY",
   "FOLLOW_UP_ON_TIME",
   "ACADEMY_SIGNUP",
@@ -26,8 +24,7 @@ export const POINT_REASONS = [
 export type PointReasonCode = (typeof POINT_REASONS)[number];
 
 export const POINT_RULES: Record<PointReasonCode, { points: number; label: string; description: string }> = {
-  VISIT: { points: 8, label: "Visit logged", description: "A logged visit to a clinic with fit 1–3." },
-  QUALITY_VISIT: { points: 20, label: "Quality visit", description: "A logged visit to a clinic with fit 4 or 5." },
+  VISIT: { points: 10, label: "Visit logged", description: "A logged visit to a clinic (one per clinic per day)." },
   OUTCOME_SAME_DAY: { points: 5, label: "Outcome logged same day", description: "Structured outcome recorded on the visit day." },
   FOLLOW_UP_ON_TIME: { points: 10, label: "Follow-up on time", description: "Returned to a clinic on or before the follow-up date you set." },
   ACADEMY_SIGNUP: { points: 40, label: "Academy sign-up", description: "Clinic staff enrolled in NUVIOR Academy or an Aptos pathway." },
@@ -46,7 +43,6 @@ export type VisitPointInput = {
   createdDay: string;
   accountId: string | null;
   outcomeCode: VisitOutcomeCode | string | null;
-  fitScoreSnapshot: number | null;
   /** False when the same rep already logged this account on this day (anti-gaming). */
   firstVisitToAccountToday: boolean;
   /** True when any earlier visit to this account recorded ORDER_PLACED. */
@@ -63,8 +59,7 @@ export function pointsForVisit(v: VisitPointInput): PointAward[] {
   const awards: PointAward[] = [];
   const src = { sourceType: "VisitRecord" as const, sourceId: v.id };
 
-  if (isQualityVisit(v.fitScoreSnapshot)) awards.push({ reason: "QUALITY_VISIT", basePoints: POINT_RULES.QUALITY_VISIT.points, ...src });
-  else awards.push({ reason: "VISIT", basePoints: POINT_RULES.VISIT.points, ...src });
+  awards.push({ reason: "VISIT", basePoints: POINT_RULES.VISIT.points, ...src });
 
   if (v.outcomeCode && v.createdDay === v.day) awards.push({ reason: "OUTCOME_SAME_DAY", basePoints: POINT_RULES.OUTCOME_SAME_DAY.points, ...src });
   if (v.pendingFollowUpDueOn && v.day <= v.pendingFollowUpDueOn) awards.push({ reason: "FOLLOW_UP_ON_TIME", basePoints: POINT_RULES.FOLLOW_UP_ON_TIME.points, ...src });
@@ -123,7 +118,6 @@ export function levelFor(xp: number): Level {
 
 export type BadgeStats = {
   visits: number;
-  qualityVisits: number;
   academySignups: number;
   firstOrders: number;
   followUpsOnTime: number;
@@ -145,7 +139,6 @@ export type BadgeDefinition = {
 export const BADGES: readonly BadgeDefinition[] = [
   { code: "FIRST_STEPS", name: "First steps", description: "10 logged visits.", stat: "visits", threshold: 10, icon: "flag" },
   { code: "CENTURY", name: "Century", description: "100 logged visits.", stat: "visits", threshold: 100, icon: "trophy" },
-  { code: "QUALITY_FOCUS", name: "Quality focus", description: "50 visits to fit-4+ clinics.", stat: "qualityVisits", threshold: 50, icon: "star" },
   { code: "ROUTE_MASTER", name: "Route master", description: "10 days on the daily target.", stat: "daysTargetMet", threshold: 10, icon: "route" },
   { code: "STREAK_5", name: "On a roll", description: "5 working days on target in a row.", stat: "longestStreak", threshold: 5, icon: "bolt" },
   { code: "STREAK_20", name: "Unstoppable", description: "20 working days on target in a row.", stat: "longestStreak", threshold: 20, icon: "bolt" },
@@ -183,19 +176,18 @@ export type LeaderboardEntry = {
   provinceCode: string | null;
   points: number;
   visits: number;
-  qualityVisits: number;
   totalXp: number;
 };
 
 export type RankedEntry = LeaderboardEntry & { rank: number };
 
-/** Sort by period points, then quality visits, then name. Ties share a rank (1, 1, 3). */
+/** Sort by period points, then lifetime XP, then name. Ties share a rank (1, 1, 3). */
 export function rankEntries(entries: readonly LeaderboardEntry[]): RankedEntry[] {
-  const sorted = [...entries].sort((a, b) => b.points - a.points || b.qualityVisits - a.qualityVisits || a.displayName.localeCompare(b.displayName));
+  const sorted = [...entries].sort((a, b) => b.points - a.points || b.totalXp - a.totalXp || a.displayName.localeCompare(b.displayName));
   const out: RankedEntry[] = [];
   for (let i = 0; i < sorted.length; i++) {
     const prev = out[i - 1];
-    const rank = prev && prev.points === sorted[i].points && prev.qualityVisits === sorted[i].qualityVisits ? prev.rank : i + 1;
+    const rank = prev && prev.points === sorted[i].points && prev.totalXp === sorted[i].totalXp ? prev.rank : i + 1;
     out.push({ ...sorted[i], rank });
   }
   return out;

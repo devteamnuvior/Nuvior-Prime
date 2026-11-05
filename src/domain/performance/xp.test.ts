@@ -20,19 +20,18 @@ const base: VisitPointInput = {
   createdDay: "2026-11-03",
   accountId: "a1",
   outcomeCode: "INTERESTED",
-  fitScoreSnapshot: 5,
   firstVisitToAccountToday: true,
   earlierOrderOnAccount: false,
   pendingFollowUpDueOn: null,
 };
 
 describe("points for a visit", () => {
-  it("rewards quality over volume and logs outcome same day", () => {
+  it("pays the visit base and the same-day outcome bonus", () => {
     const awards = pointsForVisit(base);
-    expect(awards.map((a) => a.reason)).toEqual(["QUALITY_VISIT", "OUTCOME_SAME_DAY"]);
-    expect(awards.reduce((s, a) => s + a.basePoints, 0)).toBe(25);
-    const low = pointsForVisit({ ...base, fitScoreSnapshot: 2, createdDay: "2026-11-05" });
-    expect(low.map((a) => a.reason)).toEqual(["VISIT"]);
+    expect(awards.map((a) => a.reason)).toEqual(["VISIT", "OUTCOME_SAME_DAY"]);
+    expect(awards.reduce((s, a) => s + a.basePoints, 0)).toBe(15);
+    const late = pointsForVisit({ ...base, createdDay: "2026-11-05" });
+    expect(late.map((a) => a.reason)).toEqual(["VISIT"]);
   });
 
   it("gives nothing for a second visit to the same account on the same day", () => {
@@ -66,9 +65,9 @@ describe("levels", () => {
 });
 
 describe("badges", () => {
-  const stats: BadgeStats = { visits: 75, qualityVisits: 60, academySignups: 3, firstOrders: 1, followUpsOnTime: 4, daysTargetMet: 2, longestStreak: 3, totalXp: 900 };
+  const stats: BadgeStats = { visits: 75, academySignups: 3, firstOrders: 1, followUpsOnTime: 4, daysTargetMet: 2, longestStreak: 3, totalXp: 900 };
   it("earns thresholds and ranks next badges by progress", () => {
-    expect(earnedBadges(stats).map((b) => b.code)).toEqual(["FIRST_STEPS", "QUALITY_FOCUS", "OPENER"]);
+    expect(earnedBadges(stats).map((b) => b.code)).toEqual(["FIRST_STEPS", "OPENER"]);
     const next = nextBadges(stats, 2);
     expect(next[0].code).toBe("CENTURY");
     expect(next[0].percent).toBe(75);
@@ -83,13 +82,13 @@ describe("badges", () => {
 
 describe("leaderboard", () => {
   const entries: LeaderboardEntry[] = [
-    { userId: "a", displayName: "A", provinceCode: "ON", points: 300, visits: 20, qualityVisits: 10, totalXp: 1000 },
-    { userId: "b", displayName: "B", provinceCode: "ON", points: 300, visits: 18, qualityVisits: 10, totalXp: 900 },
-    { userId: "c", displayName: "C", provinceCode: "ON", points: 250, visits: 25, qualityVisits: 5, totalXp: 800 },
-    { userId: "d", displayName: "D", provinceCode: "ON", points: 100, visits: 9, qualityVisits: 2, totalXp: 100 },
-    { userId: "e", displayName: "E", provinceCode: "ON", points: 90, visits: 9, qualityVisits: 2, totalXp: 100 },
-    { userId: "f", displayName: "F", provinceCode: "ON", points: 10, visits: 1, qualityVisits: 0, totalXp: 10 },
-    { userId: "g", displayName: "G", provinceCode: "ON", points: 0, visits: 0, qualityVisits: 0, totalXp: 0 },
+    { userId: "a", displayName: "A", provinceCode: "ON", points: 300, visits: 20, totalXp: 1000 },
+    { userId: "b", displayName: "B", provinceCode: "ON", points: 300, visits: 18, totalXp: 1000 },
+    { userId: "c", displayName: "C", provinceCode: "ON", points: 250, visits: 25, totalXp: 800 },
+    { userId: "d", displayName: "D", provinceCode: "ON", points: 100, visits: 9, totalXp: 100 },
+    { userId: "e", displayName: "E", provinceCode: "ON", points: 90, visits: 9, totalXp: 100 },
+    { userId: "f", displayName: "F", provinceCode: "ON", points: 10, visits: 1, totalXp: 10 },
+    { userId: "g", displayName: "G", provinceCode: "ON", points: 0, visits: 0, totalXp: 0 },
   ];
   it("ranks with shared ties", () => {
     const r = rankEntries(entries);

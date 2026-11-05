@@ -13,7 +13,6 @@ export type TargetPeriod = (typeof TARGET_PERIODS)[number];
 
 export const TARGET_METRICS = [
   "VISITS",
-  "QUALITY_VISITS",
   "NEW_ACCOUNTS",
   "FOLLOW_UPS",
   "ACADEMY_SIGNUPS",
@@ -23,7 +22,6 @@ export type TargetMetric = (typeof TARGET_METRICS)[number];
 
 export const TARGET_METRIC_LABELS: Record<TargetMetric, string> = {
   VISITS: "Clinics (45-min slots)",
-  QUALITY_VISITS: "Quality visits (fit ≥ 4)",
   NEW_ACCOUNTS: "New accounts visited",
   FOLLOW_UPS: "Follow-ups completed",
   ACADEMY_SIGNUPS: "Academy sign-ups",

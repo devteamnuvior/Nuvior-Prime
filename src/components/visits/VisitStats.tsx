@@ -7,9 +7,8 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 import DirectionsCarOutlined from "@mui/icons-material/DirectionsCarOutlined";
 import FactCheckOutlined from "@mui/icons-material/FactCheckOutlined";
 import RouteOutlined from "@mui/icons-material/RouteOutlined";
-import VerifiedOutlined from "@mui/icons-material/VerifiedOutlined";
+import StarOutlineRounded from "@mui/icons-material/StarOutlineRounded";
 import EventRepeatOutlined from "@mui/icons-material/EventRepeatOutlined";
-import { isQualityVisit } from "@/domain/performance/visitOutcome";
 import { StatBar, StatBreakdown, StatCard, StatRing, useMounted } from "@/components/feedback/StatCard";
 import { duration } from "@/lib/format";
 import { OUTCOME_BUCKETS, outcomeBucket, type LoggedVisitRow, type PlannedRouteRow } from "./visitPresentation";
@@ -20,13 +19,14 @@ export function VisitStats({ runs, visits }: { runs: PlannedRouteRow[]; visits: 
   const mounted = useMounted() || reduceMotion;
   const animate = !reduceMotion;
 
-  const quality = visits.filter((v) => isQualityVisit(v.fitScore)).length;
+  const scored = visits.filter((v) => typeof v.fitScore === "number");
+  const avgFit = scored.length ? Math.round((scored.reduce((a, v) => a + (v.fitScore ?? 0), 0) / scored.length) * 10) / 10 : null;
   const followUps = visits.filter((v) => !!v.nextAction?.trim()).length;
   const stops = runs.reduce((a, r) => a + r.stopCount, 0);
   const drive = runs.reduce((a, r) => a + (r.totalDriveMinutes ?? 0), 0);
   const buckets = OUTCOME_BUCKETS.map((b) => ({ key: b.key, label: b.label, color: b.color, count: visits.filter((v) => outcomeBucket(v.outcomeCode) === b.key).length }));
   const withOutcome = buckets.reduce((a, b) => a + b.count, 0);
-  const qualityRatio = visits.length ? quality / visits.length : 0;
+  const fitRatio = avgFit != null ? avgFit / 5 : 0;
   const followRatio = visits.length ? followUps / visits.length : 0;
 
   return (
@@ -50,15 +50,16 @@ export function VisitStats({ runs, visits }: { runs: PlannedRouteRow[]; visits: 
       />
       <StatCard
         index={1}
-        label="Quality visits"
-        value={quality}
-        icon={VerifiedOutlined}
+        label="Average fit"
+        value={avgFit != null ? Math.round(avgFit * 10) : 0}
+        format={(n) => (avgFit == null ? "—" : (n / 10).toFixed(1))}
+        icon={StarOutlineRounded}
         tone="primary"
         animate={animate}
-        aside={<StatRing ratio={qualityRatio} tone="primary" mounted={mounted} label={`${quality} of ${visits.length} visits had fit 4 or 5`} />}
+        aside={<StatRing ratio={fitRatio} tone="primary" mounted={mounted} label={avgFit != null ? `Average fit ${avgFit} of 5 across ${scored.length} visits` : "No fit scores yet"} />}
         footer={
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            {visits.length ? `Fit 4–5 · ${Math.round(qualityRatio * 100)}% of logged` : "Fit 4–5 count here"}
+            {avgFit != null ? `Out of 5 · ${scored.length} of ${visits.length} visits scored` : "Fit of the clinics you visit"}
           </Typography>
         }
       />

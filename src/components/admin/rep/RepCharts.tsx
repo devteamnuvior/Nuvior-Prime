@@ -30,7 +30,6 @@ function Legend({ items }: { items: { color: string; label: string; dashed?: boo
 export function VisitsTrendChart({ weekly }: { weekly: WeekPoint[] }) {
   const theme = useTheme();
   const primary = theme.palette.primary.main;
-  const quality = theme.palette.success.main;
   const muted = theme.palette.text.disabled;
   const hasData = weekly.some((w) => w.visits > 0);
   const hasTarget = weekly.some((w) => w.target != null);
@@ -44,7 +43,6 @@ export function VisitsTrendChart({ weekly }: { weekly: WeekPoint[] }) {
       <Legend
         items={[
           { color: primary, label: "Visits" },
-          { color: quality, label: "Quality visits (fit ≥ 4)" },
           ...(hasTarget ? [{ color: muted, label: "Weekly target", dashed: true }] : []),
         ]}
       />
@@ -56,7 +54,6 @@ export function VisitsTrendChart({ weekly }: { weekly: WeekPoint[] }) {
         yAxis={[{ min: 0, tickLabelStyle: { fontSize: 11 } }]}
         series={[
           { id: "visits", label: "Visits", data: weekly.map((w) => w.visits), color: primary, curve: "monotoneX", area: true, showMark: weekly.length <= 16 },
-          { id: "quality", label: "Quality visits", data: weekly.map((w) => w.qualityVisits), color: quality, curve: "monotoneX", showMark: false },
           ...(hasTarget
             ? [{ id: "target", label: "Weekly target", data: weekly.map((w) => w.target ?? null), color: muted, curve: "linear" as const, showMark: false }]
             : []),

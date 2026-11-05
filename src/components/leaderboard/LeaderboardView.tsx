@@ -109,7 +109,7 @@ function PodiumPlace({ entry, place, isMe, showProvince, delay }: { entry: Ranke
           {isMe && <CodeChip label="You" />}
         </Box>
         <Typography variant="caption" noWrap sx={{ display: "block", color: "text.secondary" }}>
-          {entry.qualityVisits} quality · {entry.visits} visits{showProvince && entry.provinceCode ? ` · ${entry.provinceCode}` : ""}
+          {entry.visits} visits{showProvince && entry.provinceCode ? ` · ${entry.provinceCode}` : ""}
         </Typography>
       </Box>
       <Box
@@ -182,7 +182,7 @@ export function LeaderboardView({
     <>
       <PageHeader
         title="Leaderboard"
-        description={`XP earned ${periodLabel} · ${rangeFmt.format(new Date(`${range.start}T00:00:00.000Z`))} – ${rangeFmt.format(new Date(`${range.end}T00:00:00.000Z`))}. Points reward quality visits, follow-through and strategic outcomes, never raw volume.`}
+        description={`XP earned ${periodLabel} · ${rangeFmt.format(new Date(`${range.start}T00:00:00.000Z`))} – ${rangeFmt.format(new Date(`${range.end}T00:00:00.000Z`))}. Points reward follow-through and strategic outcomes, never raw volume.`}
         actions={
           <>
             {provinceOptions.length > 1 && (
@@ -242,7 +242,7 @@ export function LeaderboardView({
                 <Box
                   sx={{
                     display: "grid",
-                    gridTemplateColumns: { xs: "36px minmax(0, 1fr) auto", sm: "36px minmax(0, 1fr) 80px 80px 96px" },
+                    gridTemplateColumns: { xs: "36px minmax(0, 1fr) auto", sm: "36px minmax(0, 1fr) 80px 96px" },
                     gap: 3,
                     px: 5,
                     py: 2.5,
@@ -251,8 +251,8 @@ export function LeaderboardView({
                     bgcolor: "background.default",
                   }}
                 >
-                  {["#", "Rep", "Visits", "Quality", "XP"].map((h, i) => (
-                    <Typography key={h} variant="eyebrow" sx={{ color: "text.faint", textAlign: i >= 2 ? "right" : "left", display: i === 2 || i === 3 ? { xs: "none", sm: "block" } : "block" }}>
+                  {["#", "Rep", "Visits", "XP"].map((h, i) => (
+                    <Typography key={h} variant="eyebrow" sx={{ color: "text.faint", textAlign: i >= 2 ? "right" : "left", display: i === 2 ? { xs: "none", sm: "block" } : "block" }}>
                       {h}
                     </Typography>
                   ))}
@@ -327,9 +327,6 @@ export function LeaderboardView({
                           </Box>
                           <Typography variant="body2" sx={{ display: { xs: "none", sm: "block" }, color: "text.secondary", fontVariantNumeric: "tabular-nums", textAlign: "right" }}>
                             {r.visits}
-                          </Typography>
-                          <Typography variant="body2" sx={{ display: { xs: "none", sm: "block" }, color: "text.secondary", fontVariantNumeric: "tabular-nums", textAlign: "right" }}>
-                            {r.qualityVisits}
                           </Typography>
                           <Typography variant="h3" component="span" sx={{ fontVariantNumeric: "tabular-nums", textAlign: "right", whiteSpace: "nowrap" }}>
                             {nf.format(r.points)}

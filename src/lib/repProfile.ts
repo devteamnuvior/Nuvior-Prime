@@ -142,7 +142,6 @@ export async function loadRepProfile(userId: string, rangeKey: RangeKey): Promis
     plannedStops: s.plannedStops,
     visits: s.visits,
     visitSlots: s.visitSlots,
-    qualityVisits: s.qualityVisits,
     newAccounts: s.newAccounts,
     followUpsDone: s.followUpsDone,
     academySignups: s.academySignups,

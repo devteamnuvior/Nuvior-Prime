@@ -66,6 +66,14 @@ const RELEASES: Release[] = [
       ],
     },
   },
+  {
+    name: "2026-11-05 quality visits removed",
+    file: "prisma/releases/2026-11-05_quality_visits_removed.sql",
+    present: {},
+    absent: {
+      columns: [["RepDailySummary", "qualityVisits"]],
+    },
+  },
 ];
 
 const log = (msg: string) => console.log(`[predeploy] ${msg}`);

@@ -77,7 +77,6 @@ export function buildDayMessage(input: {
   isWorkingDay: boolean;
 }): DayMessage {
   const daily = input.progress.find((p) => p.period === "DAY" && p.metric === "VISITS") ?? null;
-  const quality = input.progress.find((p) => p.period === "DAY" && p.metric === "QUALITY_VISITS") ?? null;
   const monthly = input.progress.filter((p) => p.period === "MONTH");
 
   const followUpNote =
@@ -107,7 +106,6 @@ export function buildDayMessage(input: {
     const extras: string[] = [];
     if (input.streak.days > 1) extras.push(`That makes a ${input.streak.days}-day streak.`);
     else if (input.streak.days === 1) extras.push("Streak started — same again tomorrow keeps it going.");
-    if (quality && quality.status !== "met") extras.push(`${plural(quality.remaining, "more fit-4+ clinic")} would also close the quality target.`);
     return {
       headline: `Today's target reached: ${daily.actual} of ${daily.target} clinics`,
       detail: [...extras, followUpNote].filter(Boolean).join(" ") || null,
@@ -118,9 +116,6 @@ export function buildDayMessage(input: {
   const parts: string[] = [];
   if (input.streak.atRisk) parts.push(`keeps your ${input.streak.days}-day streak alive`);
   else if (input.streak.days === 0) parts.push("starts a streak");
-  if (quality && quality.status !== "met" && quality.remaining <= daily.remaining) {
-    parts.push(`and ${plural(quality.remaining, "fit-4+ clinic")} among them also closes the quality target`);
-  }
 
   const pace = monthly
     .filter((m) => m.status === "behind" && m.dayIndex >= 3)

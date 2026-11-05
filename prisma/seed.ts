@@ -247,7 +247,6 @@ async function main() {
   const startsOn = new Date(Date.UTC(new Date().getUTCFullYear(), 0, 1));
   const defaultTargets: Array<{ period: TargetPeriod; metric: TargetMetric; value: number }> = [
     { period: TargetPeriod.DAY, metric: TargetMetric.VISITS, value: 10 },
-    { period: TargetPeriod.DAY, metric: TargetMetric.QUALITY_VISITS, value: 4 },
     { period: TargetPeriod.WEEK, metric: TargetMetric.FOLLOW_UPS, value: 5 },
     { period: TargetPeriod.MONTH, metric: TargetMetric.NEW_ACCOUNTS, value: 4 },
     { period: TargetPeriod.MONTH, metric: TargetMetric.ACADEMY_SIGNUPS, value: 2 },

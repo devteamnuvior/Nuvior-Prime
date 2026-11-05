@@ -42,7 +42,6 @@ export type RepDashboardDto = {
     visits: number;
     visitsPrev: number;
     visitsDelta: number | null;
-    qualityShare: number | null;
     newAccounts: number;
     avgFitScore: number | null;
     teamAvgFitScore: number | null;
@@ -90,7 +89,7 @@ export async function loadRepDashboard(user: AuthUser): Promise<RepDashboardDto>
     prisma.repDailySummary.findMany({
       where: { userId: user.id, day: { gte: since, lte: parseDayKey(today) } },
       orderBy: { day: "asc" },
-      select: { day: true, visits: true, visitSlots: true, qualityVisits: true, newAccounts: true, avgFitScore: true, plannedStops: true },
+      select: { day: true, visits: true, visitSlots: true, newAccounts: true, avgFitScore: true, plannedStops: true },
     }),
     listSalesTargets(user.id),
     getTargetProgress(user.id, today),
@@ -106,7 +105,6 @@ export async function loadRepDashboard(user: AuthUser): Promise<RepDashboardDto>
 
   const visits = inMonth.reduce((a, r) => a + r.visits, 0);
   const visitsPrev = inPrev.reduce((a, r) => a + r.visits, 0);
-  const qualityVisits = inMonth.reduce((a, r) => a + r.qualityVisits, 0);
   const newAccounts = inMonth.reduce((a, r) => a + r.newAccounts, 0);
   const fitRows = inMonth.filter((r) => r.avgFitScore != null);
   const avgFitScore = fitRows.length ? Math.round((fitRows.reduce((a, r) => a + (r.avgFitScore ?? 0) * r.visits, 0) / Math.max(1, fitRows.reduce((a, r) => a + r.visits, 0))) * 10) / 10 : null;
@@ -159,7 +157,6 @@ export async function loadRepDashboard(user: AuthUser): Promise<RepDashboardDto>
       visits,
       visitsPrev,
       visitsDelta: deltaPercent(visits, visitsPrev),
-      qualityShare: visits > 0 ? Math.round((qualityVisits / visits) * 100) : null,
       newAccounts,
       avgFitScore,
       teamAvgFitScore,

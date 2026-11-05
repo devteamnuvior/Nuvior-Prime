@@ -10,7 +10,7 @@ import type { DailySummaryValues } from "./dailySummary";
 
 export type DailySummaryRow = Pick<
   DailySummaryValues,
-  "plannedStops" | "visits" | "visitSlots" | "qualityVisits" | "newAccounts" | "followUpsDone" | "academySignups" | "orders" | "plannedDriveMinutes" | "avgFitScore"
+  "plannedStops" | "visits" | "visitSlots" | "newAccounts" | "followUpsDone" | "academySignups" | "orders" | "plannedDriveMinutes" | "avgFitScore"
 > & { day: string; outcomeCounts: Partial<Record<string, number>> | null };
 
 export type VisitRowInput = {
@@ -35,7 +35,6 @@ export type RepKpis = {
   driveMinutesPerVisit: number | null;
   totals: {
     visits: number;
-    qualityVisits: number;
     plannedStops: number;
     newAccounts: number;
     followUpsDone: number;
@@ -45,7 +44,7 @@ export type RepKpis = {
   };
 };
 
-export type WeekPoint = { weekStart: string; label: string; visits: number; qualityVisits: number; target: number | null };
+export type WeekPoint = { weekStart: string; label: string; visits: number; target: number | null };
 
 export type FunnelStep = { key: string; label: string; value: number };
 
@@ -53,14 +52,13 @@ export type OutcomeSlice = { code: VisitOutcomeCode; label: string; count: numbe
 
 export type ProductMixSlice = { product: string; count: number; percent: number };
 
-export type CalendarCell = { day: string; visits: number; qualityVisits: number };
+export type CalendarCell = { day: string; visits: number };
 
 export type QualityStats = {
   avgFitScore: number | null;
   /** Share of logged visits carrying a structured outcome, 0–100. */
   outcomeCoverage: number | null;
   overdueFollowUps: number;
-  qualityShare: number | null;
 };
 
 const POSITIVE: ReadonlySet<VisitOutcomeCode> = new Set(["INTERESTED", "SAMPLE_LEFT", "QUOTE_REQUESTED", "ORDER_PLACED", "ACADEMY_SIGNUP"]);
@@ -71,7 +69,7 @@ function pct(num: number, den: number): number | null {
 }
 
 export function computeRepKpis(summaries: readonly DailySummaryRow[], targets: readonly SalesTargetLike[]): RepKpis {
-  const totals = { visits: 0, qualityVisits: 0, plannedStops: 0, newAccounts: 0, followUpsDone: 0, academySignups: 0, orders: 0, activeDays: 0 };
+  const totals = { visits: 0, plannedStops: 0, newAccounts: 0, followUpsDone: 0, academySignups: 0, orders: 0, activeDays: 0 };
   let driveMinutes = 0;
   let contactVisits = 0;
   let targetDays = 0;
@@ -82,7 +80,6 @@ export function computeRepKpis(summaries: readonly DailySummaryRow[], targets: r
     if (!active) continue;
     totals.activeDays += 1;
     totals.visits += s.visits;
-    totals.qualityVisits += s.qualityVisits;
     totals.plannedStops += s.plannedStops;
     totals.newAccounts += s.newAccounts;
     totals.followUpsDone += s.followUpsDone;
@@ -115,17 +112,12 @@ export function weeklySeries(summaries: readonly DailySummaryRow[], targets: rea
   while (weekStart <= end) {
     const weekEnd = addDays(weekStart, 6);
     let visits = 0;
-    let qualityVisits = 0;
     for (let d = weekStart; d <= weekEnd; d = addDays(d, 1)) {
-      const s = byDay.get(d);
-      if (s) {
-        visits += s.visits;
-        qualityVisits += s.qualityVisits;
-      }
+      visits += byDay.get(d)?.visits ?? 0;
     }
     const weekly = resolveActiveTarget(targets, "WEEK", "VISITS", weekStart);
     const target = weekly ? weekly.value : resolveDailyVisitsTarget(targets, weekStart).value * 5;
-    points.push({ weekStart, label: weekLabel.format(parseDayKey(weekStart)), visits, qualityVisits, target });
+    points.push({ weekStart, label: weekLabel.format(parseDayKey(weekStart)), visits, target });
     weekStart = addDays(weekStart, 7);
   }
   return points;
@@ -180,8 +172,7 @@ export function activityCalendar(summaries: readonly DailySummaryRow[], start: s
   const byDay = new Map(summaries.map((s) => [s.day, s] as const));
   const cells: CalendarCell[] = [];
   for (let d = start; d <= end; d = addDays(d, 1)) {
-    const s = byDay.get(d);
-    cells.push({ day: d, visits: s?.visits ?? 0, qualityVisits: s?.qualityVisits ?? 0 });
+    cells.push({ day: d, visits: byDay.get(d)?.visits ?? 0 });
   }
   return cells;
 }
@@ -194,12 +185,10 @@ export function qualityStats(visits: readonly VisitRowInput[], today: string): Q
   let fitSum = 0;
   let fitCount = 0;
   let withOutcome = 0;
-  let quality = 0;
   for (const v of visits) {
     if (typeof v.fitScoreSnapshot === "number") {
       fitSum += v.fitScoreSnapshot;
       fitCount += 1;
-      if (v.fitScoreSnapshot >= 4) quality += 1;
     }
     if (isVisitOutcomeCode(v.outcomeCode)) withOutcome += 1;
   }
@@ -215,7 +204,6 @@ export function qualityStats(visits: readonly VisitRowInput[], today: string): Q
     avgFitScore: fitCount ? Math.round((fitSum / fitCount) * 10) / 10 : null,
     outcomeCoverage: pct(withOutcome, visits.length),
     overdueFollowUps: overdue,
-    qualityShare: pct(quality, visits.length),
   };
 }
 
