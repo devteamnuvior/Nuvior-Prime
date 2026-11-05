@@ -17,14 +17,20 @@ import { ConfirmDialog } from "@/components/feedback/ConfirmDialog";
 import { StatusChip } from "@/components/feedback/StatusChip";
 import { LAYOUT } from "@/theme/tokens";
 import {
+  checkInAction,
+  checkOutAction,
   generateVisitListAction,
   getClinicIntelligenceAction,
+  getOpenCheckInAction,
   getClinicWebProfileAction,
   runClinicResearchAction,
   runClinicWebProfileAction,
   type ActionState,
 } from "@/app/actions";
 import type { ClinicWebProfileDto } from "@/domain/clinicProfile/runClinicProfile";
+import { distanceMeters, presenceFor, type CheckInDto } from "@/domain/visits/checkIn";
+import { useRepPosition } from "./useRepPosition";
+import { toast } from "@/components/feedback/toast";
 import { CANADIAN_PROVINCES } from "@/domain/scopeOfPractice";
 import { accessibleProvinces } from "@/domain/auth/permissions";
 import type { GeoPoint } from "@/domain/geo";
@@ -246,6 +252,15 @@ export function TodayRoute({
   }, [start, startText, provinces]);
 
   const data = committed;
+  // Presence: follow the phone while a plan is on screen so the drawer knows when the rep has arrived.
+  const { position: repPosition, status: locationStatus } = useRepPosition(data != null);
+  const [openCheckIn, setOpenCheckIn] = useState<CheckInDto | null>(null);
+  useEffect(() => {
+    if (!data) return;
+    void getOpenCheckInAction().then((r) => {
+      if (r.ok) setOpenCheckIn(r.checkIn);
+    });
+  }, [data]);
   const errorMessage = state.status === "error" ? state.message : null;
 
   useEffect(() => {
@@ -397,6 +412,15 @@ export function TodayRoute({
   const selectedStop = selectedId
     ? (displayStops.find((s) => s.accountId === selectedId) ?? null)
     : null;
+  const selectedPresence = selectedStop
+    ? presenceFor({
+        placeId: selectedStop.accountId,
+        openCheckIn,
+        position: repPosition,
+        locationStatus,
+        stop: data?.coordsByAccountId[selectedStop.accountId] ?? null,
+      })
+    : null;
   const brief = briefId && data ? (data.briefByAccountId[briefId] ?? null) : null;
   const briefRoute = briefId && data ? data.routeByAccountId[briefId] : undefined;
   const briefIntelligence = briefId ? intelligenceByAccountId[briefId] : undefined;
@@ -452,6 +476,25 @@ export function TodayRoute({
 
   // Claude web research: public contact/identity facts. Cached read on select;
   // the provider only runs when the rep asks for it (it costs an API call).
+  async function checkInAt(accountId: string) {
+    const stopCoords = data?.coordsByAccountId[accountId] ?? null;
+    const distanceM = repPosition && stopCoords ? distanceMeters(repPosition, stopCoords) : null;
+    const r = await checkInAction({ placeId: accountId, lat: repPosition?.lat ?? null, lng: repPosition?.lng ?? null, distanceM });
+    if (r.ok) setOpenCheckIn(r.checkIn);
+    else toast.error(r.error);
+  }
+
+  async function checkOut(): Promise<CheckInDto | null> {
+    if (!openCheckIn) return null;
+    const r = await checkOutAction({ checkInId: openCheckIn.id });
+    if (!r.ok) {
+      toast.error(r.error);
+      return null;
+    }
+    setOpenCheckIn(null);
+    return r.checkIn;
+  }
+
   async function loadWebProfile(accountId: string, run = false) {
     if (!data) return;
     const stop = data.routeByAccountId[accountId];
@@ -770,6 +813,9 @@ export function TodayRoute({
               onProfile={() => void loadWebProfile(selectedStop.accountId, true)}
               onClose={() => setSelectedId(null)}
               onViewBrief={SHOW_PRE_VISIT_BRIEF ? () => setBriefId(selectedStop.accountId) : undefined}
+              presence={selectedPresence}
+              onCheckIn={() => checkInAt(selectedStop.accountId)}
+              onCheckOut={checkOut}
             />
           )}
         </Box>

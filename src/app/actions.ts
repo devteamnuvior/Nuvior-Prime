@@ -34,6 +34,8 @@ import {
   type ClinicWebProfileDto,
 } from "@/domain/clinicProfile/runClinicProfile";
 import { getClinicProfileProvider } from "@/providers/clinicProfile";
+import { attachVisitToCheckIn, closeCheckIn, getOpenCheckIn, openCheckIn } from "@/lib/checkInStore";
+import type { CheckInDto } from "@/domain/visits/checkIn";
 import { recomputeRepDailySummary, upsertSalesTarget, deleteSalesTarget, type SalesTargetRow } from "@/lib/performance";
 import { DAILY_CLINIC_SLOTS, TARGET_METRICS, TARGET_PERIODS, VISIT_OUTCOME_CODES, VISIT_DURATIONS, isVisitDuration } from "@/domain/performance";
 
@@ -228,6 +230,8 @@ export async function recordVisitAction(input: {
   nextAction?: string;
   followUpDate?: string;
   notes?: string;
+  /** The check-in this visit closes, when the rep checked in on arrival. */
+  checkInId?: string | null;
 }): Promise<{ ok: boolean; message: string }> {
   try {
     const user = await requireSessionUser();
@@ -253,6 +257,7 @@ export async function recordVisitAction(input: {
     if ("error" in result) {
       return { ok: false, message: result.error };
     }
+    if (input.checkInId) await attachVisitToCheckIn(user.id, input.checkInId, result.id);
 
     await writeAuditEvent({
       actor: user,
@@ -270,6 +275,71 @@ export async function recordVisitAction(input: {
   } catch (e) {
     if (e instanceof AuthError) return { ok: false, message: `${e.code}: ${e.message}` };
     return { ok: false, message: e instanceof Error ? e.message : "Failed" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Clinic check-in / check-out — the rep's presence at a stop. One open check-in per rep.
+// ---------------------------------------------------------------------------
+
+/** The caller's open check-in, so a reload keeps the Check Out button. */
+export async function getOpenCheckInAction(): Promise<{ ok: true; checkIn: CheckInDto | null } | { ok: false; error: string }> {
+  try {
+    const user = await requireSessionUser();
+    requirePermission(user, "visit.create");
+    return { ok: true, checkIn: await getOpenCheckIn(user.id) };
+  } catch (e) {
+    if (e instanceof AuthError) return { ok: false, error: `${e.code}: ${e.message}` };
+    return { ok: false, error: e instanceof Error ? e.message : "Unexpected error" };
+  }
+}
+
+const checkInInputSchema = z.object({
+  placeId: z.string().min(1),
+  lat: z.number().min(-90).max(90).nullable(),
+  lng: z.number().min(-180).max(180).nullable(),
+  distanceM: z.number().min(0).max(1_000_000).nullable(),
+});
+
+export async function checkInAction(input: z.infer<typeof checkInInputSchema>): Promise<{ ok: true; checkIn: CheckInDto } | { ok: false; error: string }> {
+  try {
+    const user = await requireSessionUser();
+    requirePermission(user, "visit.create");
+    const parsed = checkInInputSchema.safeParse(input);
+    if (!parsed.success) return { ok: false, error: parsed.error.issues.map((i) => i.message).join("; ") };
+    await requireAccountAccess(user, { placeId: parsed.data.placeId });
+    const checkIn = await openCheckIn({ userId: user.id, ...parsed.data });
+    await writeAuditEvent({
+      actor: user,
+      action: "visit.checkin",
+      resourceType: "ClinicCheckIn",
+      resourceId: checkIn.id,
+      metadata: { placeId: parsed.data.placeId, distanceM: parsed.data.distanceM, manual: parsed.data.lat == null },
+    });
+    return { ok: true, checkIn };
+  } catch (e) {
+    if (e instanceof AuthError) return { ok: false, error: `${e.code}: ${e.message}` };
+    return { ok: false, error: e instanceof Error ? e.message : "Unexpected error" };
+  }
+}
+
+export async function checkOutAction(input: { checkInId: string }): Promise<{ ok: true; checkIn: CheckInDto } | { ok: false; error: string }> {
+  try {
+    const user = await requireSessionUser();
+    requirePermission(user, "visit.create");
+    const checkIn = await closeCheckIn(user.id, z.string().min(1).parse(input.checkInId));
+    if (!checkIn) return { ok: false, error: "No such check-in" };
+    await writeAuditEvent({
+      actor: user,
+      action: "visit.checkout",
+      resourceType: "ClinicCheckIn",
+      resourceId: checkIn.id,
+      metadata: { placeId: checkIn.placeId, checkedInAt: checkIn.checkedInAt, checkedOutAt: checkIn.checkedOutAt },
+    });
+    return { ok: true, checkIn };
+  } catch (e) {
+    if (e instanceof AuthError) return { ok: false, error: `${e.code}: ${e.message}` };
+    return { ok: false, error: e instanceof Error ? e.message : "Unexpected error" };
   }
 }
 

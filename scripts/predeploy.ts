@@ -88,6 +88,13 @@ const RELEASES: Release[] = [
       tables: ["PointEvent", "UserBadge"],
     },
   },
+  {
+    name: "2026-11-05 clinic check-in / check-out",
+    file: "prisma/releases/2026-11-05_check_in.sql",
+    present: {
+      tables: ["ClinicCheckIn"],
+    },
+  },
 ];
 
 const log = (msg: string) => console.log(`[predeploy] ${msg}`);

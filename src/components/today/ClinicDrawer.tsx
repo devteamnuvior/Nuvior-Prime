@@ -29,6 +29,7 @@ import { ClinicWebProfileSection } from "@/components/intelligence/ClinicWebProf
 import type { ClinicIntelligenceDto } from "@/domain/intelligence/clinicIntelligenceDto";
 import type { ClinicWebProfileDto } from "@/domain/clinicProfile/runClinicProfile";
 import { SHOW_TAXONOMY_VERIFICATION, TAXONOMY_VERIFY_FIELD_LABEL } from "@/domain/taxonomy";
+import { formatDistance, suggestedDurationMinutes, type CheckInDto, type PresenceState } from "@/domain/visits/checkIn";
 
 const SWIPE_CLOSE_PX = 90;
 /** Facts shown in the Contact block, so Signals does not repeat them. */
@@ -50,6 +51,9 @@ export function ClinicDrawer({
   onProfile,
   onClose,
   onViewBrief,
+  presence = null,
+  onCheckIn,
+  onCheckOut,
 }: {
   stop: PlannedRouteStop;
   /** Sequence shown to the rep (reflects any manual reorder). */
@@ -69,8 +73,38 @@ export function ClinicDrawer({
   onClose: () => void;
   /** Omit to hide the pre-visit brief button. */
   onViewBrief?: () => void;
+  /** Where the rep is relative to this stop; null hides check-in entirely. */
+  presence?: PresenceState | null;
+  onCheckIn?: () => Promise<void>;
+  /** Resolves with the closed check-in; the visit form opens on it. */
+  onCheckOut?: () => Promise<CheckInDto | null>;
 }) {
   const [visitOpen, setVisitOpen] = useState(false);
+  // The check-in that Check Out just closed: the visit form links to it and suggests a duration from the stay.
+  const [closedCheckIn, setClosedCheckIn] = useState<CheckInDto | null>(null);
+  const [presenceBusy, setPresenceBusy] = useState(false);
+  const handleCheckIn = async () => {
+    if (!onCheckIn) return;
+    setPresenceBusy(true);
+    try {
+      await onCheckIn();
+    } finally {
+      setPresenceBusy(false);
+    }
+  };
+  const handleCheckOut = async () => {
+    if (!onCheckOut) return;
+    setPresenceBusy(true);
+    try {
+      const closed = await onCheckOut();
+      if (closed) {
+        setClosedCheckIn(closed);
+        setVisitOpen(true);
+      }
+    } finally {
+      setPresenceBusy(false);
+    }
+  };
   const crm = data.crmByAccountId[stop.accountId];
   const origins = data.fieldOriginsByAccountId[stop.accountId];
   const facts = data.enrichmentByAccountId[stop.accountId]?.facts;
@@ -354,9 +388,7 @@ export function ClinicDrawer({
           )}
         </Box>
 
-        <Button variant="outlined" fullWidth onClick={() => setVisitOpen(true)} sx={{ mt: 2, minHeight: 40, fontWeight: 600 }}>
-          Record Visit
-        </Button>
+        {presence && <PresenceActions presence={presence} busy={presenceBusy} onCheckIn={handleCheckIn} onCheckOut={handleCheckOut} />}
 
         {/* Visit record: centred dialog on desktop, bottom sheet on phones. Closes itself after a save. */}
         <Dialog
@@ -381,12 +413,88 @@ export function ClinicDrawer({
               crmExternalId={crm?.crmExternalId ?? null}
               businessName={stop.businessName}
               embedded
-              onSaved={() => setVisitOpen(false)}
+              checkInId={closedCheckIn?.id ?? null}
+              initialDurationMinutes={closedCheckIn ? suggestedDurationMinutes(closedCheckIn.checkedInAt, closedCheckIn.checkedOutAt ?? undefined) : 45}
+              onSaved={() => {
+                setVisitOpen(false);
+                setClosedCheckIn(null);
+              }}
             />
           </DialogContent>
         </Dialog>
       </Box>
     </Paper>
+  );
+}
+
+/**
+ * Check In appears once the phone is within CHECK_IN_RADIUS_M of the stop (or by hand when
+ * there is no fix); Check Out replaces it while checked in here and opens the visit form.
+ */
+function PresenceActions({
+  presence,
+  busy,
+  onCheckIn,
+  onCheckOut,
+}: {
+  presence: PresenceState;
+  busy: boolean;
+  onCheckIn: () => void;
+  onCheckOut: () => void;
+}) {
+  const caption = (text: string, tone: "secondary" | "faint" = "secondary") => (
+    <Typography variant="caption" sx={{ display: "block", mt: 1, textAlign: "center", color: `text.${tone}` }}>
+      {text}
+    </Typography>
+  );
+  const since = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  const checkInButton = (enabled: boolean) => (
+    <Button variant="outlined" fullWidth disabled={!enabled || busy} onClick={onCheckIn} sx={{ minHeight: 40, fontWeight: 600 }}>
+      {busy ? "Checking in…" : "Check In"}
+    </Button>
+  );
+  return (
+    <Box sx={{ mt: 2 }}>
+      {presence.kind === "checked_in" && (
+        <>
+          <Button variant="contained" fullWidth disabled={busy} onClick={onCheckOut} sx={{ minHeight: 40, fontWeight: 600 }}>
+            {busy ? "Checking out…" : "Check Out"}
+          </Button>
+          {caption(`Checked in at ${since(presence.checkIn.checkedInAt)}`)}
+        </>
+      )}
+      {presence.kind === "checked_in_elsewhere" && (
+        <>
+          {checkInButton(false)}
+          {caption("Check out of your current clinic first.")}
+        </>
+      )}
+      {presence.kind === "arrived" && (
+        <>
+          {checkInButton(true)}
+          {caption(`You're here · ${formatDistance(presence.distanceM)} from the door`)}
+        </>
+      )}
+      {presence.kind === "no_location" && (
+        <>
+          {checkInButton(true)}
+          {caption(
+            presence.status === "denied"
+              ? "Location is off — check in by hand."
+              : presence.status === "watching"
+                ? "Waiting for a location fix — or check in by hand."
+                : "No location on this device — check in by hand.",
+            "faint",
+          )}
+        </>
+      )}
+      {presence.kind === "away" && (
+        <>
+          {checkInButton(false)}
+          {caption(`Check In appears when you arrive · ${formatDistance(presence.distanceM)} away`, "faint")}
+        </>
+      )}
+    </Box>
   );
 }
 

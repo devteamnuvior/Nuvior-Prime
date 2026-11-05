@@ -144,6 +144,7 @@ model Account {
   visitRecords      VisitRecord[]
   assignments       AccountAssignment[]
   repPositions      RepPosition[]
+  checkIns          ClinicCheckIn[]
   createdAt         DateTime               @default(now())
   updatedAt         DateTime               @updatedAt
 }
@@ -429,12 +430,37 @@ model VisitRecord {
   followUpDate      DateTime?
   notes             String?
   createdAt         DateTime      @default(now())
+  /// The check-in this record closed, when the rep checked in on arrival.
+  checkIn           ClinicCheckIn?
 
   @@index([placeId])
   @@index([crmExternalId])
   @@index([visitDate])
   @@index([createdByUserId])
   @@index([createdByUserId, visitDate])
+}
+
+/// A rep's presence at a clinic: Check In on arrival (within CHECK_IN_RADIUS_M of the stop,
+/// or by hand when the phone has no fix), Check Out when leaving. Checking out opens the
+/// visit form; the saved VisitRecord links back here. One open check-in per rep at a time.
+model ClinicCheckIn {
+  id            String       @id @default(cuid())
+  userId        String
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  placeId       String
+  accountId     String?
+  account       Account?     @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  checkedInAt   DateTime     @default(now())
+  checkedOutAt  DateTime?
+  /// Phone position at check-in and how far it was from the clinic; null for a manual check-in.
+  lat           Float?
+  lng           Float?
+  distanceM     Float?
+  visitRecordId String?      @unique
+  visitRecord   VisitRecord? @relation(fields: [visitRecordId], references: [id], onDelete: SetNull)
+
+  @@index([userId, checkedOutAt])
+  @@index([placeId])
 }
 
 /// Performance phase 1 — target periods and metrics.
@@ -633,6 +659,7 @@ model User {
   targetsCreated    SalesTarget[]       @relation("TargetsCreated")
   dailySummaries    RepDailySummary[]   @relation("DailySummaries")
   position          RepPosition?
+  checkIns          ClinicCheckIn[]
 
   @@index([role])
   @@index([status])

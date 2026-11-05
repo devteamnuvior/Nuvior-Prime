@@ -26,6 +26,8 @@ export function VisitRecordForm({
   crmExternalId,
   businessName,
   embedded = false,
+  checkInId = null,
+  initialDurationMinutes = 45,
   onSaved,
 }: {
   placeId: string;
@@ -35,6 +37,10 @@ export function VisitRecordForm({
   embedded?: boolean;
   /** Called after a successful save (the dialog closes on it). */
   onSaved?: () => void;
+  /** The check-in this visit closes; saved on the record so the stay and the visit stay linked. */
+  checkInId?: string | null;
+  /** Preselected time at clinic, e.g. suggested from the check-in / check-out stay. */
+  initialDurationMinutes?: VisitDurationMinutes;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -47,7 +53,7 @@ export function VisitRecordForm({
   const [nextAction, setNextAction] = useState("");
   const [followUpDate, setFollowUpDate] = useState("");
   const [visitType, setVisitType] = useState("first visit");
-  const [durationMinutes, setDurationMinutes] = useState<VisitDurationMinutes>(45);
+  const [durationMinutes, setDurationMinutes] = useState<VisitDurationMinutes>(initialDurationMinutes);
   const [outcomeError, setOutcomeError] = useState<string | null>(null);
 
   const outcomeHint = outcomeCode ? visitOutcomeDefinition(outcomeCode).hint : "Required — pick what happened.";
@@ -72,6 +78,7 @@ export function VisitRecordForm({
             const r = await recordVisitAction({
               placeId,
               crmExternalId,
+              checkInId,
               visitDate: String(fd.get("visitDate")),
               visitType,
               durationMinutes,
@@ -89,7 +96,7 @@ export function VisitRecordForm({
               // Refresh server data (My day panel, targets) while keeping the planned route in client state.
               router.refresh();
               setNotes("");
-              setDurationMinutes(45);
+              setDurationMinutes(initialDurationMinutes);
               setOutcomeCode("");
               setOutcomeNote("");
               setPeopleMet("");
