@@ -103,6 +103,11 @@ export type CrmOverlaySnapshot = {
   };
 };
 
+export type PlaceContact = {
+  phone: string | null;
+  website: string | null;
+};
+
 export type ProspectSearchSuccess = {
   ok: true;
   startPoint: { lat: number; lng: number };
@@ -123,6 +128,8 @@ export type ProspectSearchSuccess = {
   qualifiedCount: number;
   verificationQueue: VerificationItem[];
   enrichmentByAccountId: Record<string, EnrichmentResult>;
+  /** Contact details straight from the Places provider (null when Google has none). */
+  contactByAccountId: Record<string, PlaceContact>;
   fieldOriginsByAccountId: Record<
     string,
     {
@@ -361,6 +368,7 @@ export async function runProspectSearch(
   const candidates: ProspectCandidate[] = [];
   const fieldOriginsByAccountId: ProspectSearchSuccess["fieldOriginsByAccountId"] = {};
   const crmByAccountId: Record<string, CrmOverlaySnapshot> = {};
+  const contactByAccountId: Record<string, PlaceContact> = {};
   const matchingQueue: ProspectSearchSuccess["matchingQueue"] = [];
   const verificationQueue: VerificationItem[] = [];
   const openingHoursByAccountId: Record<string, unknown | null | undefined> = {};
@@ -486,6 +494,11 @@ export async function runProspectSearch(
       crmFields.push(`match=${match.state}: ${match.reason}`);
       if (dnc.crmUnverified) crmFields.push("internal status NOT VERIFIED");
     }
+
+    contactByAccountId[place.placeId] = {
+      phone: place.mainPhone && place.mainPhone !== UNKNOWN_VERIFY ? place.mainPhone : null,
+      website: place.website,
+    };
 
     crmByAccountId[place.placeId] = {
       match,
@@ -849,6 +862,7 @@ export async function runProspectSearch(
     qualifiedCount: result.entries.length,
     verificationQueue,
     enrichmentByAccountId,
+    contactByAccountId,
     fieldOriginsByAccountId,
     crmByAccountId,
     matchingQueue,

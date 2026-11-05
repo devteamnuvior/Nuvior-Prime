@@ -33,19 +33,7 @@ export class MockClinicProfileProvider implements ClinicProfileProvider {
       clinicName: request.businessName,
       matchConfidence: "LOW",
       matchReason: "Mock provider — fixture data, not a real lookup",
-      address: {
-        street: request.streetAddress,
-        city: request.city,
-        province: request.provinceCode,
-        postalCode: request.postalCode,
-        formatted: [request.streetAddress, request.city, request.provinceCode, request.postalCode]
-          .filter(Boolean)
-          .join(", ") || null,
-        sourceUrl: site,
-      },
-      phones: [{ number: request.knownPhone ?? "+1 555 010 0000", label: "main (mock)", sourceUrl: site }],
       emails: [{ address: `info@mock-${slug(request.businessName)}.example`, label: "mock", sourceUrl: site }],
-      website: { url: site, sourceUrl: site },
       socialProfiles: [
         {
           platform: "instagram",
@@ -55,7 +43,6 @@ export class MockClinicProfileProvider implements ClinicProfileProvider {
         },
       ],
       people: [{ name: "Mock Clinic Manager", role: "Clinic manager (mock)", snippet: null, sourceUrl: site }],
-      openingHours: [{ label: "Mon–Fri", hours: "9:00 AM – 5:00 PM (mock)", sourceUrl: site }],
       services: ["Mock injectables", "Mock skin treatments"],
       products: [
         { name: "Mock Neuromodulator", kind: "injectable", context: "listed under Injectables (mock)", sourceUrl: site },

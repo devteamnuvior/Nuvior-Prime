@@ -20,9 +20,10 @@ const PRODUCT_KIND_LABEL: Record<ClinicProduct["kind"], string> = {
 };
 
 /**
- * Public contact & identity facts about the clinic, plus the products and
- * devices it publishes, researched by Claude from public web sources. Every
- * fact links to the page it was read from.
+ * What Claude finds on the public web that Google Places does not list:
+ * emails, social profiles, leadership, services and the products and devices
+ * the clinic publishes. Address, phone, website and hours are shown from
+ * Google Places elsewhere in the drawer. Every fact links to its source page.
  */
 export function ClinicWebProfileSection({
   dto,
@@ -42,16 +43,11 @@ export function ClinicWebProfileSection({
   if (state === "NOT_RESEARCHED" || !profile) {
     const failure = state === "FAILED" || state === "UNAVAILABLE" ? dto?.failureMessage : null;
     return (
-      <Shell title="Clinic contact research">
-        {failure ? (
+      <Shell title="Clinic web research">
+        {failure && (
           <Typography variant="body2" sx={{ color: "warning.main" }}>
             {failure}
           </Typography>
-        ) : (
-          <Muted>
-            Look up this clinic&apos;s address, phone numbers, website, social profiles, leadership and the
-            products and devices it publishes, from public sources.
-          </Muted>
         )}
         <Button
           variant="contained"
@@ -61,7 +57,7 @@ export function ClinicWebProfileSection({
           disabled={state === "UNAVAILABLE" || isRunning}
           startIcon={isRunning ? spinner : undefined}
           aria-busy={isRunning}
-          sx={{ mt: 3, fontWeight: 600 }}
+          sx={{ mt: failure ? 3 : 0, fontWeight: 600 }}
         >
           {isRunning ? "Researching…" : failure ? "Retry with Claude" : "Find clinic info with Claude"}
         </Button>
@@ -70,7 +66,7 @@ export function ClinicWebProfileSection({
   }
 
   return (
-    <Shell title="Clinic contact research">
+    <Shell title="Clinic web research">
       <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1.5 }}>
         <Badge tone={profile.matchConfidence === "HIGH" ? "accent" : profile.matchConfidence === "MEDIUM" ? "neutral" : "signal"}>
           Match {profile.matchConfidence.toLowerCase()}
@@ -82,33 +78,6 @@ export function ClinicWebProfileSection({
         <Typography variant="caption" sx={{ display: "block", mt: 1.5, color: "text.secondary" }}>
           {profile.matchReason}
         </Typography>
-      )}
-
-      {profile.address && (profile.address.formatted || profile.address.street) && (
-        <Row label="Address">
-          <Sourced url={profile.address.sourceUrl}>
-            {profile.address.formatted ??
-              [profile.address.street, profile.address.city, profile.address.province, profile.address.postalCode]
-                .filter(Boolean)
-                .join(", ")}
-          </Sourced>
-        </Row>
-      )}
-
-      {profile.phones.length > 0 && (
-        <Row label="Phone">
-          <PlainList gap={0.5}>
-            {profile.phones.map((p) => (
-              <li key={`${p.number}-${p.label ?? ""}`}>
-                <Link href={`tel:${p.number.replace(/[^+\d]/g, "")}`} color="text.primary">
-                  {p.number}
-                </Link>
-                {p.label && <MutedSpan> · {p.label}</MutedSpan>}
-                <SourceLink url={p.sourceUrl} />
-              </li>
-            ))}
-          </PlainList>
-        </Row>
       )}
 
       {profile.emails.length > 0 && (
@@ -124,12 +93,6 @@ export function ClinicWebProfileSection({
               </li>
             ))}
           </PlainList>
-        </Row>
-      )}
-
-      {profile.website && (
-        <Row label="Website">
-          <ExternalLink url={profile.website.url} />
         </Row>
       )}
 
@@ -156,19 +119,6 @@ export function ClinicWebProfileSection({
                 </Box>
                 <MutedSpan> · {p.role}</MutedSpan>
                 <SourceLink url={p.sourceUrl} />
-              </li>
-            ))}
-          </PlainList>
-        </Row>
-      )}
-
-      {profile.openingHours.length > 0 && (
-        <Row label="Hours">
-          <PlainList gap={0.5}>
-            {profile.openingHours.map((h) => (
-              <li key={`${h.label}-${h.hours}`}>
-                <MutedSpan>{h.label}</MutedSpan> {h.hours}
-                <SourceLink url={h.sourceUrl} />
               </li>
             ))}
           </PlainList>
@@ -280,15 +230,6 @@ function MutedSpan({ children, sx }: { children: React.ReactNode; sx?: Parameter
     <Box component="span" sx={[{ color: "text.secondary" }, ...(Array.isArray(sx) ? sx : [sx])]}>
       {children}
     </Box>
-  );
-}
-
-function Sourced({ url, children }: { url: string | null; children: React.ReactNode }) {
-  return (
-    <span>
-      {children}
-      <SourceLink url={url} />
-    </span>
   );
 }
 

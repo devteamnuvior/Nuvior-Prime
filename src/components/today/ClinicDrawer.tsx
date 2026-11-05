@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
+import Link from "@mui/material/Link";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
@@ -65,6 +66,7 @@ export function ClinicDrawer({
 }) {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const crm = data.crmByAccountId[stop.accountId];
+  const contact = data.contactByAccountId[stop.accountId];
   const origins = data.fieldOriginsByAccountId[stop.accountId];
 
   const verified = (origins?.enrichedFields ?? []).slice(0, 3);
@@ -210,6 +212,30 @@ export function ClinicDrawer({
             </Typography>
           )}
         </Section>
+
+        {(contact?.phone || contact?.website) && (
+          <Section title="Contact">
+            <PlainList gap={0.5}>
+              {contact.phone && (
+                <li>
+                  <Link href={`tel:${contact.phone.replace(/[^+\d]/g, "")}`} color="text.primary">
+                    {contact.phone}
+                  </Link>
+                </li>
+              )}
+              {contact.website && (
+                <li>
+                  <Link href={contact.website} target="_blank" rel="noreferrer" color="primary.main" sx={{ overflowWrap: "anywhere" }}>
+                    {contact.website.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+                  </Link>
+                </li>
+              )}
+            </PlainList>
+            <Typography variant="caption" sx={{ display: "block", mt: 1, color: "text.faint" }}>
+              From Google Places
+            </Typography>
+          </Section>
+        )}
 
         {(verified.length > 0 || toVerify.length > 0) && (
           <Section title="Signals">

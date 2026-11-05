@@ -100,8 +100,8 @@ describe("clinic profile schema", () => {
     const r = validateClinicWebProfile({ clinicName: "X", matchConfidence: "MEDIUM" });
     expect(r.ok).toBe(true);
     if (r.ok) {
-      expect(r.value.phones).toEqual([]);
-      expect(r.value.website).toBeNull();
+      expect(r.value.emails).toEqual([]);
+      expect(r.value.websiteSummary).toBeNull();
       expect(r.value.products).toEqual([]);
     }
   });
@@ -112,17 +112,25 @@ describe("clinic profile schema", () => {
     const r = validateClinicWebProfile({
       ...base,
       emails: [{ address: "info@clinic.example", label: long, sourceUrl: "https://clinic.example" }],
-      phones: Array.from({ length: 14 }, (_, i) => ({ number: `+1 416 555 01${String(i).padStart(2, "0")}` })),
+      people: Array.from({ length: 14 }, (_, i) => ({ name: `Person ${i}`, role: "Injector" })),
       services: ["Injectables", "", "   ", "Laser"],
     });
     expect(r.ok).toBe(true);
     if (r.ok) {
       expect(r.value.emails[0]?.label).toHaveLength(60);
-      expect(r.value.phones).toHaveLength(10);
+      expect(r.value.people).toHaveLength(12);
       expect(r.value.services).toEqual(["Injectables", "Laser"]);
     }
     // Shape errors still reject.
-    expect(validateClinicWebProfile({ ...base, phones: [{ number: "1" }] }).ok).toBe(false);
+    expect(validateClinicWebProfile({ ...base, emails: [{ address: "x" }] }).ok).toBe(false);
+  });
+
+  it("rejects the fields Google Places already provides", () => {
+    const base = { clinicName: "X", matchConfidence: "HIGH" };
+    expect(validateClinicWebProfile({ ...base, phones: [{ number: "+1 416 555 0100" }] }).ok).toBe(false);
+    expect(validateClinicWebProfile({ ...base, website: { url: "https://clinic.example" } }).ok).toBe(false);
+    expect(validateClinicWebProfile({ ...base, address: { city: "Toronto" } }).ok).toBe(false);
+    expect(validateClinicWebProfile({ ...base, openingHours: [{ label: "Mon", hours: "9-5" }] }).ok).toBe(false);
   });
 
   it("accepts published products with a kind and a source, rejects unknown kinds", () => {
@@ -151,6 +159,18 @@ describe("clinic profile prompts", () => {
     expect(s).toMatch(/sourceUrl/);
     expect(s).toMatch(/never infer a brand/);
     expect(s).toMatch(/"products": \[/);
+  });
+
+  it("leave address, phone, website and hours to Google Places", () => {
+    const s = buildClinicProfileSystemPrompt();
+    expect(s).toMatch(/Do NOT report those/);
+    expect(s).not.toMatch(/"phones": \[/);
+    expect(s).not.toMatch(/"website": \{/);
+    expect(s).not.toMatch(/"address": \{/);
+    expect(s).not.toMatch(/"openingHours": \[/);
+    const u = buildClinicProfileUserPrompt({ ...req(), knownWebsite: "https://clinic.example", knownPhone: "+1 416 555 0100" });
+    expect(u).toMatch(/website on file \(Google Places\): https:\/\/clinic.example/);
+    expect(u).toMatch(/Do not report them back/);
   });
 
   it("include the clinic identity and strip secrets", () => {

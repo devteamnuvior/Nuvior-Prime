@@ -1,17 +1,22 @@
 /**
- * Clinic web profile — public contact/identity facts about a clinic, gathered
- * by the research provider from public web sources. Every fact carries the
- * URL it was read from; anything not found stays out (or lands in `unknowns`).
+ * Clinic web profile — what Claude finds about a clinic on the public web that
+ * Google Places does not already give us: emails, social profiles, leadership,
+ * services, and the products, brands and devices the clinic itself says it
+ * uses or sells — as published, never inferred. Every fact carries the URL it
+ * was read from; anything not found stays out (or lands in `unknowns`).
  *
- * It also records the products, brands and devices the clinic itself says it
- * uses or sells — as published, never inferred. No product recommendations,
- * no qualification, no CRM/DNC decisions.
+ * Address, phone, website and opening hours come from Google Places and are
+ * deliberately NOT part of this profile. No product recommendations, no
+ * qualification, no CRM/DNC decisions.
  */
 
 import { z } from "zod";
 
-/** v2 adds `products` (brands, devices, skincare lines the clinic publishes). Older rows show as stale. */
-export const CLINIC_PROFILE_PROMPT_VERSION = "clinic-profile-v2";
+/**
+ * v3 drops address, phones, website and opening hours (Google Places owns them);
+ * v2 added `products`. Older rows show as stale.
+ */
+export const CLINIC_PROFILE_PROMPT_VERSION = "clinic-profile-v3";
 
 /**
  * Claude occasionally overshoots a length ("Bookings & general enquiries (front desk)…")
@@ -46,21 +51,6 @@ export const SOCIAL_PLATFORMS = [
 
 export const MATCH_CONFIDENCE = ["HIGH", "MEDIUM", "LOW"] as const;
 
-export const clinicAddressSchema = z.object({
-  street: shortText.nullable().default(null),
-  city: shortText.nullable().default(null),
-  province: clamp(60).nullable().default(null),
-  postalCode: clamp(20).nullable().default(null),
-  formatted: clamp(400).nullable().default(null),
-  ...sourced,
-});
-
-export const clinicPhoneSchema = z.object({
-  number: text(40, 3),
-  label: clamp(60).nullable().default(null),
-  ...sourced,
-});
-
 export const clinicEmailSchema = z.object({
   address: text(200, 3),
   label: clamp(60).nullable().default(null),
@@ -78,12 +68,6 @@ export const clinicPersonSchema = z.object({
   name: shortText,
   role: shortText,
   snippet: clamp(400).nullable().default(null),
-  ...sourced,
-});
-
-export const clinicHoursSchema = z.object({
-  label: text(80),
-  hours: text(120),
   ...sourced,
 });
 
@@ -108,16 +92,9 @@ export const clinicWebProfileSchema = z
     clinicName: shortText,
     matchConfidence: z.enum(MATCH_CONFIDENCE),
     matchReason: clamp(400).nullable().default(null),
-    address: clinicAddressSchema.nullable().default(null),
-    phones: limit(clinicPhoneSchema, 10).default([]),
     emails: limit(clinicEmailSchema, 10).default([]),
-    website: z
-      .object({ url: url, ...sourced })
-      .nullable()
-      .default(null),
     socialProfiles: limit(clinicSocialSchema, 12).default([]),
     people: limit(clinicPersonSchema, 12).default([]),
-    openingHours: limit(clinicHoursSchema, 10).default([]),
     services: limit(text(120), 30).default([]),
     products: limit(clinicProductSchema, 40).default([]),
     websiteSummary: clamp(1500).nullable().default(null),

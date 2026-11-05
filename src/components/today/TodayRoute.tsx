@@ -465,6 +465,7 @@ export function TodayRoute({
       return;
     }
     const enrichment = data.enrichmentByAccountId[accountId];
+    const contact = data.contactByAccountId[accountId];
     setProfilingId(accountId);
     try {
       const result = await runClinicWebProfileAction({
@@ -475,8 +476,8 @@ export function TodayRoute({
         city: stop.city,
         postalCode: stop.postalCode,
         categoryLabel: stop.categoryLabel,
-        knownWebsite: enrichment?.website ?? null,
-        knownPhone: null,
+        knownWebsite: enrichment?.website ?? contact?.website ?? null,
+        knownPhone: contact?.phone ?? null,
       });
       const dto = result.ok ? result.dto : result.dto;
       if (dto) {
