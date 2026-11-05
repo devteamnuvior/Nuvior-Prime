@@ -87,17 +87,22 @@ export function ClinicWebProfileSection({
     );
   }
 
+  const matchLabel = profile.matchConfidence.charAt(0) + profile.matchConfidence.slice(1).toLowerCase();
   return (
-    <Shell title="Clinic web research">
-      <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1.5 }}>
-        <Badge tone={profile.matchConfidence === "HIGH" ? "accent" : profile.matchConfidence === "MEDIUM" ? "neutral" : "signal"}>
-          Match {profile.matchConfidence.toLowerCase()}
-        </Badge>
-        {dto?.provider === "mock" && <Badge tone="outline">Mock data</Badge>}
-        {state === "STALE" && <Badge tone="outline">May be outdated</Badge>}
-      </Box>
+    <Shell
+      title="Clinic web research"
+      aside={
+        <>
+          <Badge tone={profile.matchConfidence === "HIGH" ? "accent" : profile.matchConfidence === "MEDIUM" ? "neutral" : "signal"}>
+            Match {matchLabel}
+          </Badge>
+          {dto?.provider === "mock" && <Badge tone="outline">Mock data</Badge>}
+          {state === "STALE" && <Badge tone="outline">May be outdated</Badge>}
+        </>
+      }
+    >
       {profile.matchReason && (
-        <Typography variant="caption" sx={{ display: "block", mt: 1.5, color: "text.secondary" }}>
+        <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>
           {profile.matchReason}
         </Typography>
       )}
@@ -110,8 +115,8 @@ export function ClinicWebProfileSection({
                 <Link href={`mailto:${e.address}`} color="text.primary">
                   {e.address}
                 </Link>
-                {e.label && <MutedSpan> · {e.label}</MutedSpan>}
                 <SourceLink url={e.sourceUrl} />
+                {e.label && <MutedSpan> · {e.label}</MutedSpan>}
               </li>
             ))}
           </PlainList>
@@ -147,8 +152,8 @@ export function ClinicWebProfileSection({
                 <Box component="span" sx={{ fontWeight: 500 }}>
                   {p.name}
                 </Box>
-                <MutedSpan> · {p.role}</MutedSpan>
                 <SourceLink url={p.sourceUrl} />
+                <MutedSpan> · {p.role}</MutedSpan>
               </li>
             ))}
           </PlainList>
@@ -173,9 +178,9 @@ export function ClinicWebProfileSection({
                 <Box component="span" sx={{ fontWeight: 500 }}>
                   {p.name}
                 </Box>
+                <SourceLink url={p.sourceUrl} />
                 <MutedSpan> · {PRODUCT_KIND_LABEL[p.kind]}</MutedSpan>
                 {p.context && <MutedSpan> · {p.context}</MutedSpan>}
-                <SourceLink url={p.sourceUrl} />
               </li>
             ))}
           </PlainList>
@@ -210,12 +215,6 @@ export function ClinicWebProfileSection({
         </Row>
       )}
 
-      {profile.unknowns.length > 0 && (
-        <Row label="Not Found">
-          <Muted>{profile.unknowns.join(", ")}</Muted>
-        </Row>
-      )}
-
       <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end" }}>
         <Button size="small" variant="text" color="primary" onClick={onRun} disabled={isRunning} startIcon={isRunning ? spinner : undefined} aria-busy={isRunning} sx={{ px: 1, mx: -1, minHeight: 28, fontSize: "0.75rem" }}>
           {isRunning ? "Refreshing…" : "Refresh"}
@@ -225,48 +224,36 @@ export function ClinicWebProfileSection({
   );
 }
 
-function Shell({ title, children }: { title: string; children: React.ReactNode }) {
+/** `aside`: badges shown on the same line as the title, right-aligned. */
+function Shell({ title, aside, children }: { title: string; aside?: React.ReactNode; children: React.ReactNode }) {
   return (
     <Box component="section" sx={{ mt: 4 }}>
-      <Typography variant="eyebrow" component="h3" sx={{ display: "block", mb: 1.5 }}>
-        {title}
-      </Typography>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, mb: 1.5 }}>
+        <Typography variant="eyebrow" component="h3" sx={{ display: "block" }}>
+          {title}
+        </Typography>
+        {aside && <Box sx={{ display: "flex", flexWrap: "wrap", justifyContent: "flex-end", gap: 1 }}>{aside}</Box>}
+      </Box>
       <Box sx={{ typography: "body2", lineHeight: 1.6, color: "text.primary", "& p": { m: 0 } }}>{children}</Box>
     </Box>
   );
 }
 
-/** Section title: bold, with a short green rule underneath so it stands apart from the content. */
+/** Section title: small green uppercase label with a hairline running to the edge, like a form divider. */
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <Box sx={{ mt: 3 }}>
-      <Typography
-        variant="body2"
-        component="div"
-        sx={{
-          display: "inline-block",
-          fontWeight: 600,
-          color: "text.primary",
-          pb: 0.5,
-          mb: 1.5,
-          borderBottom: 2,
-          borderColor: "primary.main",
-        }}
-      >
-        {label}
-      </Typography>
+    <Box sx={{ mt: 3.5 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1.5 }}>
+        <Typography variant="eyebrow" component="div" sx={{ color: "primary.main", whiteSpace: "nowrap" }}>
+          {label}
+        </Typography>
+        <Box aria-hidden sx={{ flex: 1, height: "1px", bgcolor: "divider" }} />
+      </Box>
       <div>{children}</div>
     </Box>
   );
 }
 
-function Muted({ children }: { children: React.ReactNode }) {
-  return (
-    <Typography variant="body2" sx={{ color: "text.secondary" }}>
-      {children}
-    </Typography>
-  );
-}
 
 function MutedSpan({ children, sx }: { children: React.ReactNode; sx?: Parameters<typeof Box>[0]["sx"] }) {
   return (
@@ -285,7 +272,7 @@ function SourceLink({ url }: { url: string | null }) {
       rel="noreferrer"
       title={url}
       aria-label={`Source: ${hostOf(url)}`}
-      sx={{ ml: 1, display: "inline-flex", verticalAlign: "middle", fontSize: 14, color: "text.faint", "&:hover": { color: "primary.main" } }}
+      sx={{ mx: 1, display: "inline-flex", verticalAlign: "middle", fontSize: 14, color: "text.faint", "&:hover": { color: "primary.main" } }}
     >
       <OpenInNewOutlined fontSize="inherit" />
     </Link>
