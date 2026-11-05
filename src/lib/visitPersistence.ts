@@ -41,6 +41,8 @@ export async function persistVisitRun(opts: {
     }
   >;
 }): Promise<string | null> {
+  // Unit tests exercise the planner end to end with mock providers; keep their runs out of the database.
+  if (process.env.VITEST) return null;
   try {
     const calculatedAt = new Date();
     const run = await prisma.visitListRun.create({

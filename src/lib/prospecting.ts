@@ -48,6 +48,7 @@ import { deriveLastOrderStatus, type LastOrderStatus } from "@/domain/crm/lastOr
 import { loadPersistedMappings } from "@/lib/crmMappings";
 import { persistVisitRun } from "@/lib/visitPersistence";
 import { loadTeamVisits } from "@/lib/teamVisits";
+import { syncDiscoveredAccounts } from "@/lib/accountSync";
 import type { CrmAccountStatus, CrmInternalAccount } from "@/providers/crm/types";
 import { MOCK_CRM_AS_OF } from "@/providers/crm/mockCrmProvider";
 
@@ -260,6 +261,10 @@ export async function runProspectSearch(
   }
 
   const { candidates: discovered, stats: discovery } = discoveryResult;
+
+  // Every in-taxonomy clinic gets an Account row so route items, visits, XP and
+  // team-visit marks can reference it, whichever places provider found it.
+  await syncDiscoveredAccounts(discovered);
 
   if (discovery.errors.length && discovered.length === 0) {
     return {
