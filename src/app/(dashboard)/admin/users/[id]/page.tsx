@@ -33,7 +33,7 @@ export default async function AdminUserProfilePage({
   const profile = await loadRepProfile(id, rangeKey);
   if (!profile) notFound();
 
-  // Managers only see reps who share one of their provinces; admins (*) see everyone.
+  // Admins with ["*"] see everyone; anyone else only sees reps who share one of their provinces.
   const sharesTerritory = viewer.provinces.includes("*") || profile.user.provinces.some((p) => viewer.provinces.includes(p));
   if (!sharesTerritory) redirect(hasPermission(viewer.role, "user.manage") ? "/admin/users" : "/team");
 

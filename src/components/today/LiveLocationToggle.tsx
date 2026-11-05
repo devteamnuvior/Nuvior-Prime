@@ -20,7 +20,7 @@ const blink = keyframes`
 
 /**
  * "Share live location" — opt-in. Once the rep turns it on, the browser's
- * watchPosition feeds /api/positions every few seconds so managers see them on
+ * watchPosition feeds /api/positions every few seconds so admins see them on
  * the live map. The choice is remembered per browser and resumed on the next
  * visit (the rep already granted the permission); nothing is requested before
  * the first explicit click.
