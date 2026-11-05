@@ -25,10 +25,16 @@ export function VisitRecordForm({
   placeId,
   crmExternalId,
   businessName,
+  embedded = false,
+  onSaved,
 }: {
   placeId: string;
   crmExternalId: string | null;
   businessName: string;
+  /** Inside a dialog: no card chrome or own title. */
+  embedded?: boolean;
+  /** Called after a successful save (the dialog closes on it). */
+  onSaved?: () => void;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -46,11 +52,8 @@ export function VisitRecordForm({
 
   const outcomeHint = outcomeCode ? visitOutcomeDefinition(outcomeCode).hint : "Required — pick what happened.";
 
-  return (
-    <Paper variant="outlined" sx={{ p: 5 }}>
-      <Typography variant="eyebrow" component="h3" sx={{ display: "block", mb: 3, color: "text.secondary" }}>
-        Record visit
-      </Typography>
+  const body = (
+    <>
       <Typography variant="caption" sx={{ display: "block", mb: 3, color: "text.secondary" }}>
         {businessName}
         {SHOW_AI_NOTE_STRUCTURING ? " — AI note structuring is a suggestion only (no autonomous CRM write)." : ""}
@@ -93,6 +96,7 @@ export function VisitRecordForm({
               setProductsDiscussed("");
               setNextAction("");
               setFollowUpDate("");
+              onSaved?.();
             }
           });
         }}
@@ -215,6 +219,15 @@ export function VisitRecordForm({
           {msg}
         </Typography>
       )}
+    </>
+  );
+  if (embedded) return body;
+  return (
+    <Paper variant="outlined" sx={{ p: 5 }}>
+      <Typography variant="eyebrow" component="h3" sx={{ display: "block", mb: 3, color: "text.secondary" }}>
+        Record visit
+      </Typography>
+      {body}
     </Paper>
   );
 }

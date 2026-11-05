@@ -6,7 +6,9 @@ import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
 import Paper from "@mui/material/Paper";
-import Stack from "@mui/material/Stack";
+import Dialog from "@mui/material/Dialog";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 import Typography from "@mui/material/Typography";
 import CheckOutlined from "@mui/icons-material/CheckOutlined";
 import CloseOutlined from "@mui/icons-material/CloseOutlined";
@@ -16,10 +18,7 @@ import LanguageOutlined from "@mui/icons-material/LanguageOutlined";
 import PhoneOutlined from "@mui/icons-material/PhoneOutlined";
 import type { PlannedRouteStop } from "@/domain/routing/optimize";
 import type { ProspectSearchSuccess } from "@/lib/prospecting";
-import { CrmStatusPanel } from "@/components/CrmStatusPanel";
-import { EvidenceInspector } from "@/components/EvidenceInspector";
 import { VisitRecordForm } from "@/components/VisitRecordForm";
-import { Disclosure } from "@/components/feedback/Disclosure";
 import { DotList, PlainList } from "@/components/feedback/DotList";
 import { StatusChip } from "@/components/feedback/StatusChip";
 import { clock12 } from "@/lib/format";
@@ -71,7 +70,7 @@ export function ClinicDrawer({
   /** Omit to hide the pre-visit brief button. */
   onViewBrief?: () => void;
 }) {
-  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [visitOpen, setVisitOpen] = useState(false);
   const crm = data.crmByAccountId[stop.accountId];
   const origins = data.fieldOriginsByAccountId[stop.accountId];
   const facts = data.enrichmentByAccountId[stop.accountId]?.facts;
@@ -355,29 +354,37 @@ export function ClinicDrawer({
           )}
         </Box>
 
-        <Disclosure
-          label="Details — evidence, CRM & visit log"
-          open={detailsOpen}
-          onToggle={setDetailsOpen}
-          sx={{ mt: 4 }}
-          contentSx={{ pt: 3 }}
+        <Button variant="contained" fullWidth onClick={() => setVisitOpen(true)} sx={{ mt: 2, minHeight: 40, fontWeight: 600 }}>
+          Record Visit
+        </Button>
+
+        {/* Visit record: centred dialog on desktop, bottom sheet on phones. Closes itself after a save. */}
+        <Dialog
+          open={visitOpen}
+          onClose={() => setVisitOpen(false)}
+          fullWidth
+          maxWidth="sm"
+          scroll="paper"
+          aria-labelledby="nv-visit-record-title"
+          sx={{ "& .MuiDialog-container": { alignItems: { xs: "flex-end", sm: "center" } } }}
+          slotProps={{ paper: { className: "nv-scroll", sx: { m: { xs: 0, sm: 4 }, width: 1, maxHeight: "94dvh", borderRadius: { xs: "16px 16px 0 0", sm: 2 } } } }}
         >
-          <Stack spacing={3}>
-            <CrmStatusPanel accountName={stop.businessName} overlay={crm} />
+          <DialogTitle id="nv-visit-record-title" sx={{ pb: 1 }}>
+            Record Visit
+            <Typography variant="caption" component="div" sx={{ mt: 0.5, color: "text.secondary" }}>
+              {stop.businessName}
+            </Typography>
+          </DialogTitle>
+          <DialogContent sx={{ pt: "12px !important" }}>
             <VisitRecordForm
               placeId={stop.accountId}
               crmExternalId={crm?.crmExternalId ?? null}
               businessName={stop.businessName}
+              embedded
+              onSaved={() => setVisitOpen(false)}
             />
-            {origins && (
-              <EvidenceInspector
-                accountName={stop.businessName}
-                evidence={origins.evidence ?? []}
-                enrichment={data.enrichmentByAccountId[stop.accountId]}
-              />
-            )}
-          </Stack>
-        </Disclosure>
+          </DialogContent>
+        </Dialog>
       </Box>
     </Paper>
   );
