@@ -82,6 +82,8 @@ export function ClinicDrawer({
     email: facts?.generalEmail ?? null,
     instagram: facts?.instagramHandle ?? null,
   };
+  // Only reasons the router actually produced; the generic opening-angle template adds nothing here.
+  const routeReasons = stop.routeReasons.filter((r) => r !== "legacy nearest order").map((r) => sentence(r));
   const hasContact = Boolean(contact.phone || contact.website || contact.email || contact.instagram);
 
   const verified = (origins?.enrichedFields ?? [])
@@ -198,16 +200,13 @@ export function ClinicDrawer({
         <Box sx={{ mt: 3, display: "flex", flexWrap: "wrap", gap: 1.5 }}>
           <Badge tone="neutral">{stop.leadProductLabel}</Badge>
           {stop.isRevisit && <Badge tone="signal">Revisit</Badge>}
-          {stop.needsManualVerification && <Badge tone="outline">Verify on site</Badge>}
         </Box>
 
-        <Section title="Why this stop">
-          {stop.routeReasons.length > 0 ? (
-            <DotList gap={1} items={stop.routeReasons.map((r) => sentence(r))} />
-          ) : (
-            <p>{stop.openingAngle}</p>
-          )}
-        </Section>
+        {routeReasons.length > 0 && (
+          <Section title="Why this stop">
+            <DotList gap={1} items={routeReasons} />
+          </Section>
+        )}
 
         <Section title="Arrival & opening">
           {timesValid ? (
