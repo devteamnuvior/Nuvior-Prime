@@ -173,7 +173,7 @@ export function ClinicWebProfileSection({
       )}
 
       {profile.websiteSummary && (
-        <Row label="Website summary">
+        <Row label="Website Summary" prominent>
           <p>{profile.websiteSummary}</p>
         </Row>
       )}
