@@ -13,7 +13,6 @@ export type ClinicProfileConfig = {
   timeoutMs: number;
   maxSearches: number;
   maxFetches: number;
-  cacheTtlSeconds: number;
   hasAnthropicKey: boolean;
 };
 
@@ -37,7 +36,6 @@ export function getClinicProfileConfig(): ClinicProfileConfig {
     timeoutMs: Number(process.env.CLINIC_PROFILE_TIMEOUT_MS ?? "180000") || 180000,
     maxSearches: Number(process.env.CLINIC_PROFILE_MAX_SEARCHES ?? "8") || 8,
     maxFetches: Number(process.env.CLINIC_PROFILE_MAX_FETCHES ?? "6") || 6,
-    cacheTtlSeconds: Number(process.env.CLINIC_PROFILE_CACHE_TTL_SECONDS ?? "604800") || 604800,
     hasAnthropicKey,
   };
 }

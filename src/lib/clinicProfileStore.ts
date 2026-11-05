@@ -60,8 +60,3 @@ export async function saveClinicWebProfile(input: {
     researchedAt: row.researchedAt,
   };
 }
-
-export function isClinicWebProfileStale(stored: StoredClinicWebProfile, ttlSeconds: number): boolean {
-  if (stored.promptVersion !== CLINIC_PROFILE_PROMPT_VERSION) return true;
-  return Date.now() - stored.researchedAt.getTime() > ttlSeconds * 1000;
-}

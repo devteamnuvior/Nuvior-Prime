@@ -1,13 +1,13 @@
 import type { ClinicProfileRequest } from "./prompts";
 import type { ClinicWebProfile } from "./schema";
 import type { ClinicProfileProvider } from "@/providers/clinicProfile/types";
-import {
-  getStoredClinicWebProfile,
-  isClinicWebProfileStale,
-  saveClinicWebProfile,
-} from "@/lib/clinicProfileStore";
+import { getStoredClinicWebProfile, saveClinicWebProfile, type StoredClinicWebProfile } from "@/lib/clinicProfileStore";
 
-export type ClinicWebProfileState = "NOT_RESEARCHED" | "READY" | "STALE" | "FAILED" | "UNAVAILABLE";
+/**
+ * A clinic is researched once. The stored profile is shared by every user and
+ * is never re-requested from Claude; there is no "stale" state.
+ */
+export type ClinicWebProfileState = "NOT_RESEARCHED" | "READY" | "FAILED" | "UNAVAILABLE";
 
 /** Serializable view for the client. Dates are ISO strings. */
 export type ClinicWebProfileDto = {
@@ -34,30 +34,38 @@ export function emptyClinicWebProfileDto(clinicId: string): ClinicWebProfileDto 
   };
 }
 
-/** Cached view only — never calls the provider. */
-export async function getCachedClinicWebProfile(
-  clinicId: string,
-  cacheTtlSeconds: number,
-): Promise<ClinicWebProfileDto> {
-  const stored = await getStoredClinicWebProfile(clinicId);
-  if (!stored) return emptyClinicWebProfileDto(clinicId);
+function readyDto(clinicId: string, stored: StoredClinicWebProfile, searchesUsed: number | null): ClinicWebProfileDto {
   return {
     clinicId,
-    state: isClinicWebProfileStale(stored, cacheTtlSeconds) ? "STALE" : "READY",
+    state: "READY",
     profile: stored.profile,
     provider: stored.provider,
     model: stored.model,
     researchedAt: stored.researchedAt.toISOString(),
     failureMessage: null,
-    searchesUsed: null,
+    searchesUsed,
   };
 }
 
-/** Runs the provider and persists the result. */
+/** Stored view only — never calls the provider. */
+export async function getCachedClinicWebProfile(clinicId: string): Promise<ClinicWebProfileDto> {
+  const stored = await getStoredClinicWebProfile(clinicId);
+  if (!stored) return emptyClinicWebProfileDto(clinicId);
+  return readyDto(clinicId, stored, null);
+}
+
+/**
+ * Runs the provider once per clinic and persists the result. A clinic that
+ * already has a stored profile is returned as-is: no second request to Claude,
+ * whoever asks.
+ */
 export async function runClinicWebProfileResearch(
   provider: ClinicProfileProvider,
   request: ClinicProfileRequest,
 ): Promise<ClinicWebProfileDto> {
+  const existing = await getStoredClinicWebProfile(request.clinicId);
+  if (existing) return readyDto(request.clinicId, existing, 0);
+
   if (!provider.isEnabled()) {
     return {
       ...emptyClinicWebProfileDto(request.clinicId),
@@ -83,15 +91,5 @@ export async function runClinicWebProfileResearch(
     model: result.model,
     profile: result.profile,
   });
-
-  return {
-    clinicId: request.clinicId,
-    state: "READY",
-    profile: stored.profile,
-    provider: stored.provider,
-    model: stored.model,
-    researchedAt: stored.researchedAt.toISOString(),
-    failureMessage: null,
-    searchesUsed: result.searchesUsed,
-  };
+  return readyDto(request.clinicId, stored, result.searchesUsed);
 }

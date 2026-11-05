@@ -38,6 +38,7 @@ const PRODUCT_KIND_LABEL: Record<ClinicProduct["kind"], string> = {
 };
 
 /**
+ * Researched once per clinic and stored for everyone; there is no refresh.
  * What Claude finds on the public web that Google Places does not list:
  * emails, social profiles, leadership, services and the products and devices
  * the clinic publishes. Address, phone, website and hours are shown from
@@ -97,7 +98,6 @@ export function ClinicWebProfileSection({
             Match {matchLabel}
           </Badge>
           {dto?.provider === "mock" && <Badge tone="outline">Mock data</Badge>}
-          {state === "STALE" && <Badge tone="outline">May be outdated</Badge>}
         </>
       }
     >
@@ -214,12 +214,6 @@ export function ClinicWebProfileSection({
           </PlainList>
         </Row>
       )}
-
-      <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end" }}>
-        <Button size="small" variant="text" color="primary" onClick={onRun} disabled={isRunning} startIcon={isRunning ? spinner : undefined} aria-busy={isRunning} sx={{ px: 1, mx: -1, minHeight: 28, fontSize: "0.75rem" }}>
-          {isRunning ? "Refreshing…" : "Refresh"}
-        </Button>
-      </Box>
     </Shell>
   );
 }

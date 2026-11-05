@@ -34,7 +34,6 @@ import {
   type ClinicWebProfileDto,
 } from "@/domain/clinicProfile/runClinicProfile";
 import { getClinicProfileProvider } from "@/providers/clinicProfile";
-import { getClinicProfileConfig } from "@/lib/clinicProfileConfig";
 import { recomputeRepDailySummary, upsertSalesTarget, deleteSalesTarget, type SalesTargetRow } from "@/lib/performance";
 import { DAILY_CLINIC_SLOTS, TARGET_METRICS, TARGET_PERIODS, VISIT_OUTCOME_CODES, VISIT_DURATIONS, isVisitDuration } from "@/domain/performance";
 
@@ -726,7 +725,7 @@ export async function getClinicWebProfileAction(input: {
     requirePermission(user, "brief.generate");
     requireProvinceAccess(user, input.provinceCode);
     await requireAccountAccess(user, { placeId: input.clinicId, provinceCode: input.provinceCode });
-    const dto = await getCachedClinicWebProfile(input.clinicId, getClinicProfileConfig().cacheTtlSeconds);
+    const dto = await getCachedClinicWebProfile(input.clinicId);
     return { ok: true, dto };
   } catch (e) {
     if (e instanceof AuthError) return { ok: false, error: `${e.code}: ${e.message}` };
