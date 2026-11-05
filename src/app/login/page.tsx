@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { LoginForm } from "@/components/LoginForm";
@@ -51,9 +50,7 @@ export default function LoginPage() {
         </Box>
 
         <Box sx={{ position: "relative", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", width: 1, maxWidth: 400, mx: "auto", py: 10 }}>
-          <Suspense fallback={<Typography sx={{ color: "text.secondary" }}>Loading…</Typography>}>
-            <LoginForm />
-          </Suspense>
+          <LoginForm />
         </Box>
 
         <Box sx={{ position: "relative", display: "flex", justifyContent: "space-between", gap: 3 }}>

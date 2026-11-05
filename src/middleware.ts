@@ -3,6 +3,9 @@ import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
 const PUBLIC_PATHS = ["/login", "/api/auth"];
+// Keeps the login URL clean: the page to return to after sign-in travels in a
+// short-lived cookie instead of a ?callbackUrl= query string. Read by LoginForm.
+const RETURN_TO_COOKIE = "nv_return_to";
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -30,8 +33,15 @@ export async function middleware(req: NextRequest) {
   if (!token?.id || token.status === "DISABLED") {
     const url = req.nextUrl.clone();
     url.pathname = "/login";
-    url.searchParams.set("callbackUrl", pathname);
-    return NextResponse.redirect(url);
+    url.search = "";
+    const res = NextResponse.redirect(url);
+    const returnTo = pathname + req.nextUrl.search;
+    if (returnTo !== "/") {
+      res.cookies.set(RETURN_TO_COOKIE, returnTo, { path: "/", maxAge: 600, sameSite: "lax" });
+    } else {
+      res.cookies.delete(RETURN_TO_COOKIE);
+    }
+    return res;
   }
 
   return NextResponse.next();

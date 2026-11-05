@@ -2,7 +2,6 @@
 
 import { signIn } from "next-auth/react";
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
@@ -19,6 +18,18 @@ import { FONT_SERIF } from "@/theme/tokens";
 import { toast } from "@/components/feedback/toast";
 
 const REMEMBER_KEY = "nuvior.login.email";
+const RETURN_TO_COOKIE = "nv_return_to";
+
+// Where the middleware sent us from; only same-origin paths are honoured.
+function readReturnTo(): string {
+  const match = document.cookie.match(new RegExp(`(?:^|; )${RETURN_TO_COOKIE}=([^;]*)`));
+  const value = match ? decodeURIComponent(match[1]) : "";
+  return value.startsWith("/") && !value.startsWith("//") ? value : "/";
+}
+
+function clearReturnTo() {
+  document.cookie = `${RETURN_TO_COOKIE}=; Max-Age=0; path=/`;
+}
 
 // Inputs are 44px tall (12px padding) instead of MUI's 56px default, so the resting
 // label must sit at 12px rather than MUI's 16px to stay vertically centered.
@@ -28,8 +39,6 @@ const FIELD_SX = {
 } as const;
 
 export function LoginForm() {
-  const params = useSearchParams();
-  const callbackUrl = params.get("callbackUrl") || "/";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(true);
@@ -49,7 +58,7 @@ export function LoginForm() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setPending(true);
-    const res = await signIn("credentials", { email, password, redirect: false, callbackUrl });
+    const res = await signIn("credentials", { email, password, redirect: false });
     setPending(false);
     if (res?.error) {
       toast.error("Sign-in failed — check email/password or user status.");
@@ -61,7 +70,9 @@ export function LoginForm() {
     } catch {
       /* storage unavailable */
     }
-    window.location.href = callbackUrl;
+    const returnTo = readReturnTo();
+    clearReturnTo();
+    window.location.href = returnTo;
   }
 
   return (
