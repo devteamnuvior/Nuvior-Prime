@@ -13,7 +13,6 @@ const req = (): ClinicProfileRequest => ({
   city: "Toronto",
   provinceCode: "ON",
   postalCode: "M6J 1E5",
-  categoryLabel: "Medical spa",
   knownWebsite: null,
   knownPhone: null,
 });

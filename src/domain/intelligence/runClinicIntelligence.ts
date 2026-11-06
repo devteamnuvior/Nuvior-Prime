@@ -54,8 +54,6 @@ export type ClinicIntelligenceInput = {
   clinicId: string;
   businessName: string;
   provinceCode: string;
-  segmentNumber: number;
-  categoryLabel: string;
   websiteUrl: string | null;
   enrichment?: EnrichmentResult | null;
   rawPages?: { url: string; title: string | null; bodyText: string; retrievedAt: string }[];
@@ -91,8 +89,6 @@ export async function runClinicIntelligencePipeline(
     clinicId: input.clinicId,
     businessName: input.businessName,
     provinceCode: input.provinceCode,
-    segmentNumber: input.segmentNumber,
-    categoryLabel: input.categoryLabel,
     websiteUrl: input.websiteUrl,
     enrichment: input.enrichment ?? null,
     rawPages: input.rawPages ?? [],
@@ -224,8 +220,6 @@ export async function getCachedClinicIntelligence(
     clinicId: input.clinicId,
     businessName: input.businessName,
     provinceCode: input.provinceCode,
-    segmentNumber: input.segmentNumber,
-    categoryLabel: input.categoryLabel,
     websiteUrl: input.websiteUrl,
     enrichment: input.enrichment ?? null,
     rawPages: input.rawPages ?? [],

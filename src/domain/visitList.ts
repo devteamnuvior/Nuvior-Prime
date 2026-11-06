@@ -4,17 +4,12 @@
 
 import { haversineKm, postalCodePrefix, type GeoPoint } from "./geo";
 import { qualifyAccount, type QualificationInput, type QualificationResult } from "./qualification";
-import type { LeadProductCode } from "./terminology";
 import { resolveRevisitFlags } from "./crm/revisit";
 
 export type ProspectCandidate = {
   id: string;
   businessName: string;
   parentGroupName: string | null;
-  organizationTypeLabel: string;
-  segmentNumber: number;
-  categoryNumber: number;
-  categoryLabel: string;
   streetAddress: string;
   city: string;
   provinceCode: string;
@@ -24,15 +19,7 @@ export type ProspectCandidate = {
   googleMapsUrl: string | null;
   placeId: string | null;
   dataCompleteness: string;
-  qualificationInput: Omit<
-    QualificationInput,
-    | "businessName"
-    | "provinceCode"
-    | "segmentNumber"
-    | "categoryNumber"
-    | "categoryLabel"
-    | "organizationTypeLabel"
-  > &
+  qualificationInput: Omit<QualificationInput, "businessName" | "provinceCode"> &
     Partial<Pick<QualificationInput, "businessName" | "provinceCode">>;
 };
 
@@ -81,10 +68,6 @@ export type VisitListRequest = {
 export type VisitListEntry = {
   accountId: string;
   businessName: string;
-  segmentNumber: number;
-  categoryNumber: number;
-  categoryLabel: string;
-  organizationTypeLabel: string;
   streetAddress: string;
   city: string;
   provinceCode: string;
@@ -92,8 +75,6 @@ export type VisitListEntry = {
   postalCodePrefix: string;
   distanceKm: number;
   isRevisit: boolean;
-  leadProduct: LeadProductCode;
-  leadProductLabel: string;
   openingAngle: string;
   certificationPathwayFit: string;
   needsManualVerification: boolean;
@@ -178,10 +159,6 @@ export function buildDailyVisitList(
     const qInput: QualificationInput = {
       businessName: c.businessName,
       provinceCode: c.provinceCode,
-      segmentNumber: c.segmentNumber,
-      categoryNumber: c.categoryNumber,
-      categoryLabel: c.categoryLabel,
-      organizationTypeLabel: c.organizationTypeLabel,
       credentials: c.qualificationInput.credentials,
       advertisesThreadLifting: c.qualificationInput.advertisesThreadLifting,
       pricePositioning: c.qualificationInput.pricePositioning,
@@ -206,10 +183,6 @@ export function buildDailyVisitList(
     scored.push({
       accountId: c.id,
       businessName: c.businessName,
-      segmentNumber: c.segmentNumber,
-      categoryNumber: c.categoryNumber,
-      categoryLabel: c.categoryLabel,
-      organizationTypeLabel: c.organizationTypeLabel,
       streetAddress: c.streetAddress,
       city: c.city,
       provinceCode: c.provinceCode,
@@ -217,8 +190,6 @@ export function buildDailyVisitList(
       postalCodePrefix: postalCodePrefix(c.postalCode),
       distanceKm: Math.round(distanceKm * 10) / 10,
       isRevisit: revisit.isRevisit,
-      leadProduct: qualification.recommendedLeadProduct,
-      leadProductLabel: qualification.recommendedLeadProductLabel,
       openingAngle: qualification.openingAngle,
       certificationPathwayFit: qualification.certificationPathwayFit,
       needsManualVerification: c.dataCompleteness !== "verified",

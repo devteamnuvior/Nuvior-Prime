@@ -21,7 +21,7 @@ import { KpiCard, KpiGrid } from "@/components/feedback/KpiCard";
 import { StatusChip } from "@/components/feedback/StatusChip";
 import { ActivityCalendar } from "./ActivityCalendar";
 import { ProfileIdentityCard } from "./ProfileIdentityCard";
-import { FunnelBars, ProductMixChart, VisitsTrendChart } from "./RepCharts";
+import { FunnelBars, VisitsTrendChart } from "./RepCharts";
 import { AuditList, RecentRoutesTable, RecentVisitsTable } from "./RepTables";
 import { TargetsEditor } from "./TargetsEditor";
 
@@ -118,14 +118,9 @@ export function RepProfileView({
           <VisitsTrendChart weekly={profile.weekly} />
         </Section>
 
-        <Box sx={{ display: "grid", gap: 6, gridTemplateColumns: { xs: "1fr", lg: "repeat(2, minmax(0, 1fr))" } }}>
-          <Section title="Funnel" hint="Each step shows its conversion from the previous one.">
-            <FunnelBars steps={profile.funnel} />
-          </Section>
-          <Section title="Lead product mix" hint="Recommended lead product across the stops on this rep's routes.">
-            <ProductMixChart mix={profile.productMix} />
-          </Section>
-        </Box>
+        <Section title="Funnel" hint="Each step shows its conversion from the previous one.">
+          <FunnelBars steps={profile.funnel} />
+        </Section>
 
         <Box sx={{ display: "grid", gap: 6, gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 1.4fr) minmax(0, 1fr)" } }}>
           <Section title="Activity" hint="Logged visits per day. Darker means more visits.">

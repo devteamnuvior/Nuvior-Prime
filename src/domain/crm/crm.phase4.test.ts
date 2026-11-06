@@ -278,10 +278,6 @@ describe("revisit / already visited", () => {
   it("visit list excludes DNC and already visited; labels revisits", () => {
     const cand = (partial: Partial<ProspectCandidate> & Pick<ProspectCandidate, "id" | "businessName">): ProspectCandidate => ({
       parentGroupName: null,
-      organizationTypeLabel: "Independent",
-      segmentNumber: 1,
-      categoryNumber: 2,
-      categoryLabel: "Dermatology clinic, medical and/or cosmetic",
       streetAddress: "1 St",
       city: "Toronto",
       provinceCode: "ON",
@@ -352,7 +348,7 @@ describe("certification / meso / last-order", () => {
     expect(ownershipOf("doNotContact")).toBe("crm");
     expect(ownershipOf("formerMesoesteticCustomer")).toBe("crm");
     expect(ownershipOf("placeId")).toBe("places");
-    expect(ownershipOf("recommendedLeadProduct")).toBe("derived");
+    expect(ownershipOf("openingAngle")).toBe("derived");
   });
 
   it("derives last-order status with explicit thresholds", () => {
@@ -362,37 +358,11 @@ describe("certification / meso / last-order", () => {
     expect(deriveLastOrderStatus(null)).toBe("never");
   });
 
-  it("former Mesoestetic → Dermaceutic; never Mesoestetic lead", () => {
-    const r = qualifyAccount({
-      businessName: "Meso",
-      provinceCode: "ON",
-      segmentNumber: 3,
-      categoryNumber: 3,
-      categoryLabel: "Laser & skin clinic",
-      organizationTypeLabel: "Independent",
-      credentials: baseCreds,
-      advertisesThreadLifting: false,
-      pricePositioning: "mid",
-      formerMesoesteticCustomer: true,
-      doNotContact: false,
-      hasAcademyAccount: true,
-      aptosPathway: "NONE",
-      injectablesOffered: "yes",
-      threadsOffered: "none",
-      skincareLines: "Mesoestetic on website",
-    });
-    expect(r.recommendedLeadProduct).toBe("DERMACEUTIC");
-    expect(r.recommendedLeadProductLabel).not.toMatch(/Mesoestetic/i);
-  });
 
-  it("fully certified CRM level does not recommend lower cert lead", () => {
+  it("fully certified CRM level gets a certification-complete opening angle", () => {
     const r = qualifyAccount({
       businessName: "Certified",
       provinceCode: "BC",
-      segmentNumber: 1,
-      categoryNumber: 1,
-      categoryLabel: "Plastic & cosmetic surgery clinic",
-      organizationTypeLabel: "Independent",
       credentials: baseCreds,
       advertisesThreadLifting: true,
       pricePositioning: "premium",
@@ -406,7 +376,8 @@ describe("certification / meso / last-order", () => {
       skincareLines: "unknown",
     });
     expect(isFullyCertified("3/3 Online Certification")).toBe(true);
-    expect(r.recommendedLeadProduct).toBe("APTOS");
+    expect(r.certificationPathwayFit).toBe("THREE_LEVEL");
+    expect(r.openingAngle).toMatch(/complete/);
     expect(nextCertificationHint("THREE_LEVEL", "3/3 Online Certification")).toMatch(/complete/);
   });
 

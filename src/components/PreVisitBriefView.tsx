@@ -12,8 +12,7 @@ import { clock12 } from "@/lib/format";
 import { SHOW_CLINIC_INTELLIGENCE } from "@/lib/featureFlags";
 
 /**
- * Two-minute field briefing card. Lead product is deterministic (locked from
- * qualification) — the layout keeps it visually dominant.
+ * Two-minute field briefing card.
  */
 export function PreVisitBriefView({
   brief,
@@ -48,25 +47,12 @@ export function PreVisitBriefView({
             </Typography>
             <Typography variant="body2" sx={{ mt: 1, color: "text.secondary" }}>
               {visitTypeLabel}
-              {arrivalClock ? ` · Arrive ${clock12(arrivalClock)}` : ""} · {brief.categoryLabel} ·{" "}
-              {brief.provinceCode}
+              {arrivalClock ? ` · Arrive ${clock12(arrivalClock)}` : ""} · {brief.provinceCode}
             </Typography>
           </Box>
           <IconButton onClick={onClose} aria-label="Close brief" sx={{ flexShrink: 0, mr: -1, color: "text.secondary" }}>
             <CloseOutlined fontSize="small" />
           </IconButton>
-        </Box>
-
-        {/* Lead product hero */}
-        <Box sx={{ mt: 4, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 3, borderRadius: 1, bgcolor: "primary.tint", px: 4, py: 3 }}>
-          <Box sx={{ minWidth: 0, flex: 1 }}>
-            <Typography variant="eyebrow" sx={{ color: "primary.main" }}>
-              Lead product this visit
-            </Typography>
-            <Typography variant="body1" sx={{ mt: 0.5, fontWeight: 600 }}>
-              {brief.leadProductForVisit}
-            </Typography>
-          </Box>
         </Box>
       </Box>
 
@@ -80,10 +66,7 @@ export function PreVisitBriefView({
         )}
 
         <Section title="Why we're here">
-          <Typography variant="body2" sx={{ fontWeight: 500, lineHeight: 1.6 }}>
-            {brief.leadProductWhy}
-          </Typography>
-          <DotList items={brief.snapshotThreeLines} sx={{ mt: 2 }} />
+          <DotList items={brief.snapshotThreeLines} />
         </Section>
 
         {brief.accountSummary && (
@@ -181,12 +164,6 @@ export function PreVisitBriefView({
               Leave behind:
             </Box>{" "}
             {brief.leaveBehind}
-          </Typography>
-          <Typography variant="body2" sx={{ mt: 2, color: "text.secondary", lineHeight: 1.6 }}>
-            <Box component="span" sx={{ fontWeight: 500 }}>
-              If the first product lands:
-            </Box>{" "}
-            {brief.secondProductIfFirstLands}
           </Typography>
         </Section>
 

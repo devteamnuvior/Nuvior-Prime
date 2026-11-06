@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import type { LeadProduct, Prisma, VisitOutcome } from "@prisma/client";
+import type { Prisma, VisitOutcome } from "@prisma/client";
 import { isVisitOutcomeCode } from "@/domain/performance/visitOutcome";
 import type { VisitListEntry } from "@/domain/visitList";
 import type { PlannedRouteStop, RoutePlanSummary } from "@/domain/routing/optimize";
@@ -94,7 +94,6 @@ export async function persistVisitRun(opts: {
           sortDistanceKm: e.distanceKm,
           postalCodePrefix: e.postalCodePrefix,
           isRevisit: e.isRevisit,
-          leadProduct: e.leadProduct as LeadProduct,
           openingAngle: e.openingAngle,
           needsManualVerification: e.needsManualVerification,
           rank,

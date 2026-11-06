@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CATALOG_PRODUCT_IDS } from "@/domain/products/leadProductCompat";
+import { CATALOG_PRODUCT_IDS } from "@/domain/products/catalogProductIds";
 import {
   analyzeProductGaps,
   APPROVED_PRODUCT_COMPARISONS,
@@ -22,8 +22,6 @@ async function profileFor(fixtureId: string) {
     clinicId: fixtureId,
     businessName: fixtureId,
     provinceCode: "ON",
-    segmentNumber: 1,
-    categoryLabel: "Test",
     websiteUrl: null,
     rawPages: [],
   });

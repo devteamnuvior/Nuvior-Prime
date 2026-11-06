@@ -304,8 +304,6 @@ export function buildClinicIntelligenceDto(input: {
 export function buildBriefIntelligenceSections(
   dto: ClinicIntelligenceDto,
   businessName: string,
-  categoryLabel: string,
-  segmentNumber: number,
 ): BriefIntelligenceSections {
   const watchOuts: string[] = [];
   if (dto.primary?.recommendationStatus === "PENDING_VERIFICATION") {
@@ -325,7 +323,7 @@ export function buildBriefIntelligenceSections(
   return {
     lockedFromOpportunityEngine: Boolean(dto.primary?.productName),
     clinicSnapshot: [
-      `${businessName} — Segment ${segmentNumber}: ${categoryLabel}.`,
+      `${businessName}.`,
       dto.offerings.length > 0
         ? `Reviewed offerings: ${dto.offerings
             .filter((o) => o.inventoryStateLabel === "Confirmed on website")

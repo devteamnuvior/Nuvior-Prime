@@ -35,8 +35,6 @@ export const FIELD_OWNERSHIP: Record<string, FieldOwner> = {
   people: "website",
   serviceMenuSummary: "website",
 
-  taxonomy: "derived",
-  recommendedLeadProduct: "derived",
   certificationPathwayFit: "derived",
   openingAngle: "derived",
   lastOrderStatus: "derived",

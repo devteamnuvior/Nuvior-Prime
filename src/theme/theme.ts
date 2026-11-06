@@ -275,7 +275,7 @@ export const theme = createTheme({
         separator: ({ theme }) => ({ color: theme.vars.palette.text.disabled, marginInline: 4 }),
       },
     },
-    MuiLink: { defaultProps: { underline: "hover" } },
+    MuiLink: { defaultProps: { underline: "none" } },
     MuiAvatar: {
       styleOverrides: {
         root: ({ theme }) => ({

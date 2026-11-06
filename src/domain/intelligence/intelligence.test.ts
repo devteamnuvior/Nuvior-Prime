@@ -10,12 +10,11 @@ import {
 import { applyIntelligenceToBrief } from "@/domain/intelligence/applyIntelligenceToBrief";
 import { inventoryStateLabel, opportunityHeadline } from "@/domain/intelligence/labels";
 import { generatePreVisitBrief } from "@/domain/brief";
-import { mergeBriefWithNarrative } from "@/domain/llm/synthesize";
 import { runOpportunityScoringForFixture } from "@/domain/opportunity/opportunityTestHelpers";
 import { runGapAnalysisForFixture } from "@/domain/gap/gapTestHelpers";
 import { buildResearchContext } from "@/domain/research/buildContext";
 import { runClinicResearch } from "@/domain/research/runResearch";
-import { CATALOG_PRODUCT_IDS } from "@/domain/products/leadProductCompat";
+import { CATALOG_PRODUCT_IDS } from "@/domain/products/catalogProductIds";
 import { hasPermission } from "@/domain/auth/permissions";
 import { AuthError, requirePermission } from "@/lib/authz";
 import type { AuthUser } from "@/domain/auth/permissions";
@@ -37,8 +36,6 @@ describe("Clinic intelligence orchestration", () => {
       clinicId: "fixture-injectable-clinic",
       businessName: "Injectable Clinic",
       provinceCode: "ON",
-      segmentNumber: 1,
-      categoryLabel: "Medical aesthetics",
       websiteUrl: "https://example-clinic.ca",
       catalog: MOCK_CATALOG_FIXTURES,
       catalogVersion: MOCK_CATALOG_VERSION,
@@ -64,8 +61,6 @@ describe("Rep-safe DTO", () => {
       clinicId: "fixture-injectable-clinic",
       businessName: "x",
       provinceCode: "ON",
-      segmentNumber: 1,
-      categoryLabel: "x",
       websiteUrl: null,
       rawPages: [],
     });
@@ -95,8 +90,6 @@ describe("Rep-safe DTO", () => {
       clinicId: "fixture-injectable-clinic",
       businessName: "x",
       provinceCode: "ON",
-      segmentNumber: 1,
-      categoryLabel: "x",
       websiteUrl: null,
       rawPages: [],
     });
@@ -161,8 +154,6 @@ describe("Mesoestetic exclusion", () => {
       clinicId: "fixture-skincare-brands",
       businessName: "x",
       provinceCode: "ON",
-      segmentNumber: 1,
-      categoryLabel: "x",
       websiteUrl: null,
       rawPages: [],
     });
@@ -194,8 +185,6 @@ describe("Evidence and offerings", () => {
       clinicId: "fixture-injectable-clinic",
       businessName: "x",
       provinceCode: "ON",
-      segmentNumber: 1,
-      categoryLabel: "x",
       websiteUrl: null,
       rawPages: [],
     });
@@ -221,8 +210,6 @@ describe("Secondary opportunities", () => {
       clinicId: "fixture-injectable-clinic",
       businessName: "x",
       provinceCode: "ON",
-      segmentNumber: 1,
-      categoryLabel: "x",
       websiteUrl: null,
       rawPages: [],
     });
@@ -246,8 +233,8 @@ describe("Secondary opportunities", () => {
   });
 });
 
-describe("Pre-visit brief product lock", () => {
-  it("locks primary product from Stage E intelligence", async () => {
+describe("Pre-visit brief intelligence", () => {
+  it("attaches locked Stage E intelligence to the brief", async () => {
     const analysis = await runOpportunityScoringForFixture({
       fixtureId: "fixture-injectable-clinic",
     });
@@ -256,8 +243,6 @@ describe("Pre-visit brief product lock", () => {
       clinicId: "fixture-injectable-clinic",
       businessName: "Test Clinic",
       provinceCode: "ON",
-      segmentNumber: 1,
-      categoryLabel: "Medical aesthetics",
       websiteUrl: null,
       rawPages: [],
     });
@@ -277,11 +262,7 @@ describe("Pre-visit brief product lock", () => {
       ctx: {
         accountId: "fixture-injectable-clinic",
         accountName: "Test Clinic",
-        segmentNumber: 1,
-        categoryLabel: "Medical aesthetics",
-        organizationTypeLabel: "Independent",
         provinceCode: "ON",
-        leadProduct: "APTOS",
         openingAngle: "threads",
         formerMesoesteticCustomer: false,
         aptosProductAllowed: true,
@@ -299,67 +280,10 @@ describe("Pre-visit brief product lock", () => {
 
     const merged = applyIntelligenceToBrief(template, dto, {
       businessName: "Test Clinic",
-      categoryLabel: "Medical aesthetics",
-      segmentNumber: 1,
     });
 
-    expect(merged.leadProductForVisit).toBe(dto.primary!.productName);
-    expect(merged.leadProductForVisit).not.toBe(template.leadProductForVisit);
+    expect(merged.clinicIntelligence?.bestOpportunity).toBeTruthy();
     expect(merged.clinicIntelligence?.lockedFromOpportunityEngine).toBe(true);
-  });
-
-  it("LLM merge cannot change locked lead product", () => {
-    const template = generatePreVisitBrief({
-      ctx: {
-        accountId: "x",
-        accountName: "Clinic",
-        segmentNumber: 1,
-        categoryLabel: "Med spa",
-        organizationTypeLabel: "Independent",
-        provinceCode: "ON",
-        leadProduct: "APTOS_3_LEVEL_CERTIFICATION",
-        openingAngle: "cert",
-        formerMesoesteticCustomer: false,
-        aptosProductAllowed: true,
-        serviceMenuSummary: "injectables",
-        skincareLines: "ZO",
-        practitionersSummary: "MD",
-        pricePositioning: "premium",
-        googleReviewCount: null,
-        thinPublicData: false,
-      },
-      visitDate: new Date("2026-09-01"),
-      visitType: "first visit",
-      lastVisitNotes: null,
-    });
-
-    const locked = "Aptos 3-level certification";
-    const merged = mergeBriefWithNarrative(
-      template,
-      {
-        ok: true,
-        narrative: {
-          accountSummary: "Summary",
-          snapshotThreeLines: ["a", "b", "c"],
-          leadProductWhy: "Why cert",
-          secondProductIfFirstLands: "Dermaceutic",
-          openingLines: template.openingLines,
-          fiveQuestions: template.fiveQuestions,
-          signalsToReadOnSite: template.signalsToReadOnSite,
-          objectionsAndResponses: template.objectionsAndResponses,
-          theAsk: template.theAsk,
-          leaveBehind: template.leaveBehind,
-          doNotSay: template.doNotSay,
-          confirmOnSite: [],
-        },
-        provider: "mock",
-        model: "mock",
-        cacheHit: false,
-        warnings: [],
-      },
-      locked,
-    );
-    expect(merged.leadProductForVisit).toBe(locked);
   });
 });
 
@@ -377,8 +301,6 @@ describe("BLOCKED_DNC state", () => {
       clinicId: "fixture-injectable-clinic",
       businessName: "x",
       provinceCode: "ON",
-      segmentNumber: 1,
-      categoryLabel: "x",
       websiteUrl: null,
       rawPages: [],
     });
@@ -407,8 +329,6 @@ describe("Failure handling", () => {
       clinicId: "fixture-injectable-clinic",
       businessName: "Clinic",
       provinceCode: "ON",
-      segmentNumber: 1,
-      categoryLabel: "x",
       websiteUrl: null,
       catalog: MOCK_CATALOG_FIXTURES,
       catalogVersion: MOCK_CATALOG_VERSION,

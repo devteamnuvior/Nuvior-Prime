@@ -95,6 +95,23 @@ const RELEASES: Release[] = [
       tables: ["ClinicCheckIn"],
     },
   },
+  {
+    name: "2026-11-05 taxonomy and lead product removed",
+    file: "prisma/releases/2026-11-05_taxonomy_removed.sql",
+    present: {},
+    absent: {
+      tables: ["TaxonomySegment", "TaxonomyCategory"],
+      columns: [
+        ["Account", "organizationType"],
+        ["Account", "segmentNumber"],
+        ["Account", "categoryNumber"],
+        ["Account", "categoryLabel"],
+        ["AccountQualification", "recommendedLeadProduct"],
+        ["VisitListItem", "leadProduct"],
+        ["ProductDefinition", "mayRecommendAsLead"],
+      ],
+    },
+  },
 ];
 
 const log = (msg: string) => console.log(`[predeploy] ${msg}`);

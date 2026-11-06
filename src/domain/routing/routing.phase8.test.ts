@@ -38,10 +38,6 @@ function entry(
   partial: Partial<VisitListEntry> & Pick<VisitListEntry, "accountId" | "businessName">,
 ): VisitListEntry {
   return {
-    segmentNumber: 1,
-    categoryNumber: 1,
-    categoryLabel: "Medical aesthetic clinic",
-    organizationTypeLabel: "Independent",
     streetAddress: "1 Test St",
     city: "Toronto",
     provinceCode: "ON",
@@ -49,8 +45,6 @@ function entry(
     postalCodePrefix: "M5V",
     distanceKm: 5,
     isRevisit: false,
-    leadProduct: "DERMACEUTIC",
-    leadProductLabel: "Dermaceutic",
     openingAngle: "test",
     certificationPathwayFit: "THREE_LEVEL",
     needsManualVerification: false,
@@ -58,10 +52,6 @@ function entry(
     qualification: qualifyAccount({
       businessName: partial.businessName,
       provinceCode: "ON",
-      segmentNumber: 1,
-      categoryNumber: 1,
-      categoryLabel: "Medical aesthetic clinic",
-      organizationTypeLabel: "Independent",
       credentials: {
         hasPhysicianOrNp: true,
         hasRn: false,
@@ -334,10 +324,6 @@ describe("qualification still authoritative before routing", () => {
         id: "dnc",
         businessName: "DNC Clinic",
         parentGroupName: null,
-        organizationTypeLabel: "Independent",
-        segmentNumber: 1,
-        categoryNumber: 1,
-        categoryLabel: "Medical aesthetic clinic",
         streetAddress: "1 St",
         city: "Toronto",
         provinceCode: "ON",

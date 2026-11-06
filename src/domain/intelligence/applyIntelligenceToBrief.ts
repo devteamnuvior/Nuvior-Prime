@@ -1,5 +1,5 @@
 /**
- * Apply Stage E intelligence to pre-visit brief — primary product locked.
+ * Apply Stage E intelligence to the pre-visit brief.
  */
 
 import type { PreVisitBriefPayload } from "@/domain/brief";
@@ -9,24 +9,13 @@ import { buildBriefIntelligenceSections } from "./buildClinicIntelligenceDto";
 export function applyIntelligenceToBrief(
   template: PreVisitBriefPayload,
   dto: ClinicIntelligenceDto,
-  meta: { businessName: string; categoryLabel: string; segmentNumber: number },
+  meta: { businessName: string },
 ): PreVisitBriefPayload {
-  const sections = buildBriefIntelligenceSections(
-    dto,
-    meta.businessName,
-    meta.categoryLabel,
-    meta.segmentNumber,
-  );
+  const sections = buildBriefIntelligenceSections(dto, meta.businessName);
 
   if (!sections.lockedFromOpportunityEngine || !sections.bestOpportunity) {
     return { ...template, clinicIntelligence: sections };
   }
-
-  const lockedProduct = sections.bestOpportunity.productName;
-  const why =
-    sections.whyReasons.length > 0
-      ? sections.whyReasons.join("; ")
-      : template.leadProductWhy;
 
   const thinWarnings = [...template.thinInputWarnings];
   if (sections.verifyQuestion && !thinWarnings.includes(sections.verifyQuestion)) {
@@ -38,8 +27,6 @@ export function applyIntelligenceToBrief(
 
   return {
     ...template,
-    leadProductForVisit: lockedProduct,
-    leadProductWhy: why,
     snapshotThreeLines: [
       sections.clinicSnapshot[0] ?? template.snapshotThreeLines[0],
       template.snapshotThreeLines[1],
@@ -52,12 +39,7 @@ export function applyIntelligenceToBrief(
 
 export function intelligenceSectionsFromDto(
   dto: ClinicIntelligenceDto,
-  meta: { businessName: string; categoryLabel: string; segmentNumber: number },
+  meta: { businessName: string },
 ): BriefIntelligenceSections {
-  return buildBriefIntelligenceSections(
-    dto,
-    meta.businessName,
-    meta.categoryLabel,
-    meta.segmentNumber,
-  );
+  return buildBriefIntelligenceSections(dto, meta.businessName);
 }

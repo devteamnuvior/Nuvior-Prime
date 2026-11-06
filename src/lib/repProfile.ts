@@ -12,7 +12,6 @@ import {
   funnel,
   outcomeBreakdown,
   parseDayKey,
-  productMix,
   qualityStats,
   rangeFor,
   visitOutcomeLabel,
@@ -21,7 +20,6 @@ import {
   type DailySummaryRow,
   type FunnelStep,
   type OutcomeSlice,
-  type ProductMixSlice,
   type QualityStats,
   type RangeKey,
   type RepKpis,
@@ -76,7 +74,6 @@ export type RepProfileDto = {
   weekly: WeekPoint[];
   funnel: FunnelStep[];
   outcomes: OutcomeSlice[];
-  productMix: ProductMixSlice[];
   calendar: CalendarCell[];
   quality: QualityStats;
   targets: SalesTargetRow[];
@@ -96,7 +93,7 @@ export async function loadRepProfile(userId: string, rangeKey: RangeKey): Promis
   const start = parseDayKey(range.start);
   const endExclusive = new Date(parseDayKey(range.end).getTime() + 86_400_000);
 
-  const [summaryRows, targets, progress, visitRows, stops, recentVisitRows, recentRunRows, auditRows] = await Promise.all([
+  const [summaryRows, targets, progress, visitRows, recentVisitRows, recentRunRows, auditRows] = await Promise.all([
     prisma.repDailySummary.findMany({
       where: { userId, day: { gte: start, lt: endExclusive } },
       orderBy: { day: "asc" },
@@ -106,10 +103,6 @@ export async function loadRepProfile(userId: string, rangeKey: RangeKey): Promis
     prisma.visitRecord.findMany({
       where: { createdByUserId: userId, visitDate: { gte: start, lt: endExclusive } },
       select: { id: true, accountId: true, visitDate: true, outcomeCode: true, followUpDate: true },
-    }),
-    prisma.visitListItem.findMany({
-      where: { run: { createdByUserId: userId, createdAt: { gte: start, lt: endExclusive } } },
-      select: { leadProduct: true },
     }),
     prisma.visitRecord.findMany({
       where: { createdByUserId: userId },
@@ -170,7 +163,6 @@ export async function loadRepProfile(userId: string, rangeKey: RangeKey): Promis
     weekly: weeklySeries(summaries, targets, range.start, range.end),
     funnel: funnel(summaries, visits),
     outcomes: outcomeBreakdown(visits),
-    productMix: productMix(stops),
     calendar: activityCalendar(summaries, range.start, range.end),
     quality: qualityStats(visits, today),
     targets,

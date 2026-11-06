@@ -142,7 +142,7 @@ export function StatStrip({ ariaLabel, header, children, dense = false }: { aria
     <Box
       component="section"
       aria-label={ariaLabel}
-      sx={{ borderBottom: 1, borderColor: "divider", bgcolor: "background.default", px: { xs: 4, md: 6 }, pt: dense ? 2 : 3, pb: dense ? 2 : 3.5, display: "grid", gap: dense ? 1.5 : 2.5 }}
+      sx={{ borderBottom: 1, borderColor: "divider", bgcolor: "background.default", px: dense ? 2 : { xs: 4, md: 6 }, pt: dense ? 2 : 3, pb: dense ? 2 : 3.5, display: "grid", gap: dense ? 1.5 : 2.5 }}
     >
       {header && <Box sx={{ display: "flex", alignItems: "center", gap: 2, minWidth: 0, minHeight: 24 }}>{header}</Box>}
       <Box

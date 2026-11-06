@@ -18,8 +18,6 @@ export type ClinicResearchContext = {
   clinicId: string;
   businessName: string;
   provinceCode: string;
-  segmentNumber: number;
-  categoryLabel: string;
   websiteUrl: string | null;
   pages: ResearchPageContent[];
   /** Field-level evidence from deterministic enrichment — read-only context. */

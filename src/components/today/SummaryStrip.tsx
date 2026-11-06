@@ -63,12 +63,6 @@ export function SummaryStrip({
       <Box sx={{ ml: "auto", display: "flex", flexWrap: "wrap", alignItems: "center", gap: 2 }}>
         {manuallyAdjusted && <Status tone="signal">Manually Adjusted — Rebuild To Recalculate</Status>}
         {summary.trafficAware && !manuallyAdjusted && <Status>Traffic Aware</Status>}
-        <Status>{providerLabel(summary.routingProvider)} routing</Status>
-        {!manuallyAdjusted && data.routeGeometry ? (
-          <Status>Road route{data.routeGeometry.trafficAware ? " · traffic" : ""}</Status>
-        ) : (
-          stops.length > 0 && <Status tone="signal">Route line schematic</Status>
-        )}
         {anyGeodesic && <Status tone="signal">Drive Times Estimated</Status>}
         {verifyCount > 0 && (
           <Status tone="signal">

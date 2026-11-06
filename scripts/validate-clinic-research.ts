@@ -32,8 +32,6 @@ async function main() {
       clinicId: fixtureId,
       businessName: fixtureId,
       provinceCode: "ON",
-      segmentNumber: 1,
-      categoryLabel: "Validation fixture",
       websiteUrl: "https://example-clinic.ca",
       rawPages: [],
     });

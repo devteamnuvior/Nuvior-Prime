@@ -17,12 +17,9 @@ export type AccountRow = {
   id: string;
   businessName: string;
   needsVerification: boolean;
-  categoryLabel: string;
-  segment: string;
   address: string;
   city: string;
   provinceCode: string;
-  leadProduct: string | null;
   rating: number | null;
   website: string | null;
   googleMapsUrl: string | null;
@@ -50,25 +47,8 @@ export function AccountsTable({ rows, query }: { rows: AccountRow[]; query: stri
           </Box>
         ),
       },
-      {
-        field: "categoryLabel",
-        headerName: "Category",
-        flex: 1,
-        minWidth: 180,
-        renderCell: ({ row }) => (
-          <Box sx={{ minWidth: 0 }}>
-            <Typography variant="body2" noWrap>
-              {row.categoryLabel}
-            </Typography>
-            <Typography variant="caption" sx={{ color: "text.secondary" }}>
-              Segment {row.segment}
-            </Typography>
-          </Box>
-        ),
-      },
       { field: "city", headerName: "City", width: 140 },
       { field: "provinceCode", headerName: "Prov.", width: 90, renderCell: ({ value }) => <CodeChip label={String(value)} /> },
-      { field: "leadProduct", headerName: "Lead product", flex: 1, minWidth: 160, valueFormatter: (v) => (v ? String(v) : "—") },
       {
         field: "rating",
         headerName: "Rating",

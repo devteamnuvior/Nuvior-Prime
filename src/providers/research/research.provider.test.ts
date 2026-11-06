@@ -10,8 +10,6 @@ const baseCtx = () =>
     clinicId: "fixture-injectable-clinic",
     businessName: "Test",
     provinceCode: "ON",
-    segmentNumber: 1,
-    categoryLabel: "Medical aesthetics",
     websiteUrl: "https://example.ca",
     rawPages: [],
   });

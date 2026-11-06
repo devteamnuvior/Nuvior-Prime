@@ -5,7 +5,7 @@
 
 import type { CapabilityTag } from "@/domain/products/capabilityTaxonomy";
 import type { ProductFamilyCode } from "@/domain/products/nuviorProduct";
-import { CATALOG_PRODUCT_IDS } from "@/domain/products/leadProductCompat";
+import { CATALOG_PRODUCT_IDS } from "@/domain/products/catalogProductIds";
 
 export type AdjacencyRule = {
   id: string;

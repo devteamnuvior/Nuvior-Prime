@@ -186,7 +186,7 @@ describe("website enrichment provider", () => {
 });
 
 describe("fixture enrichment + qualification", () => {
-  it("feeds explicit MD/thread signals into qualification without Mesoestetic lead", async () => {
+  it("feeds explicit MD/thread signals into qualification", async () => {
     const provider = new FixtureEnrichmentProvider(MOCK_WEBSITE_HTML);
     const enriched = await provider.enrich(
       {
@@ -209,10 +209,6 @@ describe("fixture enrichment + qualification", () => {
     const q = qualifyAccount({
       businessName: "Mock Yorkville Dermatology",
       provinceCode: "ON",
-      segmentNumber: 1,
-      categoryNumber: 2,
-      categoryLabel: "Dermatology clinic, medical and/or cosmetic",
-      organizationTypeLabel: "Independent",
       credentials: {
         hasPhysicianOrNp: true,
         hasRn: false,
@@ -232,10 +228,11 @@ describe("fixture enrichment + qualification", () => {
       threadsOffered: signals.threadsOffered ?? "PDO",
       skincareLines: signals.skincareLines ?? "SkinCeuticals",
     });
-    expect(q.recommendedLeadProductLabel).not.toMatch(/Mesoestetic/i);
+    expect(q.excluded).toBe(false);
+    expect(q.certificationPathwayFit).not.toBe("NONE");
   });
 
-  it("Mesoestetic on website does not become lead product", async () => {
+  it("detects Mesoestetic mentioned on the website", async () => {
     const provider = new FixtureEnrichmentProvider(MOCK_WEBSITE_HTML);
     const enriched = await provider.enrich(
       {
@@ -252,33 +249,6 @@ describe("fixture enrichment + qualification", () => {
       },
     );
     expect(enriched.facts.mesoesteticMentioned).toBe(true);
-    const q = qualifyAccount({
-      businessName: "Pigment Lab",
-      provinceCode: "ON",
-      segmentNumber: 4,
-      categoryNumber: 3,
-      categoryLabel: "Pigmentation & melasma specialist clinic",
-      organizationTypeLabel: "Independent",
-      credentials: {
-        hasPhysicianOrNp: false,
-        hasRn: false,
-        hasNd: false,
-        hasImg: false,
-        hasAllied: false,
-        physicianOrNpOnSiteForPrp: false,
-        rnHasPhysicianDirective: false,
-      },
-      advertisesThreadLifting: false,
-      pricePositioning: "mid",
-      formerMesoesteticCustomer: false,
-      doNotContact: false,
-      hasAcademyAccount: false,
-      aptosPathway: "NONE",
-      injectablesOffered: "no",
-      threadsOffered: "none",
-      skincareLines: enriched.facts.skincareLines ?? "UNKNOWN, verify",
-    });
-    expect(q.recommendedLeadProduct).toBe("DERMACEUTIC");
   });
 });
 
@@ -301,6 +271,5 @@ describe("end-to-end with enrichment fixtures", () => {
     expect(result.enrichment.enabled).toBe(true);
     expect(result.enrichment.accountsAttempted).toBeGreaterThan(0);
     expect(result.verificationQueue.length).toBeGreaterThan(0);
-    expect(result.result.entries.every((e) => e.leadProductLabel !== "Mesoestetic")).toBe(true);
   });
 });

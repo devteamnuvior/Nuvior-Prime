@@ -12,7 +12,6 @@ export type ClinicProfileRequest = {
   city: string | null;
   provinceCode: string;
   postalCode: string | null;
-  categoryLabel: string | null;
   knownWebsite: string | null;
   knownPhone: string | null;
 };
@@ -85,7 +84,6 @@ export function buildClinicProfileUserPrompt(req: ClinicProfileRequest): string 
     `name: ${req.businessName}`,
     `address on file (Google Places): ${[req.streetAddress, req.city, provinceName(req.provinceCode), req.postalCode].filter(Boolean).join(", ") || "unknown"}`,
     `province: ${provinceName(req.provinceCode)} (${req.provinceCode})`,
-    `category on file: ${req.categoryLabel ?? "unknown"}`,
     `website on file (Google Places): ${req.knownWebsite ?? "none"}`,
     `phone on file (Google Places): ${req.knownPhone ?? "none"}`,
     ``,

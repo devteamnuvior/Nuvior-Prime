@@ -6,7 +6,7 @@ import {
   getProductCatalogProvider,
   resetProductCatalogProviderForTests,
 } from "./index";
-import { CATALOG_PRODUCT_IDS } from "@/domain/products/leadProductCompat";
+import { CATALOG_PRODUCT_IDS } from "@/domain/products/catalogProductIds";
 
 describe("ProductCatalogProvider — mock", () => {
   it("lists active products excluding inactive rows", async () => {

@@ -3,9 +3,7 @@ import { qualifyAccount } from "@/domain/qualification";
 import { evaluateScopeOfPractice } from "@/domain/scopeOfPractice";
 import { buildDailyVisitList, parseAccountNameList } from "@/domain/visitList";
 import { generatePreVisitBrief, seasonFromDate, seasonalPitchOrder } from "@/domain/brief";
-import { TAXONOMY } from "@/domain/taxonomy";
 import { PRODUCTS } from "@/domain/products";
-import { ALLOWED_LEAD_PRODUCTS } from "@/domain/terminology";
 import type { ProspectCandidate } from "@/domain/visitList";
 
 const baseCredentials = {
@@ -18,20 +16,10 @@ const baseCredentials = {
   rnHasPhysicianDirective: false,
 };
 
-describe("taxonomy", () => {
-  it("has six segments with exact category counts from the spec", () => {
-    expect(TAXONOMY).toHaveLength(6);
-    expect(TAXONOMY.map((s) => s.categories.length)).toEqual([12, 6, 6, 8, 6, 7]);
-    expect(TAXONOMY[0]!.categories[0]!.label).toBe("Plastic & cosmetic surgery clinic");
-  });
-});
-
 describe("products", () => {
-  it("never allows Mesoestetic as a recommendable lead", () => {
+  it("keeps Mesoestetic out of the active portfolio", () => {
     const meso = PRODUCTS.find((p) => p.code === "MESOESTETIC");
-    expect(meso?.mayRecommendAsLead).toBe(false);
     expect(meso?.isActivePortfolio).toBe(false);
-    expect(ALLOWED_LEAD_PRODUCTS.join(" ")).not.toMatch(/Mesoestetic/i);
   });
 });
 
@@ -40,10 +28,6 @@ describe("qualification", () => {
     const result = qualifyAccount({
       businessName: "DNC Clinic",
       provinceCode: "ON",
-      segmentNumber: 1,
-      categoryNumber: 1,
-      categoryLabel: "Plastic & cosmetic surgery clinic",
-      organizationTypeLabel: "Independent",
       credentials: baseCredentials,
       advertisesThreadLifting: true,
       pricePositioning: "premium",
@@ -59,14 +43,10 @@ describe("qualification", () => {
     expect(result.exclusionReason).toBe("Do-Not-Contact");
   });
 
-  it("recommends Dermaceutic for former Mesoestetic customers, never Mesoestetic", () => {
+  it("uses the Mesoestetic opening angle for former Mesoestetic customers", () => {
     const result = qualifyAccount({
       businessName: "Former Meso",
       provinceCode: "ON",
-      segmentNumber: 3,
-      categoryNumber: 3,
-      categoryLabel: "Laser & skin clinic",
-      organizationTypeLabel: "Independent",
       credentials: baseCredentials,
       advertisesThreadLifting: false,
       pricePositioning: "mid",
@@ -79,33 +59,9 @@ describe("qualification", () => {
       skincareLines: "former Mesoestetic",
     });
     expect(result.excluded).toBe(false);
-    expect(result.recommendedLeadProduct).toBe("DERMACEUTIC");
-    expect(result.recommendedLeadProductLabel).toBe("Dermaceutic");
     expect(result.openingAngle.toLowerCase()).toContain("mesoestetic");
   });
 
-  it("scores physician thread advertiser highly", () => {
-    const result = qualifyAccount({
-      businessName: "Thread Clinic",
-      provinceCode: "ON",
-      segmentNumber: 1,
-      categoryNumber: 2,
-      categoryLabel: "Dermatology clinic, medical and/or cosmetic",
-      organizationTypeLabel: "Independent",
-      credentials: baseCredentials,
-      advertisesThreadLifting: true,
-      pricePositioning: "premium",
-      formerMesoesteticCustomer: false,
-      doNotContact: false,
-      hasAcademyAccount: false,
-      aptosPathway: "NONE",
-      injectablesOffered: "yes",
-      threadsOffered: "PDO",
-      skincareLines: "UNKNOWN, verify",
-    });
-    expect(result.excluded).toBe(false);
-    expect(["APTOS", "APTOS_3_LEVEL_CERTIFICATION"]).toContain(result.recommendedLeadProduct);
-  });
 });
 
 describe("scope of practice", () => {
@@ -144,10 +100,6 @@ describe("visit list", () => {
       id: "a",
       businessName: "Near Clinic",
       parentGroupName: null,
-      organizationTypeLabel: "Independent",
-      segmentNumber: 1,
-      categoryNumber: 3,
-      categoryLabel: "Physician-led cosmetic medicine clinic (GP/family physician)",
       streetAddress: "1 Near St",
       city: "Toronto",
       provinceCode: "ON",
@@ -174,10 +126,6 @@ describe("visit list", () => {
       id: "b",
       businessName: "Far Clinic",
       parentGroupName: null,
-      organizationTypeLabel: "Independent",
-      segmentNumber: 1,
-      categoryNumber: 3,
-      categoryLabel: "Physician-led cosmetic medicine clinic (GP/family physician)",
       streetAddress: "2 Far St",
       city: "Toronto",
       provinceCode: "ON",
@@ -235,7 +183,7 @@ describe("visit list", () => {
 });
 
 describe("pre-visit brief", () => {
-  it("uses seasonal pitch order from the spec and never leads with Mesoestetic", () => {
+  it("uses seasonal pitch order from the spec and never promises Mesoestetic", () => {
     expect(seasonFromDate(new Date("2026-08-15T12:00:00Z"))).toBe("SUMMER");
     expect(seasonalPitchOrder("SUMMER")[0]).toContain("GESKE");
 
@@ -243,11 +191,7 @@ describe("pre-visit brief", () => {
       ctx: {
         accountId: "x",
         accountName: "Mock Clinic",
-        segmentNumber: 1,
-        categoryLabel: "Dermatology clinic, medical and/or cosmetic",
-        organizationTypeLabel: "Independent",
         provinceCode: "ON",
-        leadProduct: "APTOS",
         openingAngle: "test",
         formerMesoesteticCustomer: true,
         aptosProductAllowed: true,
@@ -263,7 +207,6 @@ describe("pre-visit brief", () => {
       lastVisitNotes: null,
     });
 
-    expect(brief.leadProductForVisit).toBe("Dermaceutic");
     expect(brief.doNotSay.some((l) => /Mesoestetic/i.test(l))).toBe(true);
     expect(brief.fiveQuestions).toHaveLength(5);
     expect(brief.signalsToReadOnSite).toHaveLength(5);

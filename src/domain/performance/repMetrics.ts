@@ -21,7 +21,6 @@ export type VisitRowInput = {
   followUpDate: string | null;
 };
 
-export type PlannedStopInput = { leadProduct: string };
 
 export type RepKpis = {
   /** Days with a DAY/VISITS target and any activity where the target was met, as 0–100. Null without a target. */
@@ -49,7 +48,6 @@ export type FunnelStep = { key: string; label: string; value: number };
 
 export type OutcomeSlice = { code: VisitOutcomeCode; label: string; count: number; tone: string };
 
-export type ProductMixSlice = { product: string; count: number; percent: number };
 
 export type CalendarCell = { day: string; visits: number };
 
@@ -153,15 +151,6 @@ export function outcomeBreakdown(visits: readonly VisitRowInput[]): OutcomeSlice
       const def = visitOutcomeDefinition(code);
       return { code, label: def.label, count, tone: def.tone };
     })
-    .sort((a, b) => b.count - a.count);
-}
-
-export function productMix(stops: readonly PlannedStopInput[]): ProductMixSlice[] {
-  const counts = new Map<string, number>();
-  for (const s of stops) counts.set(s.leadProduct, (counts.get(s.leadProduct) ?? 0) + 1);
-  const total = stops.length;
-  return [...counts.entries()]
-    .map(([product, count]) => ({ product, count, percent: total ? Math.round((count / total) * 100) : 0 }))
     .sort((a, b) => b.count - a.count);
 }
 

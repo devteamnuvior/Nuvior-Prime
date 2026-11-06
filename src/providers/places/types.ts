@@ -12,8 +12,7 @@ export type FieldProvenance = {
 };
 
 /**
- * Place evidence from a Places provider — no NUVIOR taxonomy.
- * Taxonomy is assigned by the domain classifier (Phase 2).
+ * Place evidence from a Places provider.
  */
 export type RawPlace = {
   placeId: string;
@@ -31,7 +30,7 @@ export type RawPlace = {
   googleRating: number | null;
   googleReviewCount: number | null;
   openingHoursJson: unknown | null;
-  /** Google Places types — evidence only, never the NUVIOR taxonomy. */
+  /** Google Places types — evidence only. */
   googleTypes: string[];
   primaryType: string | null;
   /** Which focused search queries / keyword groups found this place. */

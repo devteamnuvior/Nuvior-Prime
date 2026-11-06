@@ -18,9 +18,10 @@ export function Diagnostics({ data }: { data: ProspectSearchSuccess }) {
   const [open, setOpen] = useState(false);
   const summary = data.routeSummary;
   const excluded = summary?.excludedForRouting ?? [];
+  const verificationQueue = data.verificationQueue;
   const attention =
     data.matchingQueue.length +
-    data.verificationQueue.length +
+    verificationQueue.length +
     excluded.length +
     data.result.excludedDoNotContact.length;
 
@@ -112,7 +113,7 @@ export function Diagnostics({ data }: { data: ProspectSearchSuccess }) {
         )}
 
         <MatchingQueuePanel items={data.matchingQueue} />
-        <VerificationQueuePanel items={data.verificationQueue} />
+        <VerificationQueuePanel items={verificationQueue} />
       </Disclosure>
     </Box>
   );

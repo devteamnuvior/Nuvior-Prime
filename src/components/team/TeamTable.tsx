@@ -41,7 +41,7 @@ export function TeamTable({ rows }: { rows: TeamRunRow[] }) {
                   component={Link}
                   href={`/admin/users/${row.repId}`}
                   variant="body2"
-                  sx={{ fontWeight: 600, mr: 1.5, color: "text.primary", textDecoration: "none", "&:hover": { color: "primary.main", textDecoration: "underline" } }}
+                  sx={{ fontWeight: 600, mr: 1.5, color: "text.primary", textDecoration: "none", "&:hover": { color: "primary.main" } }}
                 >
                   {row.repName}
                 </Typography>

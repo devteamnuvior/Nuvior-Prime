@@ -2,7 +2,6 @@
  * Locked facts — deterministic Phase 1–4 outputs the LLM cannot change.
  */
 
-import type { LeadProductCode } from "@/domain/terminology";
 import type { CertificationPathwayCode } from "@/domain/terminology";
 import type { MatchState } from "@/domain/crm/matching";
 import type { LastOrderStatus } from "@/domain/crm/lastOrder";
@@ -11,13 +10,7 @@ export type LockedBriefFacts = {
   accountId: string;
   accountName: string;
   placeId: string | null;
-  segmentNumber: number;
-  categoryNumber: number;
-  categoryLabel: string;
-  organizationTypeLabel: string;
   provinceCode: string;
-  leadProduct: LeadProductCode;
-  leadProductLabel: string;
   certificationPathwayFit: CertificationPathwayCode | string;
   openingAngle: string;
   isRevisit: boolean;
@@ -62,8 +55,6 @@ export type SynthesisContext = {
   /** Template brief sections used as baseline / fallback */
   templateBaseline: {
     snapshotThreeLines: [string, string, string];
-    leadProductWhy: string;
-    secondProductIfFirstLands: string;
     openingLines: { cold: string; knowsNuvior: string; revisit: string };
     fiveQuestions: string[];
     signalsToReadOnSite: string[];

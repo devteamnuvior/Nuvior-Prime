@@ -34,8 +34,6 @@ export async function runOpportunityScoringForFixture(input: {
     clinicId: input.fixtureId,
     businessName: input.fixtureId,
     provinceCode: input.provinceCode ?? "ON",
-    segmentNumber: 1,
-    categoryLabel: "Opportunity test fixture",
     websiteUrl: null,
     rawPages: [],
   });

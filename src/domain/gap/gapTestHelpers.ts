@@ -25,8 +25,6 @@ export async function runGapAnalysisForFixture(input: {
     clinicId: input.fixtureId,
     businessName: input.fixtureId,
     provinceCode: input.provinceCode ?? "ON",
-    segmentNumber: 1,
-    categoryLabel: "Gap test fixture",
     websiteUrl: "https://example-clinic.ca",
     rawPages: [],
   });

@@ -631,8 +631,6 @@ const intelligenceInputSchema = z.object({
   clinicId: z.string().min(1),
   businessName: z.string().min(1),
   provinceCode: z.enum(provinceCodes),
-  segmentNumber: z.coerce.number().int().min(1).max(6),
-  categoryLabel: z.string().min(1),
   websiteUrl: z.string().nullable().optional(),
   forceRefresh: z.coerce.boolean().optional(),
   enrichmentJson: z.string().optional().nullable(),
@@ -666,8 +664,6 @@ export async function getClinicIntelligenceAction(input: {
   clinicId: string;
   businessName: string;
   provinceCode: string;
-  segmentNumber: number;
-  categoryLabel: string;
   websiteUrl?: string | null;
   enrichmentJson?: string | null;
   crmJson?: string | null;
@@ -691,8 +687,6 @@ export async function getClinicIntelligenceAction(input: {
       clinicId: parsed.data.clinicId,
       businessName: parsed.data.businessName,
       provinceCode: parsed.data.provinceCode,
-      segmentNumber: parsed.data.segmentNumber,
-      categoryLabel: parsed.data.categoryLabel,
       websiteUrl: parsed.data.websiteUrl ?? null,
       enrichment,
       crm,
@@ -710,8 +704,6 @@ export async function runClinicResearchAction(input: {
   clinicId: string;
   businessName: string;
   provinceCode: string;
-  segmentNumber: number;
-  categoryLabel: string;
   websiteUrl?: string | null;
   forceRefresh?: boolean;
   enrichmentJson?: string | null;
@@ -736,8 +728,6 @@ export async function runClinicResearchAction(input: {
       clinicId: parsed.data.clinicId,
       businessName: parsed.data.businessName,
       provinceCode: parsed.data.provinceCode,
-      segmentNumber: parsed.data.segmentNumber,
-      categoryLabel: parsed.data.categoryLabel,
       websiteUrl: parsed.data.websiteUrl ?? null,
       enrichment,
       crm,
@@ -778,7 +768,6 @@ const clinicProfileInputSchema = z.object({
   streetAddress: z.string().optional().nullable(),
   city: z.string().optional().nullable(),
   postalCode: z.string().optional().nullable(),
-  categoryLabel: z.string().optional().nullable(),
   knownWebsite: z.string().optional().nullable(),
   knownPhone: z.string().optional().nullable(),
 });
@@ -826,7 +815,6 @@ export async function runClinicWebProfileAction(
       streetAddress: parsed.data.streetAddress ?? null,
       city: parsed.data.city ?? null,
       postalCode: parsed.data.postalCode ?? null,
-      categoryLabel: parsed.data.categoryLabel ?? null,
       knownWebsite: parsed.data.knownWebsite ?? null,
       knownPhone: parsed.data.knownPhone ?? null,
     });

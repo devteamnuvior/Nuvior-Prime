@@ -12,8 +12,6 @@ describe("clinic research workflow", () => {
       clinicId: "fixture-injectable-clinic",
       businessName: "Test Clinic",
       provinceCode: "ON",
-      segmentNumber: 1,
-      categoryLabel: "Medical aesthetics",
       websiteUrl: "https://example.ca",
       rawPages: [
         {
@@ -34,8 +32,6 @@ describe("clinic research workflow", () => {
       clinicId: "fixture-injectable-clinic",
       businessName: "Injectable Demo",
       provinceCode: "ON",
-      segmentNumber: 1,
-      categoryLabel: "Medical aesthetics",
       websiteUrl: "https://example.ca",
       rawPages: [],
     });
@@ -54,8 +50,6 @@ describe("clinic research workflow", () => {
       clinicId: "fixture-injectable-clinic",
       businessName: "Demo",
       provinceCode: "ON",
-      segmentNumber: 1,
-      categoryLabel: "Medical aesthetics",
       websiteUrl: null,
       rawPages: [],
     });
@@ -104,8 +98,6 @@ describe("clinic research workflow", () => {
         clinicId: id,
         businessName: id,
         provinceCode: "ON",
-        segmentNumber: 1,
-        categoryLabel: "Test",
         websiteUrl: null,
         rawPages: [],
       });

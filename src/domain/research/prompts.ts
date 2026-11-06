@@ -53,8 +53,6 @@ export function buildResearchUserPrompt(ctx: ClinicResearchContext): string {
 id=${ctx.clinicId}
 name=${ctx.businessName}
 province=${ctx.provinceCode}
-segment=${ctx.segmentNumber}
-category=${ctx.categoryLabel}
 website=${ctx.websiteUrl ?? "none"}
 
 CAPABILITY TAXONOMY (normalize into these codes only):

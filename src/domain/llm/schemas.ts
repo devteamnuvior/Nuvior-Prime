@@ -1,11 +1,9 @@
 import { z } from "zod";
 
-/** Narrative fields only — lead product labels must match locked facts after merge. */
+/** Narrative fields only. */
 export const llmBriefNarrativeSchema = z.object({
   accountSummary: z.string().min(1).max(600),
   snapshotThreeLines: z.tuple([z.string(), z.string(), z.string()]),
-  leadProductWhy: z.string().min(1).max(400),
-  secondProductIfFirstLands: z.string().min(1).max(200),
   openingLines: z.object({
     cold: z.string().min(1).max(200),
     knowsNuvior: z.string().min(1).max(200),

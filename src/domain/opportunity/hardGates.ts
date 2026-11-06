@@ -7,7 +7,7 @@ import type { NuviorProduct } from "@/domain/products/nuviorProduct";
 import type { AccountCredentialSignals } from "@/domain/scopeOfPractice";
 import type { GapCrmContext } from "@/domain/gap/gapContext";
 import type { ProductGap } from "@/domain/gap/productGapAnalysis";
-import { CATALOG_PRODUCT_IDS } from "@/domain/products/leadProductCompat";
+import { CATALOG_PRODUCT_IDS } from "@/domain/products/catalogProductIds";
 
 export type HardGateResult =
   | { passed: true }

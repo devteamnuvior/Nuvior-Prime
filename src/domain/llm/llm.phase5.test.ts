@@ -18,11 +18,7 @@ import { runProspectSearch } from "@/lib/prospecting";
 const baseCredsCtx = {
   accountId: "mock-on-001",
   accountName: "Mock Yorkville Dermatology",
-  segmentNumber: 1,
-  categoryLabel: "Dermatology clinic, medical and/or cosmetic",
-  organizationTypeLabel: "Independent",
   provinceCode: "ON",
-  leadProduct: "APTOS" as const,
   openingAngle: "Thread angle",
   formerMesoesteticCustomer: false,
   aptosProductAllowed: true,
@@ -46,13 +42,7 @@ function makeCtx(overrides?: Partial<SynthesisContext["locked"]>): SynthesisCont
       accountId: "mock-on-001",
       accountName: "Mock Yorkville Dermatology",
       placeId: "mock-on-001",
-      segmentNumber: 1,
-      categoryNumber: 2,
-      categoryLabel: "Dermatology clinic, medical and/or cosmetic",
-      organizationTypeLabel: "Independent",
       provinceCode: "ON",
-      leadProduct: "APTOS",
-      leadProductLabel: "Aptos",
       certificationPathwayFit: "THREE_LEVEL",
       openingAngle: "Thread angle",
       isRevisit: false,
@@ -94,8 +84,6 @@ function makeCtx(overrides?: Partial<SynthesisContext["locked"]>): SynthesisCont
     thinInputWarnings: [],
     templateBaseline: {
       snapshotThreeLines: template.snapshotThreeLines,
-      leadProductWhy: template.leadProductWhy,
-      secondProductIfFirstLands: template.secondProductIfFirstLands,
       openingLines: template.openingLines,
       fiveQuestions: template.fiveQuestions,
       signalsToReadOnSite: template.signalsToReadOnSite,
@@ -133,12 +121,9 @@ describe("LLM safety", () => {
 
 describe("schema validation", () => {
   it("rejects unsafe narrative", () => {
-    const ctx = makeCtx();
     const bad = {
       accountSummary: "Great clinic",
       snapshotThreeLines: ["a", "b", "c"],
-      leadProductWhy: "Results are guaranteed for patients",
-      secondProductIfFirstLands: "x",
       openingLines: { cold: "Hi", knowsNuvior: "Hi again", revisit: "Back" },
       fiveQuestions: ["1?", "2?", "3?", "4?", "5?"],
       signalsToReadOnSite: ["a", "b", "c", "d", "e"],
@@ -147,15 +132,16 @@ describe("schema validation", () => {
         { objection: "o2", response: "r2" },
         { objection: "o3", response: "r3" },
       ],
-      theAsk: "ask",
+      theAsk: "Results are guaranteed for patients",
       leaveBehind: "one-pager",
       doNotSay: ["a", "b"],
     };
-    const v = validateBriefNarrative(bad, ctx.locked);
+    const v = validateBriefNarrative(bad);
     expect(v.ok).toBe(false);
+    if (!v.ok) expect(v.findings.length).toBeGreaterThan(0);
   });
 
-  it("accepts mock synthesis and preserves locked lead on merge", async () => {
+  it("accepts mock synthesis and merges it into the brief", async () => {
     const llm = new MockLlmProvider();
     const ctx = makeCtx();
     const synth = await synthesizeBriefNarrative(llm, ctx);
@@ -167,8 +153,7 @@ describe("schema validation", () => {
       visitType: "first visit",
       lastVisitNotes: null,
     });
-    const merged = mergeBriefWithNarrative(template, synth, "Aptos");
-    expect(merged.leadProductForVisit).toBe("Aptos");
+    const merged = mergeBriefWithNarrative(template, synth);
     expect(merged.generator).toBe("llm");
     expect(merged.accountSummary).toBeTruthy();
   });
@@ -182,7 +167,7 @@ describe("schema validation", () => {
     });
     const fb = withTemplateFallback(template, "LLM disabled", "none");
     expect(fb.generator).toBe("llm_fallback");
-    expect(fb.leadProductForVisit).toBe(template.leadProductForVisit);
+    expect(fb.snapshotThreeLines).toEqual(template.snapshotThreeLines);
   });
 });
 
@@ -228,7 +213,7 @@ describe("prospecting LLM wiring", () => {
     expect(brief?.generator).toBe("template");
   });
 
-  it("synthesizes with mock LLM without changing locked lead product", async () => {
+  it("synthesizes briefs with the mock LLM", async () => {
     const prev = process.env.LLM_PROVIDER;
     process.env.LLM_PROVIDER = "mock";
     process.env.LLM_ENABLED_FOR_BRIEFS = "true";
@@ -249,7 +234,7 @@ describe("prospecting LLM wiring", () => {
     expect(result.llm.briefsSynthesized).toBeGreaterThan(0);
     for (const entry of result.result.entries) {
       const brief = result.briefByAccountId[entry.accountId]!;
-      expect(brief.leadProductForVisit).toBe(entry.leadProductLabel);
+      expect(brief.accountId).toBe(entry.accountId);
       expect(["llm", "llm_fallback"]).toContain(brief.generator);
     }
   });

@@ -15,7 +15,6 @@ import {
 } from "./validateSynthesis";
 import { getLlmCache, setLlmCache } from "@/lib/llmCache";
 import type { PreVisitBriefPayload } from "@/domain/brief";
-import { LEAD_PRODUCT_LABELS } from "@/domain/terminology";
 
 export type LlmMeta = {
   provider: string;
@@ -41,7 +40,7 @@ export async function synthesizeBriefNarrative(
 
   const cached = await getLlmCache(cacheKey);
   if (cached) {
-    const validated = validateBriefNarrative(cached.content, ctx.locked);
+    const validated = validateBriefNarrative(cached.content);
     if (validated.ok) {
       return {
         ok: true,
@@ -65,7 +64,7 @@ export async function synthesizeBriefNarrative(
     return { ok: false, reason: completion.error, provider: llm.name };
   }
 
-  const validated = validateBriefNarrative(completion.content, ctx.locked);
+  const validated = validateBriefNarrative(completion.content);
   if (!validated.ok) {
     return {
       ok: false,
@@ -95,20 +94,16 @@ export async function synthesizeBriefNarrative(
 }
 
 /**
- * Merge LLM narrative onto template brief while re-asserting locked lead product.
+ * Merge LLM narrative onto the template brief.
  */
 export function mergeBriefWithNarrative(
   template: PreVisitBriefPayload,
   synthesis: BriefSynthesisSuccess,
-  lockedLeadLabel: string,
 ): PreVisitBriefPayload {
   const n = synthesis.narrative;
   return {
     ...template,
     snapshotThreeLines: n.snapshotThreeLines,
-    leadProductForVisit: lockedLeadLabel,
-    leadProductWhy: n.leadProductWhy,
-    secondProductIfFirstLands: n.secondProductIfFirstLands,
     openingLines: n.openingLines,
     fiveQuestions: n.fiveQuestions,
     signalsToReadOnSite: n.signalsToReadOnSite,
@@ -259,10 +254,6 @@ export async function structureVisitNotesWithLlm(
     model: completion.model,
     cacheHit: false,
   };
-}
-
-export function lockedLeadLabel(code: keyof typeof LEAD_PRODUCT_LABELS | string): string {
-  return LEAD_PRODUCT_LABELS[code as keyof typeof LEAD_PRODUCT_LABELS] ?? String(code);
 }
 
 function hashKey(parts: string[]): string {

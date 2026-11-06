@@ -428,8 +428,6 @@ export function TodayRoute({
     brief && briefIntelligence && briefIntelligence.researchState !== "NOT_RESEARCHED"
       ? applyIntelligenceToBrief(brief, briefIntelligence, {
           businessName: brief.accountName,
-          categoryLabel: brief.categoryLabel,
-          segmentNumber: brief.segmentNumber,
         })
       : brief;
 
@@ -443,8 +441,6 @@ export function TodayRoute({
       clinicId: accountId,
       businessName: stop.businessName,
       provinceCode: stop.provinceCode ?? province,
-      segmentNumber: stop.segmentNumber,
-      categoryLabel: stop.categoryLabel,
       websiteUrl: enrichment?.website ?? null,
       enrichmentJson: enrichment ? JSON.stringify(enrichment) : null,
       crmJson: crm ? JSON.stringify(crm) : null,
@@ -518,7 +514,6 @@ export function TodayRoute({
         streetAddress: stop.streetAddress,
         city: stop.city,
         postalCode: stop.postalCode,
-        categoryLabel: stop.categoryLabel,
         knownWebsite: enrichment?.website ?? contact?.website ?? null,
         knownPhone: contact?.phone ?? null,
       });
@@ -885,15 +880,18 @@ export function TodayRoute({
           sx={{
             display: { xs: sheetExpanded ? "flex" : "none", md: "flex" },
             flexDirection: "column",
-            overflow: "hidden",
+            overflowX: "hidden",
+            overflowY: "auto",
+            // Scroll containers are keyboard-focusable in Chrome; the global focus ring must not frame the panel.
+            outline: "none",
+            "&:focus-visible": { outline: "none" },
             // Narrow enough that the map is the page; the itinerary still fits its cards.
-            width: { xs: 1, md: "32%", lg: "28%" },
+            width: { xs: 1, md: "25%" },
             minWidth: { md: 300 },
-            maxWidth: { md: 380 },
             maxHeight: { xs: "52dvh", md: "none" },
-            borderTop: { xs: 1, md: 0 },
-            borderLeft: { md: 1 },
-            borderColor: "divider",
+            // Explicit colour: a responsive `borderTop: 1` lands inside a media query after `borderColor`
+            // and would paint in currentColor (near-black). No side border on desktop — the map edge is enough.
+            borderTop: { xs: "1px solid var(--nv-palette-divider)", md: 0 },
             bgcolor: "background.default",
           }}
         >

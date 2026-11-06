@@ -28,13 +28,14 @@ import { ClinicIntelligenceSection } from "@/components/intelligence/ClinicIntel
 import { ClinicWebProfileSection } from "@/components/intelligence/ClinicWebProfileSection";
 import type { ClinicIntelligenceDto } from "@/domain/intelligence/clinicIntelligenceDto";
 import type { ClinicWebProfileDto } from "@/domain/clinicProfile/runClinicProfile";
-import { SHOW_TAXONOMY_VERIFICATION, TAXONOMY_VERIFY_FIELD_LABEL } from "@/domain/taxonomy";
 import { formatDistance, suggestedDurationMinutes, type CheckInDto, type PresenceState } from "@/domain/visits/checkIn";
 
 const SWIPE_CLOSE_PX = 90;
 /** Facts shown in the Contact block, so Signals does not repeat them. */
 const CONTACT_FIELDS = new Set(["website", "generalEmail", "instagramHandle"]);
 const DRAWER_WIDTH = 370;
+/** Hidden until the CRM feed is live: in dev the mock CRM mostly reports "unverified", which only alarms reps. */
+const SHOW_NUVIOR_RELATIONSHIP = false;
 
 export function ClinicDrawer({
   stop,
@@ -123,9 +124,7 @@ export function ClinicDrawer({
   const verified = (origins?.enrichedFields ?? [])
     .filter((f) => !CONTACT_FIELDS.has(f.split("=")[0] ?? ""))
     .slice(0, 3);
-  const toVerify = (origins?.verifyFields ?? [])
-    .filter((f) => SHOW_TAXONOMY_VERIFICATION || f !== TAXONOMY_VERIFY_FIELD_LABEL)
-    .slice(0, 3);
+  const toVerify = (origins?.verifyFields ?? []).slice(0, 3);
 
   // Mobile bottom sheet: drag the handle down to dismiss.
   const sheetRef = useRef<HTMLDivElement | null>(null);
@@ -157,7 +156,7 @@ export function ClinicDrawer({
   return (
     <Paper
       ref={sheetRef}
-      className="nv-drawer-in"
+      className="nv-drawer-in nv-scroll"
       variant="outlined"
       role="dialog"
       aria-labelledby="nv-clinic-drawer-title"
@@ -170,14 +169,13 @@ export function ClinicDrawer({
         width: { sm: DRAWER_WIDTH },
         maxHeight: { xs: "72dvh", sm: "calc(100% - 32px)" },
         zIndex: MAP_Z.drawer,
-        display: "flex",
-        flexDirection: "column",
+        // The whole card scrolls, header included; nothing is pinned.
+        overflowX: "hidden",
+        overflowY: "auto",
         borderWidth: { xs: 0, sm: 1 },
         borderTopWidth: 1,
-        borderTopLeftRadius: 2,
-        borderTopRightRadius: 2,
-        borderBottomLeftRadius: { xs: 0, sm: 1.5 },
-        borderBottomRightRadius: { xs: 0, sm: 1.5 },
+        // Numbers inside a responsive object are not scaled by the theme, so spell the radius out.
+        borderRadius: { xs: "16px 16px 0 0", sm: "16px" },
         boxShadow: 3,
       }}
     >
@@ -218,10 +216,6 @@ export function ClinicDrawer({
             </Typography>
           </Box>
           <Typography variant="caption" sx={{ display: "block", mt: 1, color: "text.secondary" }}>
-            {stop.categoryLabel} · Segment {stop.segmentNumber}.{stop.categoryNumber} ·{" "}
-            {stop.organizationTypeLabel}
-          </Typography>
-          <Typography variant="caption" sx={{ display: "block", mt: 0.5, color: "text.faint" }}>
             {stop.streetAddress}, {stop.city} {stop.postalCode}
           </Typography>
         </Box>
@@ -230,11 +224,12 @@ export function ClinicDrawer({
         </IconButton>
       </Box>
 
-      <Box className="nv-scroll" sx={{ minHeight: 0, flex: 1, overflowY: "auto", px: 5, pb: 5 }}>
-        <Box sx={{ mt: 3, display: "flex", flexWrap: "wrap", gap: 1.5 }}>
-          <Badge tone="neutral">{stop.leadProductLabel}</Badge>
-          {stop.isRevisit && <Badge tone="signal">Revisit</Badge>}
-        </Box>
+      <Box sx={{ px: 5, pb: 5 }}>
+        {stop.isRevisit && (
+          <Box sx={{ mt: 3, display: "flex", flexWrap: "wrap", gap: 1.5 }}>
+            <Badge tone="signal">Revisit</Badge>
+          </Box>
+        )}
 
         {routeReasons.length > 0 && (
           <Section title="Why this stop">
@@ -276,9 +271,10 @@ export function ClinicDrawer({
               )}
               {contact.website && (
                 <ContactRow icon={<LanguageOutlined fontSize="inherit" />}>
-                  <Link href={contact.website} target="_blank" rel="noreferrer" color="primary.main" sx={{ overflowWrap: "anywhere" }}>
-                    {contact.website.replace(/^https?:\/\//, "").replace(/\/$/, "")}
-                  </Link>
+                  {/* A button, not the URL: tracking-laden links wrap over three lines and say nothing. */}
+                  <Button size="small" variant="outlined" component="a" href={contact.website} target="_blank" rel="noreferrer" sx={{ fontWeight: 600 }}>
+                    Visit Website
+                  </Button>
                 </ContactRow>
               )}
               {contact.email && (
@@ -332,6 +328,7 @@ export function ClinicDrawer({
           </Section>
         )}
 
+        {SHOW_NUVIOR_RELATIONSHIP && (
         <Section title="NUVIOR relationship">
           {crm?.applied ? (
             <PlainList>
@@ -361,6 +358,7 @@ export function ClinicDrawer({
             </Typography>
           )}
         </Section>
+        )}
 
         <ClinicIntelligenceSection
           intelligence={intelligence ?? null}
@@ -377,15 +375,15 @@ export function ClinicDrawer({
           knownEmails={contact.email ? [contact.email] : []}
         />
 
-        <Box sx={{ mt: 4, display: "flex", gap: 2 }}>
+        <Box sx={{ mt: 2, display: "flex", gap: 2 }}>
           {onViewBrief && (
-            <Button variant="contained" size="large" onClick={onViewBrief} sx={{ flex: 1, fontWeight: 600 }}>
-              View pre-visit brief
+            <Button variant="contained" onClick={onViewBrief} sx={{ flex: 1, minHeight: 40, fontWeight: 600 }}>
+              View Pre-Visit Brief
             </Button>
           )}
           {stop.googleMapsUrl && (
-            <Button variant="outlined" size="large" component="a" href={stop.googleMapsUrl} target="_blank" rel="noreferrer" sx={{ flex: 1, fontWeight: 600 }}>
-              Open in Google Maps
+            <Button variant="outlined" component="a" href={stop.googleMapsUrl} target="_blank" rel="noreferrer" sx={{ flex: 1, minHeight: 40, fontWeight: 600 }}>
+              Open In Google Maps
             </Button>
           )}
         </Box>
@@ -413,7 +411,6 @@ export function ClinicDrawer({
             <VisitRecordForm
               placeId={stop.accountId}
               crmExternalId={crm?.crmExternalId ?? null}
-              businessName={stop.businessName}
               embedded
               checkInId={closedCheckIn?.id ?? null}
               initialDurationMinutes={closedCheckIn ? suggestedDurationMinutes(closedCheckIn.checkedInAt, closedCheckIn.checkedOutAt ?? undefined) : 45}

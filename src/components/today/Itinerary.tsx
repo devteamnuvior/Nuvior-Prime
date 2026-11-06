@@ -199,9 +199,6 @@ export function Itinerary({
                       {adjusted ? "—" : `${clock12(s.arrivalClock)}–${clock12(s.departureClock)}`}
                     </Typography>
                   </Box>
-                  <Typography variant="caption" noWrap sx={{ display: "block", mt: 0.5, color: "text.secondary" }}>
-                    {s.categoryLabel}
-                  </Typography>
                   <Box sx={{ mt: 2, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1.5 }}>
                     <IntelligenceItineraryBadge intelligence={intelligenceByAccountId?.[s.accountId]} />
                     {s.isRevisit && <Badge tone="signal">Revisit</Badge>}
@@ -395,8 +392,8 @@ const BADGE_TONE = {
 } as const;
 
 /**
- * Compact 4px-radius badge for itinerary cards and the clinic drawer (lead product,
- * revisit, verify). Tones follow the design system: accent = quality, signal = attention,
+ * Compact 4px-radius badge for itinerary cards and the clinic drawer (revisit,
+ * verify). Tones follow the design system: accent = quality, signal = attention,
  * danger = stop, neutral = fact, outline = low-emphasis flag.
  */
 export function Badge({

@@ -45,8 +45,6 @@ export type NuviorProduct = {
   sellable: boolean;
   availabilityStatus: AvailabilityStatus;
   capabilityTags: CapabilityTag[];
-  /** Taxonomy segment numbers (1–6) where this product is commercially relevant. */
-  applicableSegments: number[];
   /** Service/menu categories this product aligns with (internal vocabulary). */
   relevantServices: string[];
   practitionerRequirements: PractitionerRequirement[];

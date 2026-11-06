@@ -1,18 +1,11 @@
-import { PrismaClient, OrganizationType, PricePositioning, CertificationPathway, EvidenceSourceType, AppRole, UserStatus, TargetPeriod, TargetMetric } from "@prisma/client";
+import { PrismaClient, PricePositioning, CertificationPathway, EvidenceSourceType, AppRole, UserStatus, TargetPeriod, TargetMetric } from "@prisma/client";
 import { hash } from "bcryptjs";
-import { TAXONOMY } from "../src/domain/taxonomy";
 import { PRODUCTS, KEYWORD_BANK } from "../src/domain/products";
 import { buildProvinceScopeRules } from "../src/domain/scopeOfPractice";
-import { ORGANIZATION_TYPE_LABELS } from "../src/domain/terminology";
 import { MOCK_PLACES } from "../src/providers/places/mockData";
 import { MOCK_CRM_STATUSES } from "../src/providers/crm/mockCrmData";
-import { classifyPlace } from "../src/domain/classifyPlace";
 
 const prisma = new PrismaClient();
-
-function orgEnum(code: string): OrganizationType {
-  return code as OrganizationType;
-}
 
 function priceEnum(p: string): PricePositioning {
   switch (p) {
@@ -57,31 +50,9 @@ async function main() {
   await prisma.accountInternalStatus.deleteMany();
   await prisma.account.deleteMany();
   await prisma.user.deleteMany();
-  await prisma.taxonomyCategory.deleteMany();
-  await prisma.taxonomySegment.deleteMany();
   await prisma.productDefinition.deleteMany();
   await prisma.keywordBankEntry.deleteMany();
   await prisma.provinceScopeRule.deleteMany();
-
-  for (const segment of TAXONOMY) {
-    const created = await prisma.taxonomySegment.create({
-      data: {
-        number: segment.number,
-        name: segment.name,
-        subtitle: segment.subtitle,
-        priorityNote: segment.priorityNote,
-      },
-    });
-    for (const cat of segment.categories) {
-      await prisma.taxonomyCategory.create({
-        data: {
-          segmentId: created.id,
-          number: cat.number,
-          label: cat.label,
-        },
-      });
-    }
-  }
 
   for (const product of PRODUCTS) {
     await prisma.productDefinition.create({ data: product });
@@ -96,18 +67,12 @@ async function main() {
   }
 
   for (const place of MOCK_PLACES) {
-    const classification = classifyPlace(place);
-    if (!classification.inTaxonomy) continue;
     const crm = MOCK_CRM_STATUSES.find((s) => s.placeId === place.placeId);
 
     const account = await prisma.account.create({
       data: {
         businessName: place.businessName,
         parentGroupName: null,
-        organizationType: orgEnum(classification.organizationType),
-        segmentNumber: classification.segmentNumber,
-        categoryNumber: classification.categoryNumber,
-        categoryLabel: classification.categoryLabel,
         streetAddress: place.streetAddress,
         unitSuite: place.unitSuite,
         city: place.city,
@@ -192,8 +157,6 @@ async function main() {
   }
 
   const counts = {
-    segments: await prisma.taxonomySegment.count(),
-    categories: await prisma.taxonomyCategory.count(),
     products: await prisma.productDefinition.count(),
     keywords: await prisma.keywordBankEntry.count(),
     scopeRules: await prisma.provinceScopeRule.count(),
@@ -290,10 +253,6 @@ async function main() {
   const positionCount = await prisma.repPosition.count();
 
   console.log("Seed complete:", { ...counts, targets: targetCount, positions: positionCount });
-  console.log(
-    "Organization type labels (spec):",
-    Object.values(ORGANIZATION_TYPE_LABELS).join(" / "),
-  );
   console.log("Dev login password for all seed users: DevPass123!");
 }
 

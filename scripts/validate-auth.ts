@@ -76,10 +76,6 @@ async function main() {
         id: "dnc-x",
         businessName: "Mock Do-Not-Contact Demo Clinic",
         parentGroupName: null,
-        organizationTypeLabel: "Independent",
-        segmentNumber: 1,
-        categoryNumber: 1,
-        categoryLabel: "Plastic & cosmetic surgery clinic",
         streetAddress: "1",
         city: "Toronto",
         provinceCode: "ON",
@@ -123,10 +119,6 @@ async function main() {
   const q = qualifyAccount({
     businessName: "x",
     provinceCode: "ON",
-    segmentNumber: 1,
-    categoryNumber: 1,
-    categoryLabel: "Plastic & cosmetic surgery clinic",
-    organizationTypeLabel: "Independent",
     credentials: {
       hasPhysicianOrNp: true,
       hasRn: false,

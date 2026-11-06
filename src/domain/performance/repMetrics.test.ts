@@ -4,7 +4,6 @@ import {
   computeRepKpis,
   funnel,
   outcomeBreakdown,
-  productMix,
   qualityStats,
   rangeFor,
   weeklySeries,
@@ -104,12 +103,6 @@ describe("funnel and breakdowns", () => {
     expect(b[0].count).toBe(1);
     expect(b.map((s) => s.code)).toContain("ORDER_PLACED");
     expect(b.find((s) => s.code === "INTERESTED")?.label).toBe("Interested, follow-up agreed");
-  });
-
-  it("product mix percentages sum to about 100", () => {
-    const m = productMix([{ leadProduct: "DERMACEUTIC" }, { leadProduct: "DERMACEUTIC" }, { leadProduct: "APTOS" }]);
-    expect(m[0]).toEqual({ product: "DERMACEUTIC", count: 2, percent: 67 });
-    expect(m[1].percent).toBe(33);
   });
 });
 

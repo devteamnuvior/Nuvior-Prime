@@ -21,8 +21,6 @@ export type BuildResearchContextInput = {
   clinicId: string;
   businessName: string;
   provinceCode: string;
-  segmentNumber: number;
-  categoryLabel: string;
   websiteUrl: string | null;
   enrichment?: EnrichmentResult | null;
   /** Raw page text from website cache or enrichment fetch. */
@@ -48,8 +46,6 @@ export function buildResearchContext(input: BuildResearchContextInput): ClinicRe
     clinicId: input.clinicId,
     businessName: input.businessName,
     provinceCode: input.provinceCode,
-    segmentNumber: input.segmentNumber,
-    categoryLabel: input.categoryLabel,
     websiteUrl: input.websiteUrl,
     pages,
     deterministicEvidence,

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>راهنمای صفحات NUVIOR Prime</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#1d2320;--muted:#5f6a64;--faint:#8b948f;--line:#e2dfd6;--paper:#fff;--bg:#f6f4ee;--green:#1f5c4a;--green-tint:#e4efe9;--amber:#9a6b1f;--amber-tint:#f7ecd8;--radius:14px}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:Vazirmatn,"Segoe UI",Tahoma,system-ui,sans-serif;font-size:15px;line-height:1.9}
+  .wrap{max-width:960px;margin:0 auto;padding:40px 24px 80px}
+  header.hero{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:28px 32px;margin-bottom:28px}
+  header.hero h1{margin:0 0 8px;font-size:26px}
+  header.hero p{margin:0;color:var(--muted)}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .chip{display:inline-block;padding:2px 12px;border-radius:999px;font-size:12.5px;font-weight:600;background:var(--green-tint);color:var(--green)}
+  .chip.amber{background:var(--amber-tint);color:var(--amber)}
+  .chip.gray{background:#eceae4;color:var(--muted)}
+  nav.toc{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:20px 28px;margin-bottom:28px}
+  nav.toc h2{margin:0 0 10px;font-size:15px;color:var(--muted)}
+  nav.toc ol{margin:0;padding-right:20px;columns:2;column-gap:32px}
+  nav.toc li{margin:4px 0}
+  nav.toc a{color:var(--green);text-decoration:none}
+  nav.toc a:hover{text-decoration:underline}
+  h2.section{font-size:21px;margin:40px 0 14px;padding-bottom:8px;border-bottom:2px solid var(--green)}
+  article.page{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:24px 28px;margin-bottom:18px}
+  article.page h3{margin:0 0 4px;font-size:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  article.page .path{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;color:var(--faint);direction:ltr;display:inline-block}
+  article.page p{margin:10px 0}
+  article.page ul{margin:8px 0;padding-right:22px}
+  article.page li{margin:4px 0}
+  .lead{color:var(--muted)}
+  .note{background:var(--amber-tint);border-right:4px solid var(--amber);padding:10px 14px;border-radius:8px;margin-top:12px;font-size:14px}
+  .tip{background:var(--green-tint);border-right:4px solid var(--green);padding:10px 14px;border-radius:8px;margin-top:12px;font-size:14px}
+  table{width:100%;border-collapse:collapse;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;font-size:14px}
+  th,td{padding:10px 14px;text-align:right;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#f1efe8;font-weight:600;color:var(--muted);font-size:13px}
+  tr:last-child td{border-bottom:0}
+  .yes{color:var(--green);font-weight:700}
+  .no{color:var(--faint)}
+  code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;background:#f1efe8;padding:1px 6px;border-radius:6px;direction:ltr;display:inline-block}
+  footer{margin-top:40px;color:var(--faint);font-size:13px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <h1>راهنمای صفحات NUVIOR Prime</h1>
+  <p>این سند توضیح می‌دهد هر صفحه اپلیکیشن چه کاری انجام می‌دهد و چه کسی به آن دسترسی دارد. اپ دو نوع کاربر دارد: <strong>نماینده فروش (Rep)</strong> و <strong>ادمین (Admin)</strong>. ادمین همه چیزهایی را که نماینده می‌بیند دارد، به‌علاوه صفحات مدیریتی.</p>
+  <div class="meta">
+    <span class="chip">نماینده فروش: ۴ صفحه</span>
+    <span class="chip">ادمین: ۱۱ صفحه</span>
+    <span class="chip gray">نسخه ۵ نوامبر ۲۰۲۶</span>
+  </div>
+</header>
+
+<nav class="toc">
+  <h2>فهرست</h2>
+  <ol>
+    <li><a href="#common">عناصر مشترک همه صفحات</a></li>
+    <li><a href="#today">Today's Route — مسیر امروز</a></li>
+    <li><a href="#accounts">Prospecting — جستجوی حساب‌ها</a></li>
+    <li><a href="#visits">Visit History — تاریخچه ویزیت</a></li>
+    <li><a href="#verification">Verification — صف تأیید</a></li>
+    <li><a href="#live">Live Map — نقشه زنده</a></li>
+    <li><a href="#team">Team — فعالیت تیم</a></li>
+    <li><a href="#matching">Matching — تطبیق حساب‌ها با CRM</a></li>
+    <li><a href="#users">Admin › Users — کاربران</a></li>
+    <li><a href="#performance">Admin › Performance — عملکرد نماینده</a></li>
+    <li><a href="#crm">Admin › CRM Diagnostics</a></li>
+    <li><a href="#audit">Admin › Audit Log</a></li>
+    <li><a href="#permissions">جدول دسترسی‌ها</a></li>
+  </ol>
+</nav>
+
+<h2 class="section" id="common">عناصر مشترک همه صفحات</h2>
+<article class="page">
+  <ul>
+    <li><strong>نوار کناری:</strong> منوی اصلی. نماینده فقط Today's Route، Prospecting و Visit History را می‌بیند. ادمین علاوه بر این‌ها Live Map، Team، Verification، Matching و گروه Admin را دارد.</li>
+    <li><strong>جستجو (⌘K):</strong> جستجوی سریع بین صفحات.</li>
+    <li><strong>Share location:</strong> دکمه اختیاری در بالای صفحه مسیر امروز. وقتی نماینده آن را روشن می‌کند، موقعیت زنده‌اش هر چند ثانیه به سرور فرستاده می‌شود تا ادمین روی Live Map ببیند. انتخاب در همان مرورگر به خاطر سپرده می‌شود.</li>
+    <li><strong>منوی کاربر:</strong> نام، نقش و دکمه Sign out.</li>
+  </ul>
+</article>
+
+<h2 class="section">صفحات نماینده فروش (ادمین هم می‌بیند)</h2>
+
+<article class="page" id="today">
+  <h3>Today's Route — مسیر امروز <span class="path">/</span> <span class="chip">نماینده</span><span class="chip">ادمین</span></h3>
+  <p class="lead">صفحه اصلی و روزانه نماینده. کلینیک‌های اطراف را پیدا می‌کند، ۱۰ تای مناسب را انتخاب می‌کند و مسیر بهینه روز را می‌سازد.</p>
+  <ul>
+    <li><strong>نوار آمار بالا:</strong> ویزیت‌های این ماه، پیشرفت اهداف Follow-ups، New accounts و Academy sign-ups نسبت به هدف تعیین‌شده توسط ادمین.</li>
+    <li><strong>شروع روز (My Day):</strong> نماینده نقطه شروع را با «Use my location» (GPS) یا «Drop a pin on the map» مشخص می‌کند. استان از روی موقعیت تعیین می‌شود و باید در محدوده مجاز نماینده باشد.</li>
+    <li><strong>ساخت مسیر:</strong> اپ از Google Places کلینیک‌های زیبایی و پزشکی اطراف را جستجو می‌کند، آن‌ها را صلاحیت‌سنجی می‌کند (مثلاً Do-Not-Contact را کنار می‌گذارد)، کلینیک‌هایی را که تیم در ۹۰ روز گذشته ویزیت کرده کنار می‌گذارد و ۱۰ توقف ۴۵ دقیقه‌ای را با مسیریابی Google مرتب می‌کند. پاسخ‌های Google یک هفته کش می‌شوند.</li>
+    <li><strong>نوار خلاصه:</strong> تعداد ویزیت، زمان رانندگی، کیلومتر، زمان کل برنامه، ساعت پایان و هشدارهایی مثل «Stops Need Verification».</li>
+    <li><strong>نقشه و Itinerary:</strong> توقف‌ها با شماره روی نقشه و در لیست سمت راست با ساعت رسیدن/رفتن. نماینده می‌تواند با «Edit plan» ترتیب را عوض کند یا توقفی را حذف کند (زمان‌ها بعد از تغییر دستی باید دوباره ساخته شوند).</li>
+    <li><strong>دراور کلینیک (کلیک روی هر توقف):</strong>
+      <ul>
+        <li>نام و آدرس کلینیک.</li>
+        <li><em>Why this stop:</em> دلیل مسیریاب، فقط وقتی دلیل واقعی وجود دارد (مثل «Low detour»).</li>
+        <li><em>Arrival &amp; opening:</em> زمان برنامه‌ریزی‌شده، وضعیت ساعات کار از Google (باز / نزدیک تعطیلی / نامشخص) و بازه پیشنهادی سر زدن.</li>
+        <li><em>Contact:</em> تلفن و وب‌سایت از Google Places، ایمیل و اینستاگرام از وب‌سایت کلینیک، هرکدام با آیکون.</li>
+        <li><em>Signals:</em> فکت‌هایی که به‌صورت خودکار از وب‌سایت کلینیک استخراج شده (خدمات، تزریقی‌ها، برندها). تیک سبز یعنی روی سایت پیدا شده؛ «Verify» یعنی نامطمئن است.</li>
+        <li><em>Clinic web research:</em> دکمه «Find Clinic Info With Claude». هوش مصنوعی وب را می‌گردد و چیزهایی را می‌آورد که Google ندارد: ایمیل‌ها، شبکه‌های اجتماعی، افراد کلیدی، خدمات، محصولات و دستگاه‌ها، خلاصه سایت و منابع. برچسب Match High/Medium/Low می‌گوید چقدر مطمئن است همان کلینیک را پیدا کرده. نتیجه یک هفته ذخیره می‌شود.</li>
+        <li><em>دکمه‌ها:</em> View Pre-Visit Brief (خلاصه قبل از ویزیت)، Open In Google Maps، و <strong>Record Visit</strong> که دیالوگ ثبت ویزیت را باز می‌کند: تاریخ، نوع ویزیت، مدت (۴۵ یا ۹۰ دقیقه)، نتیجه، افراد ملاقات‌شده، محصولات مطرح‌شده، اقدام بعدی، تاریخ پیگیری و یادداشت.</li>
+      </ul>
+    </li>
+    <li><strong>Run diagnostics:</strong> جزئیات فنی اجرای آخر (تعداد درخواست‌های Google، کش، مواردی که نیاز به تأیید دارند).</li>
+  </ul>
+  <div class="note">کلینیک‌هایی که پیدا می‌شوند به‌صورت خودکار در دیتابیس (جدول Account) ذخیره می‌شوند تا ویزیت‌ها و اهداف به آن‌ها وصل شود.</div>
+</article>
+
+<article class="page" id="accounts">
+  <h3>Prospecting — جستجوی حساب‌ها <span class="path">/accounts</span> <span class="chip">نماینده</span><span class="chip">ادمین</span></h3>
+  <p class="lead">جدول همه کلینیک‌هایی که تاکنون در استان‌های نماینده پیدا و ذخیره شده‌اند. برای تحقیق عمیق‌تر خارج از مسیر روزانه.</p>
+  <ul>
+    <li>جستجو بر اساس نام کلینیک.</li>
+    <li>ستون‌ها: نام، آدرس، شهر، استان، امتیاز Google، وب‌سایت و لینک Google Maps.</li>
+    <li>نشانه «نیاز به تأیید» برای رکوردهایی که اطلاعاتشان کامل تأیید نشده.</li>
+    <li>آخرین ۶۰ رکورد به‌روزشده نمایش داده می‌شود.</li>
+  </ul>
+</article>
+
+<article class="page" id="visits">
+  <h3>Visit History — تاریخچه ویزیت <span class="path">/visits</span> <span class="chip">نماینده</span><span class="chip">ادمین</span></h3>
+  <p class="lead">سابقه شخصی نماینده: ویزیت‌های ثبت‌شده و مسیرهای ساخته‌شده.</p>
+  <ul>
+    <li><strong>نوار اهداف:</strong> پیشرفت امروز نسبت به اهداف تعیین‌شده.</li>
+    <li><strong>آمار:</strong> تعداد ویزیت‌های ثبت‌شده، «clinic slots» (ویزیت ۹۰ دقیقه‌ای ۲ اسلات حساب می‌شود)، مسیرهای ساخته‌شده و پیگیری‌های یادداشت‌شده.</li>
+    <li><strong>تب Logged visits:</strong> ۵۰ ویزیت آخر با تاریخ، کلینیک، شهر، نوع، مدت، نتیجه و اقدام بعدی. قابل جستجو و فیلتر.</li>
+    <li><strong>تب Planned routes:</strong> ۳۰ مسیر آخر با استان، تعداد توقف، نقطه شروع و زمان رانندگی.</li>
+  </ul>
+</article>
+
+<article class="page" id="verification">
+  <h3>Verification — صف تأیید <span class="path">/verification</span> <span class="chip">نماینده</span><span class="chip">ادمین</span></h3>
+  <p class="lead">فیلدهایی از کلینیک‌ها که اپ نتوانسته از منابع عمومی یا داخلی با اطمینان تأیید کند.</p>
+  <ul>
+    <li>هر ردیف: کلینیک، شهر/استان، نام فیلد (مثلاً injectablesOffered)، مقدار پیدا‌شده، منبع (places / website / crm) و لینک منبع.</li>
+    <li>فیلتر بر اساس وضعیت و نوع منبع.</li>
+    <li>نماینده فقط موارد استان‌های خودش را می‌بیند؛ ادمین همه را.</li>
+    <li>همین موارد در Today's Route زیر Run diagnostics هم دیده می‌شوند.</li>
+  </ul>
+  <div class="note">این صفحه در منوی نماینده نمایش داده نمی‌شود ولی با آدرس مستقیم برای او باز می‌شود.</div>
+</article>
+
+<h2 class="section">صفحات فقط ادمین</h2>
+
+<article class="page" id="live">
+  <h3>Live Map — نقشه زنده <span class="path">/live</span> <span class="chip amber">فقط ادمین</span></h3>
+  <p class="lead">موقعیت لحظه‌ای همه نماینده‌هایی که «Share location» را روشن کرده‌اند.</p>
+  <ul>
+    <li>انتخاب استان (یا همه استان‌ها).</li>
+    <li>وضعیت هر نماینده: Travelling (در حرکت)، At Clinic (در کلینیک)، Idle (بی‌حرکت) یا Offline.</li>
+    <li>پنل لیست نماینده‌ها با جستجو، استان‌ها و کلینیکی که الان در آن هستند.</li>
+    <li>نوار اهداف تیم و به‌روزرسانی خودکار هر چند ثانیه (وقتی تب پنهان است متوقف می‌شود).</li>
+  </ul>
+</article>
+
+<article class="page" id="team">
+  <h3>Team — فعالیت تیم <span class="path">/team</span> <span class="chip amber">فقط ادمین</span></h3>
+  <p class="lead">۱۰۰ مسیر آخر که نماینده‌ها در استان‌های تحت مدیریت ادمین ساخته‌اند.</p>
+  <ul>
+    <li>هر ردیف: زمان ساخت، استان، نام و ایمیل نماینده.</li>
+    <li>کلیک روی نماینده به صفحه عملکرد او (Performance) می‌رود.</li>
+  </ul>
+</article>
+
+<article class="page" id="matching">
+  <h3>Matching — تطبیق حساب‌ها با CRM <span class="path">/matching</span> <span class="chip amber">فقط ادمین</span></h3>
+  <p class="lead">تصمیم‌گیری درباره اینکه کدام کلینیکِ پیداشده از Google همان حسابِ داخل CRM است.</p>
+  <ul>
+    <li>اپ هنگام ساخت مسیر، حساب CRM را با نام + کد پستی، آدرس، تلفن، دامنه وب‌سایت یا شباهت نام حدس می‌زند و به هر حدس امتیاز اطمینان می‌دهد.</li>
+    <li>اطمینان ۰.۹ به بالا خودکار اعمال می‌شود؛ بین ۰.۶ و ۰.۹ یا با چند کاندید، در صف بررسی می‌ماند.</li>
+    <li>جدول: حساب CRM، place id، روش تطبیق، درصد اطمینان و وضعیت (pending / verified / rejected).</li>
+    <li><strong>Confirm</strong> یعنی «همان است» و از این به بعد با اولویت اول استفاده می‌شود. <strong>Reject</strong> یعنی دیگر هیچ‌وقت این جفت پیشنهاد نشود. هر تصمیم در Audit Log ثبت می‌شود.</li>
+  </ul>
+  <div class="note">تا وقتی CRM واقعی وصل نشده (<code>CRM_PROVIDER="unavailable"</code>) این صفحه خالی است.</div>
+</article>
+
+<article class="page" id="users">
+  <h3>Admin › Users — کاربران <span class="path">/admin/users</span> <span class="chip amber">فقط ادمین</span></h3>
+  <p class="lead">مدیریت حساب‌های کاربری اپ.</p>
+  <ul>
+    <li><strong>آمار تیم:</strong> تعداد ادمین‌ها و نماینده‌ها، فعال/غیرفعال.</li>
+    <li><strong>جدول کاربران:</strong> نام، ایمیل، نقش، وضعیت، استان‌های مجاز، آخرین ورود و نمودار کوچک فعالیت ۳۰ روز اخیر (ویزیت‌های ثبت‌شده).</li>
+    <li><strong>افزودن کاربر:</strong> نام کامل، ایمیل کاری، نقش (Rep یا Admin)، استان‌ها (یا همه استان‌ها) و رمز موقت با نشانگر قدرت رمز.</li>
+    <li><strong>منوی هر کاربر:</strong> View performance، تغییر نقش (Make Rep / Make Admin)، Disable / Enable account.</li>
+  </ul>
+  <div class="tip">استان‌های مجاز تعیین می‌کند نماینده در کدام استان‌ها می‌تواند مسیر بسازد و چه داده‌هایی را می‌بیند. ادمین با «همه استان‌ها» همه‌چیز را می‌بیند.</div>
+</article>
+
+<article class="page" id="performance">
+  <h3>Admin › Performance — عملکرد نماینده <span class="path">/admin/users/&lt;id&gt;</span> <span class="chip amber">فقط ادمین</span></h3>
+  <p class="lead">پروفایل کامل یک نماینده با بازه زمانی قابل انتخاب (مثلاً ۹۰ روز).</p>
+  <ul>
+    <li><strong>کارت هویت:</strong> نقش، استان‌ها، آخرین فعالیت، تاریخ عضویت، وضعیت فعال/غیرفعال.</li>
+    <li><strong>نمودارها:</strong> ویزیت‌های هفتگی، قیف توقف‌های برنامه‌ریزی‌شده تا ویزیت‌های ثبت‌شده، و توزیع محصولات پیشنهادی.</li>
+    <li><strong>تقویم فعالیت:</strong> نقشه حرارتی روزانه ویزیت‌ها.</li>
+    <li><strong>اهداف (Targets):</strong> ادمین برای هر نماینده هدف تعیین می‌کند: متریک (ویزیت، Follow-ups، New accounts، Academy sign-ups)، دوره (روزانه/هفتگی/ماهانه)، مقدار، تاریخ شروع و پایان. همین اهداف در نوار بالای Today's Route و Visit History نماینده نمایش داده می‌شوند.</li>
+    <li><strong>جدول‌ها:</strong> ویزیت‌های اخیر (با نتیجه، پیگیری و اقدام بعدی) و مسیرهای ساخته‌شده.</li>
+  </ul>
+</article>
+
+<article class="page" id="crm">
+  <h3>Admin › CRM Diagnostics <span class="path">/admin/crm</span> <span class="chip amber">فقط ادمین</span></h3>
+  <p class="lead">سلامت اتصال به CRM، بدون نمایش داده خام.</p>
+  <ul>
+    <li>کارت‌ها: تعداد حساب‌های آینه‌شده از CRM، ردیف‌های خام import شده، زمان آخرین import و تعداد تعارض مالکیت (نماینده در CRM با نماینده در اپ فرق دارد).</li>
+    <li>پیکربندی provider: حالت (mock / unavailable / import / api / database)، در دسترس بودن، قدیمی بودن داده و دلیل قطعی. فقط نام‌ها نمایش داده می‌شود، هیچ کلیدی نه.</li>
+    <li>لیست تعارض‌های مالکیت برای رسیدگی.</li>
+  </ul>
+</article>
+
+<article class="page" id="audit">
+  <h3>Admin › Audit Log <span class="path">/admin/audit</span> <span class="chip amber">فقط ادمین</span></h3>
+  <p class="lead">گزارش تغییرناپذیر هر کار مهمی که در اپ انجام شده.</p>
+  <ul>
+    <li>۱۰۰ رویداد آخر: زمان، کاربر، نقش او در آن لحظه، نوع عمل (مثلاً ساخت کاربر، تأیید mapping، ثبت ویزیت، اجرای تحقیق Claude)، منبع و وضعیت قبل/بعد.</li>
+    <li>فیلتر بر اساس نوع عمل و کاربر.</li>
+    <li>هیچ ویرایش یا حذفی از UI ممکن نیست و هیچ رمز یا کلیدی ذخیره نمی‌شود.</li>
+  </ul>
+</article>
+
+<h2 class="section" id="permissions">جدول دسترسی‌ها</h2>
+<table>
+  <thead><tr><th>صفحه</th><th>نماینده فروش</th><th>ادمین</th><th>توضیح</th></tr></thead>
+  <tbody>
+    <tr><td>Today's Route</td><td class="yes">✓</td><td class="yes">✓</td><td>فقط در استان‌های مجاز خودش</td></tr>
+    <tr><td>Prospecting</td><td class="yes">✓</td><td class="yes">✓</td><td>نماینده فقط استان‌های خودش</td></tr>
+    <tr><td>Visit History</td><td class="yes">✓</td><td class="yes">✓</td><td>فقط ویزیت‌ها و مسیرهای خود شخص</td></tr>
+    <tr><td>Verification</td><td class="yes">✓</td><td class="yes">✓</td><td>برای نماینده در منو نیست، با آدرس باز می‌شود</td></tr>
+    <tr><td>Live Map</td><td class="no">—</td><td class="yes">✓</td><td>نماینده فقط موقعیت خودش را می‌فرستد</td></tr>
+    <tr><td>Team</td><td class="no">—</td><td class="yes">✓</td><td></td></tr>
+    <tr><td>Matching</td><td class="no">—</td><td class="yes">✓</td><td>تأیید/رد فقط ادمین</td></tr>
+    <tr><td>Admin › Users</td><td class="no">—</td><td class="yes">✓</td><td></td></tr>
+    <tr><td>Admin › Performance</td><td class="no">—</td><td class="yes">✓</td><td>تعیین اهداف فقط ادمین</td></tr>
+    <tr><td>Admin › CRM Diagnostics</td><td class="no">—</td><td class="yes">✓</td><td></td></tr>
+    <tr><td>Admin › Audit Log</td><td class="no">—</td><td class="yes">✓</td><td></td></tr>
+  </tbody>
+</table>
+
+<footer>NUVIOR Prime · راهنمای صفحات · تهیه‌شده از روی کد فعلی پروژه</footer>
+</div>
+</body>
+</html>

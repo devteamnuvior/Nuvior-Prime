@@ -4,7 +4,6 @@ export type ProductSeed = {
   code: string;
   displayName: string;
   isActivePortfolio: boolean;
-  mayRecommendAsLead: boolean;
   requiresInjectionScope: boolean;
   notes: string;
 };
@@ -14,7 +13,6 @@ export const PRODUCTS: ProductSeed[] = [
     code: "APTOS",
     displayName: "Aptos",
     isActivePortfolio: true,
-    mayRecommendAsLead: true,
     requiresInjectionScope: true,
     notes:
       "Bioabsorbable lifting threads. Requires physician or NP injector; new policy for RNs, IMGs, NDs in BC, and allied professionals. Health Canada licensed.",
@@ -23,7 +21,6 @@ export const PRODUCTS: ProductSeed[] = [
     code: "DERMACEUTIC",
     displayName: "Dermaceutic",
     isActivePortfolio: true,
-    mayRecommendAsLead: true,
     requiresInjectionScope: false,
     notes: "France: clinical peels and cosmeceuticals. No injection restriction.",
   },
@@ -31,7 +28,6 @@ export const PRODUCTS: ProductSeed[] = [
     code: "FIDIA_HY_TISSUE_PRP",
     displayName: "Fidia Hy-tissue PRP",
     isActivePortfolio: true,
-    mayRecommendAsLead: true,
     requiresInjectionScope: true,
     notes:
       "Italy: Hy-tissue PRP. Requires practitioner licensed to draw blood and inject. Health Canada licensed.",
@@ -40,7 +36,6 @@ export const PRODUCTS: ProductSeed[] = [
     code: "GESKE",
     displayName: "GESKE",
     isActivePortfolio: true,
-    mayRecommendAsLead: true,
     requiresInjectionScope: false,
     notes: "Germany: at-home beauty devices / retail. No injection restriction.",
   },
@@ -48,7 +43,6 @@ export const PRODUCTS: ProductSeed[] = [
     code: "MESOESTETIC",
     displayName: "Mesoestetic",
     isActivePortfolio: false,
-    mayRecommendAsLead: false,
     requiresInjectionScope: false,
     notes:
       "NUVIOR is no longer the Canadian distributor. Remaining stock on a limited number of SKUs only while it lasts. Never pitch as ongoing line or exclusive/current distributor. Former customers: retention conversation via Dermaceutic.",

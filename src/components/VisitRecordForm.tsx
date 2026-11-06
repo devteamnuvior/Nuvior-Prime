@@ -24,7 +24,6 @@ const VISIT_TYPES = ["first visit", "re-visit", "follow-up on a quote"] as const
 export function VisitRecordForm({
   placeId,
   crmExternalId,
-  businessName,
   embedded = false,
   checkInId = null,
   initialDurationMinutes = 45,
@@ -32,7 +31,6 @@ export function VisitRecordForm({
 }: {
   placeId: string;
   crmExternalId: string | null;
-  businessName: string;
   /** Inside a dialog: no card chrome or own title. */
   embedded?: boolean;
   /** Called after a successful save (the dialog closes on it). */
@@ -60,10 +58,11 @@ export function VisitRecordForm({
 
   const body = (
     <>
-      <Typography variant="caption" sx={{ display: "block", mb: 3, color: "text.secondary" }}>
-        {businessName}
-        {SHOW_AI_NOTE_STRUCTURING ? " — AI note structuring is a suggestion only (no autonomous CRM write)." : ""}
-      </Typography>
+      {SHOW_AI_NOTE_STRUCTURING && (
+        <Typography variant="caption" sx={{ display: "block", mb: 3, color: "text.secondary" }}>
+          AI note structuring is a suggestion only (no autonomous CRM write).
+        </Typography>
+      )}
       <Box
         component="form"
         sx={{ display: "grid", gap: 3, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))" } }}

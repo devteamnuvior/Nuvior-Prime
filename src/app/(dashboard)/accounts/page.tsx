@@ -27,23 +27,18 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
     orderBy: { updatedAt: "desc" },
     take: 60,
     include: {
-      qualifications: { orderBy: { computedAt: "desc" }, take: 1 },
       publicProfile: { select: { website: true, googleRating: true } },
     },
   });
 
   const rows: AccountRow[] = accounts.map((a) => {
-    const qual = a.qualifications[0];
     return {
       id: a.id,
       businessName: a.businessName,
       needsVerification: a.dataCompleteness === "needs_verification",
-      categoryLabel: a.categoryLabel,
-      segment: `${a.segmentNumber}.${a.categoryNumber}`,
       address: `${a.streetAddress}, ${a.city} ${a.provinceCode} ${a.postalCode}`,
       city: a.city,
       provinceCode: a.provinceCode,
-      leadProduct: qual?.recommendedLeadProduct ?? null,
       rating: a.publicProfile?.googleRating ?? null,
       website: a.publicProfile?.website ?? null,
       googleMapsUrl: a.googleMapsUrl ?? null,
@@ -54,7 +49,7 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
     <PageContainer>
       <PageHeader
         title="Prospecting"
-        description="Account research in your territory. Use Today to build the day's route; this page is for deeper discovery. Lead product reflects the latest qualification run."
+        description="Account research in your territory. Use Today to build the day's route; this page is for deeper discovery."
       />
       <AccountsTable rows={rows} query={q ?? ""} />
     </PageContainer>

@@ -1,5 +1,4 @@
 import {
-  ORGANIZATION_TYPE_LABELS,
   CERTIFICATION_PATHWAY_LABELS,
   UNKNOWN_VERIFY,
 } from "@/domain/terminology";
@@ -27,7 +26,6 @@ import { seasonFromDate, seasonalPitchOrder } from "@/domain/brief";
 import { SEASON_LABELS } from "@/domain/terminology";
 import { CANADIAN_PROVINCES } from "@/domain/scopeOfPractice";
 import type { AccountCredentialSignals } from "@/domain/scopeOfPractice";
-import type { ClassificationResult } from "@/domain/classifyPlace";
 import type { RawPlace } from "@/providers/places/types";
 import { getEnrichmentConfig } from "@/lib/enrichmentConfig";
 import type { EnrichmentResult, VerificationItem } from "@/domain/enrichment/types";
@@ -138,7 +136,6 @@ export type ProspectSearchSuccess = {
       enrichedFields: string[];
       crmFields: string[];
       verifyFields: string[];
-      classification: ClassificationResult;
       evidence: EvidenceRecord[];
     }
   >;
@@ -269,7 +266,7 @@ export async function runProspectSearch(
 
   const { candidates: discovered, stats: discovery } = discoveryResult;
 
-  // Every in-taxonomy clinic gets an Account row so route items, visits, XP and
+  // Every discovered clinic gets an Account row so route items, visits, XP and
   // team-visit marks can reference it, whichever places provider found it.
   await syncDiscoveredAccounts(discovered);
 
@@ -288,10 +285,8 @@ export async function runProspectSearch(
   let cacheHits = 0;
   const requestBudget = { value: enrichCfg.maxRequests };
 
-  const inTaxonomyDiscovered = discovered.filter((d) => d.classification.inTaxonomy);
-
   if (enrichmentProvider && enrichCfg.enabled) {
-    for (const { place } of inTaxonomyDiscovered) {
+    for (const { place } of discovered) {
       if (accountsAttempted >= enrichCfg.maxAccounts) break;
       if (requestBudget.value <= 0) break;
 
@@ -378,8 +373,7 @@ export async function runProspectSearch(
     input.workingArea && input.workingArea.length >= 3 ? input.workingArea : null;
   let excludedOutsideArea = 0;
 
-  for (const { place, classification } of discovered) {
-    if (!classification.inTaxonomy) continue;
+  for (const { place } of discovered) {
     if (
       workingArea &&
       !pointInWorkingArea({ lat: place.latitude, lng: place.longitude }, workingArea)
@@ -436,11 +430,6 @@ export async function runProspectSearch(
       id: place.placeId,
       businessName: place.businessName,
       parentGroupName: null,
-      organizationTypeLabel:
-        classification.organizationTypeLabel ?? ORGANIZATION_TYPE_LABELS.INDEPENDENT,
-      segmentNumber: classification.segmentNumber,
-      categoryNumber: classification.categoryNumber,
-      categoryLabel: classification.categoryLabel,
       streetAddress: place.streetAddress,
       city: place.city,
       provinceCode: place.provinceCode,
@@ -535,20 +524,7 @@ export async function runProspectSearch(
           .map((r) => `${r.fieldPath}=${r.value}`)
       : [];
 
-    const origins = buildFieldOrigins(place, classification);
-    if (classification.needsVerification) {
-      verificationQueue.push({
-        accountId: place.placeId,
-        accountName: place.businessName,
-        fieldPath: "taxonomy",
-        value: classification.categoryLabel,
-        reason: "Ambiguous taxonomy classification",
-        sourceType: "aggregation",
-        sourceUrl: place.website,
-        status: "AMBIGUOUS",
-        snippet: classification.evidenceNotes.join("; "),
-      });
-    }
+    const origins = buildFieldOrigins(place);
 
     fieldOriginsByAccountId[place.placeId] = {
       ...origins,
@@ -695,11 +671,7 @@ export async function runProspectSearch(
       ctx: {
         accountId: entry.accountId,
         accountName: entry.businessName,
-        segmentNumber: entry.segmentNumber,
-        categoryLabel: entry.categoryLabel,
-        organizationTypeLabel: entry.organizationTypeLabel,
         provinceCode: entry.provinceCode,
-        leadProduct: entry.leadProduct,
         openingAngle: entry.openingAngle,
         formerMesoesteticCustomer: formerMeso,
         aptosProductAllowed: !entry.qualification.scopeBlockedProducts.includes("APTOS"),
@@ -741,13 +713,7 @@ export async function runProspectSearch(
           accountId: entry.accountId,
           accountName: entry.businessName,
           placeId: entry.accountId,
-          segmentNumber: entry.segmentNumber,
-          categoryNumber: entry.categoryNumber,
-          categoryLabel: entry.categoryLabel,
-          organizationTypeLabel: entry.organizationTypeLabel,
           provinceCode: entry.provinceCode,
-          leadProduct: entry.leadProduct,
-          leadProductLabel: entry.leadProductLabel,
           certificationPathwayFit: entry.certificationPathwayFit,
           openingAngle: entry.openingAngle,
           isRevisit: entry.isRevisit,
@@ -779,8 +745,6 @@ export async function runProspectSearch(
         thinInputWarnings: template.thinInputWarnings,
         templateBaseline: {
           snapshotThreeLines: template.snapshotThreeLines,
-          leadProductWhy: template.leadProductWhy,
-          secondProductIfFirstLands: template.secondProductIfFirstLands,
           openingLines: template.openingLines,
           fiveQuestions: template.fiveQuestions,
           signalsToReadOnSite: template.signalsToReadOnSite,
@@ -793,7 +757,7 @@ export async function runProspectSearch(
 
       const synthesis = await synthesizeBriefNarrative(llm, synthCtx);
       if (synthesis.ok) {
-        brief = mergeBriefWithNarrative(template, synthesis, entry.leadProductLabel);
+        brief = mergeBriefWithNarrative(template, synthesis);
         if (brief.llmMeta) {
           brief.llmMeta.evidenceCount = evidence.length;
         }
@@ -888,17 +852,12 @@ export async function runProspectSearch(
 
 function buildFieldOrigins(
   place: RawPlace,
-  classification: ClassificationResult,
 ): Omit<
   ProspectSearchSuccess["fieldOriginsByAccountId"][string],
   "enrichedFields" | "crmFields" | "evidence"
 > {
   const googleFields: string[] = [];
-  const derivedFields = [
-    `taxonomy: Segment ${classification.segmentNumber}.${classification.categoryNumber} ${classification.categoryLabel}`,
-    `organizationType: ${classification.organizationTypeLabel}`,
-    `classificationConfidence: ${classification.confidence}`,
-  ];
+  const derivedFields: string[] = [];
   const verifyFields: string[] = [];
 
   const maybe = (label: string, value: unknown, fromGoogle: boolean) => {
@@ -920,11 +879,7 @@ function buildFieldOrigins(
   maybe("openingHours", place.openingHoursJson, true);
   maybe("placeId", place.placeId, true);
 
-  if (classification.needsVerification) {
-    verifyFields.push("NUVIOR taxonomy classification");
-  }
-
-  return { googleFields, derivedFields, verifyFields, classification };
+  return { googleFields, derivedFields, verifyFields };
 }
 
 export { CERTIFICATION_PATHWAY_LABELS };

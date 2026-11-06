@@ -4,7 +4,7 @@
 
 import type { GapScenario } from "@/domain/gap/gapScenarios";
 import { GAP_VALIDATION_SCENARIOS } from "@/domain/gap/gapScenarios";
-import { CATALOG_PRODUCT_IDS } from "@/domain/products/leadProductCompat";
+import { CATALOG_PRODUCT_IDS } from "@/domain/products/catalogProductIds";
 
 export type OpportunityScenario = GapScenario & {
   expectPrimaryProductId?: string | null;

@@ -2,7 +2,7 @@
  * Product gap engine orchestrator — Stage D entry point.
  */
 
-import { CATALOG_PRODUCT_IDS } from "@/domain/products/leadProductCompat";
+import { CATALOG_PRODUCT_IDS } from "@/domain/products/catalogProductIds";
 import type { GapAnalysisInput } from "./gapContext";
 import { hashGapCrmContext } from "./gapContext";
 import {

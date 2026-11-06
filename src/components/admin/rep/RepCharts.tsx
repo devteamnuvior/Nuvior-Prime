@@ -4,9 +4,7 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { useTheme } from "@mui/material/styles";
 import { LineChart } from "@mui/x-charts/LineChart";
-import { BarChart } from "@mui/x-charts/BarChart";
-import type { FunnelStep, ProductMixSlice, WeekPoint } from "@/domain/performance/repMetrics";
-import { LEAD_PRODUCT_LABELS } from "@/domain/terminology";
+import type { FunnelStep, WeekPoint } from "@/domain/performance/repMetrics";
 import { EmptyState } from "@/components/feedback/EmptyState";
 
 function Legend({ items }: { items: { color: string; label: string; dashed?: boolean }[] }) {
@@ -105,25 +103,3 @@ export function FunnelBars({ steps }: { steps: FunnelStep[] }) {
   );
 }
 
-/** Share of planned stops by recommended lead product. */
-export function ProductMixChart({ mix }: { mix: ProductMixSlice[] }) {
-  const theme = useTheme();
-  if (!mix.length) {
-    return <EmptyState compact illustration="table" title="No planned stops in this range" description="Lead products come from the routes this rep built." />;
-  }
-  const labels = mix.map((m) => (LEAD_PRODUCT_LABELS as Record<string, string>)[m.product] ?? m.product);
-  return (
-    <BarChart
-      height={Math.max(160, mix.length * 44 + 40)}
-      layout="horizontal"
-      hideLegend
-      grid={{ vertical: true }}
-      yAxis={[{ scaleType: "band", data: labels, tickLabelStyle: { fontSize: 11 }, width: 150 }]}
-      xAxis={[{ min: 0, tickLabelStyle: { fontSize: 11 }, valueFormatter: (v: number) => `${v}%` }]}
-      series={[{ id: "mix", data: mix.map((m) => m.percent), color: theme.palette.primary.main, valueFormatter: (v) => (v == null ? "" : `${v}% of planned stops`) }]}
-      borderRadius={4}
-      margin={{ left: 0, right: 16, top: 8, bottom: 8 }}
-      sx={{ "& .MuiChartsAxis-line, & .MuiChartsAxis-tick": { stroke: theme.palette.divider } }}
-    />
-  );
-}

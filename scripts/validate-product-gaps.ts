@@ -22,8 +22,6 @@ async function main() {
       clinicId: scenario.fixtureId,
       businessName: scenario.fixtureId,
       provinceCode: scenario.provinceCode,
-      segmentNumber: 1,
-      categoryLabel: "Validation",
       websiteUrl: null,
       rawPages: [],
     });

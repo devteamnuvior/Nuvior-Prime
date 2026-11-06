@@ -74,15 +74,14 @@ export function ClinicWebProfileSection({
         )}
         <Button
           variant="contained"
-          size="large"
           fullWidth
           onClick={onRun}
           disabled={state === "UNAVAILABLE" || isRunning}
           startIcon={isRunning ? spinner : undefined}
           aria-busy={isRunning}
-          sx={{ mt: failure ? 3 : 0, fontWeight: 600 }}
+          sx={{ mt: failure ? 3 : 0, minHeight: 40, fontWeight: 600 }}
         >
-          {isRunning ? "Researching…" : failure ? "Retry with Claude" : "Find clinic info with Claude"}
+          {isRunning ? "Researching…" : failure ? "Retry With Claude" : "Find Clinic Info With Claude"}
         </Button>
       </Shell>
     );

@@ -5,13 +5,11 @@
 
 import { describe, expect, it } from "vitest";
 import { dedupePlaces, discoverPlaces, normalizeBusinessKey } from "@/domain/discovery";
-import { classifyPlace } from "@/domain/classifyPlace";
 import { radiusRingsUpTo, selectFocusedQueries } from "@/domain/searchQueries";
 import { mapGooglePlaceToRawPlace } from "@/providers/places/googlePlaceMapper";
 import { MockPlacesProvider } from "@/providers/places/mockPlacesProvider";
 import type { PlacesProvider, PlacesRequestStats, RawPlace, TextSearchParams } from "@/providers/places/types";
 import { emptyProvenance, unknownContact } from "@/providers/places/types";
-import { qualifyAccount } from "@/domain/qualification";
 import { runProspectSearch } from "@/lib/prospecting";
 import type { GeoPoint } from "@/domain/geo";
 
@@ -199,55 +197,6 @@ describe("unknown / missing provider fields", () => {
   });
 });
 
-describe("classification + Mesoestetic discovery", () => {
-  it("classifies using NUVIOR taxonomy, not Google types as final labels", () => {
-    const place = raw({
-      placeId: "d1",
-      businessName: "Downtown Dermatology Centre",
-      latitude: 43.65,
-      longitude: -79.38,
-      googleTypes: ["doctor", "health"],
-      primaryType: "doctor",
-      discoverySignals: ["Dermaceutic"],
-    });
-    const c = classifyPlace(place);
-    expect(c.inTaxonomy).toBe(true);
-    expect(c.categoryLabel).toBe("Dermatology clinic, medical and/or cosmetic");
-    expect(c.categoryLabel).not.toBe("doctor");
-  });
-
-  it("never recommends Mesoestetic as lead even when discovered via Mesoestetic keywords", () => {
-    const result = qualifyAccount({
-      businessName: "Pigment Lab Skin Studio",
-      provinceCode: "ON",
-      segmentNumber: 4,
-      categoryNumber: 3,
-      categoryLabel: "Pigmentation & melasma specialist clinic",
-      organizationTypeLabel: "Independent",
-      credentials: {
-        hasPhysicianOrNp: false,
-        hasRn: false,
-        hasNd: false,
-        hasImg: false,
-        hasAllied: false,
-        physicianOrNpOnSiteForPrp: false,
-        rnHasPhysicianDirective: false,
-      },
-      advertisesThreadLifting: false,
-      pricePositioning: "mid",
-      formerMesoesteticCustomer: false,
-      doNotContact: false,
-      hasAcademyAccount: false,
-      aptosPathway: "NONE",
-      injectablesOffered: "no",
-      threadsOffered: "none",
-      skincareLines: "UNKNOWN, verify",
-    });
-    expect(result.recommendedLeadProductLabel).not.toMatch(/Mesoestetic/i);
-    expect(result.recommendedLeadProduct).toBe("DERMACEUTIC");
-  });
-});
-
 describe("focused queries", () => {
   it("selects a bounded priority query set", () => {
     const q = selectFocusedQueries(6);
@@ -273,6 +222,5 @@ describe("end-to-end mock prospect search", () => {
     expect(result.placesProvider).toBe("mock");
     expect(result.discovery.afterDedupCount).toBeGreaterThan(0);
     expect(result.qualifiedCount).toBeGreaterThan(0);
-    expect(result.result.entries.every((e) => e.leadProductLabel !== "Mesoestetic")).toBe(true);
   });
 });

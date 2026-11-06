@@ -5,7 +5,7 @@
 
 import { createHash } from "node:crypto";
 import type { NuviorProduct } from "@/domain/products/nuviorProduct";
-import { CATALOG_PRODUCT_IDS } from "@/domain/products/leadProductCompat";
+import { CATALOG_PRODUCT_IDS } from "@/domain/products/catalogProductIds";
 
 const MOCK_SOURCE_UPDATED = "2026-09-01T12:00:00.000Z";
 
@@ -23,7 +23,6 @@ export const MOCK_CATALOG_FIXTURES: NuviorProduct[] = [
     sellable: true,
     availabilityStatus: "AVAILABLE",
     capabilityTags: ["THREAD_LIFTING"],
-    applicableSegments: [1],
     relevantServices: ["thread lift", "PDO threads", "non-surgical facelift"],
     practitionerRequirements: ["INJECTION_SCOPE", "PHYSICIAN_NP_OR_ELIGIBLE_RN"],
     provinceRestrictions: [],
@@ -47,7 +46,6 @@ export const MOCK_CATALOG_FIXTURES: NuviorProduct[] = [
     sellable: true,
     availabilityStatus: "AVAILABLE",
     capabilityTags: ["THREAD_LIFTING", "TRAINING_CERTIFICATION"],
-    applicableSegments: [1],
     relevantServices: ["Aptos certification", "physician training"],
     practitionerRequirements: ["PHYSICIAN_OR_NP"],
     provinceRestrictions: [],
@@ -70,7 +68,6 @@ export const MOCK_CATALOG_FIXTURES: NuviorProduct[] = [
     sellable: true,
     availabilityStatus: "AVAILABLE",
     capabilityTags: ["THREAD_LIFTING", "TRAINING_CERTIFICATION"],
-    applicableSegments: [1],
     relevantServices: ["Aptos certification", "RN/IMG/ND training"],
     practitionerRequirements: ["PHYSICIAN_NP_OR_ELIGIBLE_RN"],
     provinceRestrictions: [],
@@ -93,7 +90,6 @@ export const MOCK_CATALOG_FIXTURES: NuviorProduct[] = [
     sellable: false,
     availabilityStatus: "DISCONTINUED",
     capabilityTags: ["THREAD_LIFTING"],
-    applicableSegments: [1],
     relevantServices: [],
     practitionerRequirements: ["INJECTION_SCOPE"],
     provinceRestrictions: [],
@@ -121,7 +117,6 @@ export const MOCK_CATALOG_FIXTURES: NuviorProduct[] = [
       "ACNE_PROTOCOL",
       "MEDICAL_GRADE_SKINCARE",
     ],
-    applicableSegments: [1, 3, 4],
     relevantServices: ["chemical peel", "corrective skincare", "pigmentation", "acne protocol"],
     practitionerRequirements: ["NONE"],
     provinceRestrictions: [],
@@ -144,7 +139,6 @@ export const MOCK_CATALOG_FIXTURES: NuviorProduct[] = [
     sellable: true,
     availabilityStatus: "AVAILABLE",
     capabilityTags: ["PRP_HAIR", "PRP_REGENERATIVE"],
-    applicableSegments: [1, 2],
     relevantServices: ["PRP facial", "PRP hair", "regenerative injection"],
     practitionerRequirements: ["INJECTION_SCOPE"],
     provinceRestrictions: [],
@@ -167,7 +161,6 @@ export const MOCK_CATALOG_FIXTURES: NuviorProduct[] = [
     sellable: true,
     availabilityStatus: "LIMITED",
     capabilityTags: ["PRP_REGENERATIVE"],
-    applicableSegments: [2],
     relevantServices: ["PRP demo"],
     practitionerRequirements: ["INJECTION_SCOPE"],
     provinceRestrictions: ["QC"],
@@ -190,7 +183,6 @@ export const MOCK_CATALOG_FIXTURES: NuviorProduct[] = [
     sellable: true,
     availabilityStatus: "AVAILABLE",
     capabilityTags: ["RETAIL_BEAUTY_DEVICE"],
-    applicableSegments: [5, 6],
     relevantServices: ["retail beauty device", "at-home skincare tools"],
     practitionerRequirements: ["NONE"],
     provinceRestrictions: [],
@@ -213,7 +205,6 @@ export const MOCK_CATALOG_FIXTURES: NuviorProduct[] = [
     sellable: false,
     availabilityStatus: "OUT_OF_STOCK",
     capabilityTags: ["RETAIL_BEAUTY_DEVICE"],
-    applicableSegments: [5],
     relevantServices: [],
     practitionerRequirements: ["NONE"],
     provinceRestrictions: [],
@@ -236,7 +227,6 @@ export const MOCK_CATALOG_FIXTURES: NuviorProduct[] = [
     sellable: false,
     availabilityStatus: "LIMITED",
     capabilityTags: ["MEDICAL_GRADE_SKINCARE", "PIGMENTATION_CORRECTION"],
-    applicableSegments: [3, 4],
     relevantServices: ["historical stock only"],
     practitionerRequirements: ["NONE"],
     provinceRestrictions: [],

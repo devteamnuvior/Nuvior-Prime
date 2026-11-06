@@ -7,17 +7,12 @@ import {
   type AccountSummaryResult,
 } from "./schemas";
 import { clampOpening, openingUnder25Words, scanNarrativeBundle, type SafetyFinding } from "./safety";
-import type { LockedBriefFacts } from "./lockedFacts";
-import { LEAD_PRODUCT_LABELS } from "@/domain/terminology";
 
 export type ValidationResult<T> =
   | { ok: true; value: T; warnings: SafetyFinding[] }
   | { ok: false; errors: string[]; findings: SafetyFinding[] };
 
-export function validateBriefNarrative(
-  raw: unknown,
-  locked: LockedBriefFacts,
-): ValidationResult<LlmBriefNarrative> {
+export function validateBriefNarrative(raw: unknown): ValidationResult<LlmBriefNarrative> {
   const parsed = llmBriefNarrativeSchema.safeParse(raw);
   if (!parsed.success) {
     return {
@@ -38,8 +33,6 @@ export function validateBriefNarrative(
   const parts = [
     value.accountSummary,
     ...value.snapshotThreeLines,
-    value.leadProductWhy,
-    value.secondProductIfFirstLands,
     value.openingLines.cold,
     value.openingLines.knowsNuvior,
     value.openingLines.revisit,
@@ -67,27 +60,6 @@ export function validateBriefNarrative(
       };
     }
   }
-
-  // Lead product must remain the locked label — narrative may mention it but not replace it
-  const lockedLabel = locked.leadProductLabel;
-  if (
-    /mesoestetic/i.test(value.leadProductWhy) &&
-    !locked.formerMesoesteticCustomer &&
-    !/not|never|do not|don't/i.test(value.leadProductWhy)
-  ) {
-    // allow retention context only when former customer
-  }
-  if (locked.formerMesoesteticCustomer && !/dermaceutic/i.test(value.leadProductWhy + value.theAsk)) {
-    return {
-      ok: false,
-      errors: ["Former Mesoestetic accounts must keep Dermaceutic in why/ask"],
-      findings,
-    };
-  }
-
-  // Ensure locked lead label appears in why or ask when not meso path
-  void lockedLabel;
-  void LEAD_PRODUCT_LABELS;
 
   return { ok: true, value, warnings: findings.filter((f) => f.severity === "warn") };
 }

@@ -3,8 +3,7 @@
  * Phase 1: deterministic template generator (no LLM).
  */
 
-import type { LeadProductCode } from "./terminology";
-import { LEAD_PRODUCT_LABELS, SEASON_LABELS } from "./terminology";
+import { SEASON_LABELS } from "./terminology";
 import { CANADIAN_PROVINCES } from "./scopeOfPractice";
 
 export const STANDING_QUESTION_BANK = [
@@ -25,8 +24,6 @@ export type SeasonCode = "WINTER" | "SPRING" | "SUMMER" | "AUTUMN";
 export type PreVisitBriefPayload = {
   accountId: string;
   accountName: string;
-  segmentNumber: number;
-  categoryLabel: string;
   visitDate: string;
   provinceCode: string;
   visitType: "first visit" | "re-visit" | "follow-up on a quote";
@@ -35,9 +32,6 @@ export type PreVisitBriefPayload = {
   seasonalPitchOrder: string[];
   provinceUvNote: string;
   snapshotThreeLines: [string, string, string];
-  leadProductForVisit: string;
-  leadProductWhy: string;
-  secondProductIfFirstLands: string;
   openingLines: {
     cold: string;
     knowsNuvior: string;
@@ -63,7 +57,7 @@ export type PreVisitBriefPayload = {
     evidenceCount: number;
     accountSummary: string | null;
   } | null;
-  /** Stage F — intelligence sections; primary product locked from Stage E when present. */
+  /** Stage F — intelligence sections from the clinic opportunity engine. */
   clinicIntelligence?: import("./intelligence/clinicIntelligenceDto").BriefIntelligenceSections | null;
 };
 
@@ -108,11 +102,7 @@ export function seasonalPitchOrder(season: SeasonCode): string[] {
 export type BriefAccountContext = {
   accountId: string;
   accountName: string;
-  segmentNumber: number;
-  categoryLabel: string;
-  organizationTypeLabel: string;
   provinceCode: string;
-  leadProduct: LeadProductCode;
   openingAngle: string;
   formerMesoesteticCustomer: boolean;
   aptosProductAllowed: boolean;
@@ -142,52 +132,9 @@ function assertUnder25Words(line: string): string {
   return line;
 }
 
-function pickQuestions(ctx: BriefAccountContext): string[] {
-  const bank = [...STANDING_QUESTION_BANK];
+function pickQuestions(): string[] {
   // Sequence matters (spec): patients/services before purchasing decisions.
-  const preferredIdx =
-    ctx.segmentNumber === 2
-      ? [1, 2, 3, 5, 6]
-      : ctx.segmentNumber >= 5
-        ? [0, 4, 5, 6, 8]
-        : [0, 1, 2, 3, 7];
-  return preferredIdx.map((i) => {
-    const q = bank[i]!;
-    return q.replace(/\byou\b/g, "your team").includes("your team")
-      ? q
-      : q;
-  });
-}
-
-function adjustLeadForSeason(
-  lead: LeadProductCode,
-  season: SeasonCode,
-  ctx: BriefAccountContext,
-): { leadLabel: string; why: string; second: string } {
-  const order = seasonalPitchOrder(season);
-  const leadLabel = LEAD_PRODUCT_LABELS[lead];
-
-  if (ctx.formerMesoesteticCustomer) {
-    return {
-      leadLabel: LEAD_PRODUCT_LABELS.DERMACEUTIC,
-      why: `${SEASON_LABELS[season]}: former Mesoestetic account — lead Dermaceutic as the ongoing line; remaining Mesoestetic stock only while it lasts.`,
-      second: order[1] ?? "Aptos threads or certification if scope allows",
-    };
-  }
-
-  if (!ctx.aptosProductAllowed && lead.startsWith("APTOS") && !lead.includes("CERTIFICATION")) {
-    return {
-      leadLabel: LEAD_PRODUCT_LABELS.APTOS_3_LEVEL_CERTIFICATION,
-      why: "No eligible thread placer confirmed for this province/account — open on certification, not product (spec §09).",
-      second: LEAD_PRODUCT_LABELS.DERMACEUTIC,
-    };
-  }
-
-  return {
-    leadLabel,
-    why: `${SEASON_LABELS[season]} pitch context: ${order[0]}. Adjusted for this account: ${ctx.openingAngle}`,
-    second: order.find((o) => !o.toLowerCase().includes(leadLabel.toLowerCase().split(" ")[0]!)) ?? order[1]!,
-  };
+  return [0, 1, 2, 3, 7].map((i) => STANDING_QUESTION_BANK[i]!);
 }
 
 export function generatePreVisitBrief(params: {
@@ -200,7 +147,6 @@ export function generatePreVisitBrief(params: {
   const season = seasonFromDate(visitDate);
   const order = seasonalPitchOrder(season);
   const province = CANADIAN_PROVINCES.find((p) => p.code === ctx.provinceCode);
-  const adjusted = adjustLeadForSeason(ctx.leadProduct, season, ctx);
 
   const thinInputWarnings: string[] = [];
   if (ctx.thinPublicData) {
@@ -251,8 +197,6 @@ export function generatePreVisitBrief(params: {
   return {
     accountId: ctx.accountId,
     accountName: ctx.accountName,
-    segmentNumber: ctx.segmentNumber,
-    categoryLabel: ctx.categoryLabel,
     visitDate: visitDate.toISOString().slice(0, 10),
     provinceCode: ctx.provinceCode,
     visitType,
@@ -261,19 +205,16 @@ export function generatePreVisitBrief(params: {
     seasonalPitchOrder: order,
     provinceUvNote: province?.uvSeasonNote ?? "",
     snapshotThreeLines: [
-      `${ctx.accountName} — Segment ${ctx.segmentNumber}: ${ctx.categoryLabel} (${ctx.organizationTypeLabel}).`,
+      `${ctx.accountName} — ${ctx.openingAngle}`,
       decisionLine,
       `Already visible (source-backed where noted): ${visibleBits}.`,
     ],
-    leadProductForVisit: adjusted.leadLabel,
-    leadProductWhy: adjusted.why,
-    secondProductIfFirstLands: adjusted.second,
     openingLines: {
       cold: assertUnder25Words(
         `I cover aesthetic clinics in ${ctx.provinceCode} and wanted to introduce NUVIOR's Health Canada–licensed portfolio.`,
       ),
       knowsNuvior: assertUnder25Words(
-        `Following up from academy.nuvior.com / prior NUVIOR contact — quick check on ${adjusted.leadLabel} fit this season.`,
+        `Following up from academy.nuvior.com / prior NUVIOR contact — quick check on what fits this season.`,
       ),
       revisit: assertUnder25Words(
         lastVisitNotes
@@ -281,7 +222,7 @@ export function generatePreVisitBrief(params: {
           : `Good to see you again — I came with one focused update for this month.`,
       ),
     },
-    fiveQuestions: pickQuestions(ctx),
+    fiveQuestions: pickQuestions(),
     signalsToReadOnSite: [
       "Retail shelf brands (peel/cosmeceutical lines)",
       "Device manufacturer plaques on lasers/RF/microneedling",
@@ -306,11 +247,8 @@ export function generatePreVisitBrief(params: {
           "We can match the Aptos pathway window to your schedule — one specific date is enough to start.",
       },
     ],
-    theAsk:
-      adjusted.leadLabel.toLowerCase().includes("certification")
-        ? "Book a training-date conversation with the eligible injectors this week."
-        : `Leave a ${adjusted.leadLabel} sample protocol / demo booking request with the decision maker.`,
-    leaveBehind: `One-pager for ${adjusted.leadLabel} within Health Canada approved indications; no Mesoestetic future-supply claims.`,
+    theAsk: "Leave a sample protocol / demo booking request with the decision maker.",
+    leaveBehind: "Portfolio one-pager within Health Canada approved indications; no Mesoestetic future-supply claims.",
     doNotSay,
     thinInputWarnings,
     generatedAt: new Date().toISOString(),

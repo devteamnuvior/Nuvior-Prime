@@ -5,13 +5,10 @@
 
 import { haversineKm, type GeoPoint } from "./geo";
 import { radiusRingsUpTo, selectFocusedQueries } from "./searchQueries";
-import { classifyPlace } from "./classifyPlace";
 import type { PlacesProvider, RawPlace } from "@/providers/places/types";
-import type { ClassificationResult } from "./classifyPlace";
 
 export type DiscoveredCandidate = {
   place: RawPlace;
-  classification: ClassificationResult;
   distanceKm: number;
 };
 
@@ -19,7 +16,6 @@ export type DiscoveryStats = {
   provider: string;
   discoveredCount: number;
   afterDedupCount: number;
-  classifiedInTaxonomyCount: number;
   radiusReachedKm: number;
   textSearchCalls: number;
   detailCalls: number;
@@ -39,7 +35,7 @@ export type DiscoveryOptions = {
   discoveryTargetHint: number;
   maxSearchesPerRun: number;
   fetchDetails: boolean;
-  /** When true, stop expanding rings once we have enough in-taxonomy candidates near target. */
+  /** When true, stop expanding rings once we have enough candidates near target. */
   earlyStopOnCandidateVolume: boolean;
 };
 
@@ -153,17 +149,12 @@ export async function discoverPlaces(
       if (stoppedReason === "search_budget" || stoppedReason === "provider_error") break;
 
       const deduped = dedupePlaces(all);
-      const inTaxonomyNear = deduped.filter((p) => {
-        const d = haversineKm(options.origin, { lat: p.latitude, lng: p.longitude });
-        if (d > radiusKm) return false;
-        return classifyPlace(p).inTaxonomy;
-      });
+      const near = deduped.filter(
+        (p) => haversineKm(options.origin, { lat: p.latitude, lng: p.longitude }) <= radiusKm,
+      );
 
-      // Soft early-stop: enough raw in-taxonomy candidates to likely fill visit target after qualify
-      if (
-        options.earlyStopOnCandidateVolume &&
-        inTaxonomyNear.length >= options.discoveryTargetHint * 2
-      ) {
+      // Soft early-stop: enough raw candidates to likely fill visit target after qualify
+      if (options.earlyStopOnCandidateVolume && near.length >= options.discoveryTargetHint * 2) {
         stoppedReason = "target_met";
         break;
       }
@@ -198,14 +189,10 @@ export async function discoverPlaces(
   }
 
   const candidates: DiscoveredCandidate[] = deduped
-    .map((place) => {
-      const classification = classifyPlace(place);
-      const distanceKm = haversineKm(options.origin, {
-        lat: place.latitude,
-        lng: place.longitude,
-      });
-      return { place, classification, distanceKm };
-    })
+    .map((place) => ({
+      place,
+      distanceKm: haversineKm(options.origin, { lat: place.latitude, lng: place.longitude }),
+    }))
     .sort((a, b) => a.distanceKm - b.distanceKm);
 
   const req = provider.getRequestStats();
@@ -213,7 +200,6 @@ export async function discoverPlaces(
     provider: provider.name,
     discoveredCount: all.length,
     afterDedupCount: deduped.length,
-    classifiedInTaxonomyCount: candidates.filter((c) => c.classification.inTaxonomy).length,
     radiusReachedKm,
     textSearchCalls: req.textSearchCalls,
     detailCalls: req.detailCalls,

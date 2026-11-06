@@ -7,23 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/// Stored codes; display labels live in src/domain/terminology.ts (exact spec wording).
-enum OrganizationType {
-  INDEPENDENT
-  CHAIN_LOCATION
-  CHAIN_HEAD_OFFICE
-  HOSPITAL_OR_ACADEMIC
-}
-
-enum LeadProduct {
-  APTOS
-  DERMACEUTIC
-  FIDIA_HY_TISSUE_PRP
-  GESKE
-  APTOS_3_LEVEL_CERTIFICATION
-  APTOS_4_LEVEL_CERTIFICATION
-}
-
 enum CertificationPathway {
   THREE_LEVEL
   FOUR_LEVEL
@@ -67,31 +50,11 @@ enum VerificationState {
   CONFLICT
 }
 
-model TaxonomySegment {
-  id           String             @id @default(cuid())
-  number       Int                @unique
-  name         String
-  subtitle     String?
-  priorityNote String?
-  categories   TaxonomyCategory[]
-}
-
-model TaxonomyCategory {
-  id        String          @id @default(cuid())
-  segmentId String
-  segment   TaxonomySegment @relation(fields: [segmentId], references: [id])
-  number    Int
-  label     String
-
-  @@unique([segmentId, number])
-}
-
 model ProductDefinition {
   id                     String  @id @default(cuid())
   code                   String  @unique
   displayName            String
   isActivePortfolio      Boolean
-  mayRecommendAsLead     Boolean
   requiresInjectionScope Boolean @default(false)
   notes                  String?
 }
@@ -119,10 +82,6 @@ model Account {
   id                String                 @id @default(cuid())
   businessName      String
   parentGroupName   String?
-  organizationType  OrganizationType
-  segmentNumber     Int
-  categoryNumber    Int
-  categoryLabel     String
   streetAddress     String
   unitSuite         String?
   city              String
@@ -232,7 +191,6 @@ model AccountQualification {
   id                      String               @id @default(cuid())
   accountId               String
   account                 Account              @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  recommendedLeadProduct  LeadProduct
   certificationPathwayFit CertificationPathway
   openingAngle            String
   scopeBlockedProducts    String[]             @default([])
@@ -285,7 +243,6 @@ model VisitListItem {
   sortDistanceKm             Float
   postalCodePrefix           String
   isRevisit                  Boolean      @default(false)
-  leadProduct                LeadProduct
   openingAngle               String
   needsManualVerification    Boolean      @default(false)
   rank                       Int
@@ -409,27 +366,27 @@ enum VisitOutcome {
 
 /// Phase 4: persisted visit outcomes (no patient information).
 model VisitRecord {
-  id                String        @id @default(cuid())
+  id                String         @id @default(cuid())
   accountId         String?
-  account           Account?      @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  account           Account?       @relation(fields: [accountId], references: [id], onDelete: SetNull)
   placeId           String?
   crmExternalId     String?
   repIdPlaceholder  String?
   createdByUserId   String?
-  createdByUser     User?         @relation("VisitsCreated", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdByUser     User?          @relation("VisitsCreated", fields: [createdByUserId], references: [id], onDelete: SetNull)
   visitDate         DateTime
   visitType         String
   /// Structured outcome; `outcome` below stays as the free-text note.
   outcomeCode       VisitOutcome?
   /// Time spent at the clinic in 45-minute slots (45, 90, 135, 180); a 90-minute visit counts two of the day's ten. See src/domain/performance/visitSlots.ts.
-  durationMinutes   Int           @default(45)
+  durationMinutes   Int            @default(45)
   outcome           String?
   peopleMet         String?
   productsDiscussed String?
   nextAction        String?
   followUpDate      DateTime?
   notes             String?
-  createdAt         DateTime      @default(now())
+  createdAt         DateTime       @default(now())
   /// The check-in this record closed, when the rep checked in on arrival.
   checkIn           ClinicCheckIn?
 

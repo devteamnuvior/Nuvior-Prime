@@ -23,8 +23,6 @@ export type ClinicIntelligenceRequest = {
   clinicId: string;
   businessName: string;
   provinceCode: string;
-  segmentNumber: number;
-  categoryLabel: string;
   websiteUrl: string | null;
   enrichment?: EnrichmentResult | null;
   crm?: CrmOverlaySnapshot | null;
@@ -92,8 +90,6 @@ async function buildPipelineInput(req: ClinicIntelligenceRequest): Promise<Clini
     clinicId: req.clinicId,
     businessName: req.businessName,
     provinceCode: req.provinceCode,
-    segmentNumber: req.segmentNumber,
-    categoryLabel: req.categoryLabel,
     websiteUrl: req.websiteUrl,
     enrichment: req.enrichment ?? null,
     rawPages,

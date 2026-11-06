@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CATALOG_PRODUCT_IDS } from "@/domain/products/leadProductCompat";
+import { CATALOG_PRODUCT_IDS } from "@/domain/products/catalogProductIds";
 import {
   scoreProductOpportunities,
   PRODUCT_OPPORTUNITY_SCORING_VERSION,
@@ -26,8 +26,6 @@ describe("ProductOpportunity scoring determinism", () => {
       clinicId: "fixture-injectable-clinic",
       businessName: "x",
       provinceCode: "ON",
-      segmentNumber: 1,
-      categoryLabel: "x",
       websiteUrl: null,
       rawPages: [],
     });

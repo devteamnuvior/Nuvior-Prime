@@ -76,10 +76,6 @@ describe("DNC non-override", () => {
     const result = qualifyAccount({
       businessName: "DNC",
       provinceCode: "ON",
-      segmentNumber: 1,
-      categoryNumber: 1,
-      categoryLabel: "Plastic & cosmetic surgery clinic",
-      organizationTypeLabel: "Independent",
       credentials: {
         hasPhysicianOrNp: true,
         hasRn: false,

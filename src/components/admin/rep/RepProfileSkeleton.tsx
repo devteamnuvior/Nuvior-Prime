@@ -177,61 +177,6 @@ function FunnelSkeleton() {
   );
 }
 
-/** Mirrors ProductMixChart: horizontal bars with a 150px label gutter and an x-axis. */
-function BarChartSkeleton() {
-  const rows = [88, 64, 42, 26];
-  return (
-    <Box
-      sx={{
-        display: "grid",
-        gap: 1,
-        height: rows.length * 44 + 40,
-        alignContent: "start",
-        pt: 1,
-      }}
-    >
-      {rows.map((pct, i) => (
-        <Box
-          key={i}
-          sx={{
-            display: "grid",
-            gridTemplateColumns: "150px 1fr",
-            alignItems: "center",
-            gap: 2,
-            height: 40,
-          }}
-        >
-          <Skeleton variant="rounded" width={vary(84, i, 29, 50)} height={11} sx={{ justifySelf: "end", mr: 2 }} />
-          <Skeleton variant="rounded" width={`${pct}%`} height={28} sx={{ borderRadius: 1 }} />
-        </Box>
-      ))}
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: "150px 1fr",
-          gap: 2,
-          pt: 1,
-        }}
-      >
-        <Box />
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            borderTop: 1,
-            borderColor: "divider",
-            pt: 1.5,
-          }}
-        >
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} variant="rounded" width={20} height={9} />
-          ))}
-        </Box>
-      </Box>
-    </Box>
-  );
-}
-
 /** Mirrors ActivityCalendar: a 90-day week-by-weekday grid with month labels and the Less → More legend. */
 function CalendarSkeleton({ weeks = 13 }: { weeks?: number }) {
   return (
@@ -455,20 +400,9 @@ export function RepProfileSkeleton() {
           <LineChartSkeleton />
         </SectionSkeleton>
 
-        <Box
-          sx={{
-            display: "grid",
-            gap: 6,
-            gridTemplateColumns: { xs: "1fr", lg: "repeat(2, minmax(0, 1fr))" },
-          }}
-        >
-          <SectionSkeleton title={52} hint={300}>
-            <FunnelSkeleton />
-          </SectionSkeleton>
-          <SectionSkeleton title={120} hint={380}>
-            <BarChartSkeleton />
-          </SectionSkeleton>
-        </Box>
+        <SectionSkeleton title={52} hint={300}>
+          <FunnelSkeleton />
+        </SectionSkeleton>
 
         <Box
           sx={{

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { isProductRecommendable } from "./eligibility";
-import { CATALOG_PRODUCT_IDS } from "./leadProductCompat";
+import { CATALOG_PRODUCT_IDS } from "./catalogProductIds";
 import { MOCK_CATALOG_FIXTURES } from "@/providers/productCatalog/mockCatalogFixtures";
 
 const byId = (id: string) => MOCK_CATALOG_FIXTURES.find((p) => p.id === id)!;

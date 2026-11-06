@@ -47,7 +47,6 @@ async function main() {
   console.log("Discovery:", {
     discovered: result.discovery.discoveredCount,
     afterDedupe: result.discovery.afterDedupCount,
-    inTaxonomy: result.discovery.classifiedInTaxonomyCount,
     qualified: result.qualifiedCount,
     radiusReachedKm: result.discovery.radiusReachedKm,
     stoppedReason: result.discovery.stoppedReason,
@@ -82,11 +81,11 @@ async function main() {
       `Revisit (CRM): lastVisit=${crm?.lastVisitDate ?? "—"} due=${crm?.nextRevisitDueDate ?? "—"} listFlag=${e.isRevisit ? "RE-VISIT" : "no"}`,
     );
     console.log(
-      `Final: INCLUDED lead=${e.leadProductLabel}${e.isRevisit ? " RE-VISIT" : ""}`,
+      `Final: INCLUDED${e.isRevisit ? " RE-VISIT" : ""}`,
     );
     const brief = result.briefByAccountId[e.accountId];
     console.log(
-      `Brief: generator=${brief?.generator} leadLocked=${brief?.leadProductForVisit} summary=${(brief?.accountSummary ?? "").slice(0, 120)}`,
+      `Brief: generator=${brief?.generator} summary=${(brief?.accountSummary ?? "").slice(0, 120)}`,
     );
     console.log(`Website evidence: ${enr?.website ?? "UNKNOWN / not enriched"}`);
     console.log(
