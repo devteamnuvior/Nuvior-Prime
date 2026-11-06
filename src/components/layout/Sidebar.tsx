@@ -3,14 +3,17 @@
 import Link from "next/link";
 import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
+import ButtonBase from "@mui/material/ButtonBase";
 import Typography from "@mui/material/Typography";
+import LogoutOutlined from "@mui/icons-material/LogoutOutlined";
 import { LAYOUT } from "@/theme/tokens";
+import { IconTile, RingedAvatar } from "@/components/feedback/Identity";
 import { BrandMark, BrandWordmark } from "./BrandMark";
 import { SidebarNav } from "./SidebarNav";
 import { useShell } from "./shell-context";
 import type { NavGroup } from "./nav";
 
-export function Sidebar({ groups }: { groups: NavGroup[] }) {
+export function Sidebar({ groups, signOutAction }: { groups: NavGroup[]; signOutAction: () => Promise<void> }) {
   const { mobileOpen, setMobileOpen, user } = useShell();
   // Desktop is a fixed icon rail; the full nav with labels only exists in the mobile drawer.
   const width = LAYOUT.sidebarCollapsedWidth;
@@ -73,14 +76,45 @@ export function Sidebar({ groups }: { groups: NavGroup[] }) {
           <BrandWordmark />
         </Box>
         <SidebarNav groups={groups} collapsed={false} onNavigate={() => setMobileOpen(false)} />
+        {/* Account: on phones and in the iOS app this replaces the header's avatar menu. */}
         {user && (
-          <Box sx={{ borderTop: 1, borderColor: "sidebar.border", px: 4, py: 3 }}>
-            <Typography variant="body2" noWrap sx={{ fontWeight: 600 }}>
-              {user.name}
-            </Typography>
-            <Typography variant="caption" noWrap sx={{ color: "text.secondary", display: "block" }}>
-              {user.roleLabel} · {user.territory}
-            </Typography>
+          <Box sx={{ mt: "auto", borderTop: 1, borderColor: "sidebar.border", px: 3, py: 3, display: "grid", gap: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2.5, px: 1 }}>
+              <RingedAvatar initials={user.initials} size={40} dot={11} />
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="body2" noWrap sx={{ fontWeight: 600 }}>
+                  {user.name}
+                </Typography>
+                <Typography variant="caption" noWrap sx={{ color: "text.secondary", display: "block" }}>
+                  {user.roleLabel} · {user.territory}
+                </Typography>
+                <Typography variant="caption" noWrap sx={{ color: "text.disabled", display: "block" }}>
+                  {user.email}
+                </Typography>
+              </Box>
+            </Box>
+            <form action={signOutAction}>
+              <ButtonBase
+                type="submit"
+                sx={{
+                  width: 1,
+                  justifyContent: "flex-start",
+                  gap: 2.5,
+                  px: 1,
+                  py: 1.25,
+                  borderRadius: 999,
+                  color: "error.main",
+                  "&:hover, &.Mui-focusVisible": { bgcolor: "error.tint" },
+                }}
+              >
+                <IconTile tone="danger">
+                  <LogoutOutlined />
+                </IconTile>
+                <Typography variant="body2" sx={{ fontWeight: 600, color: "inherit" }}>
+                  Sign out
+                </Typography>
+              </ButtonBase>
+            </form>
           </Box>
         )}
       </Drawer>

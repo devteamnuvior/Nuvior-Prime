@@ -36,6 +36,7 @@
     "@anthropic-ai/sdk": "^1.3.0",
     "@capacitor-community/background-geolocation": "^1.3.1",
     "@capacitor/core": "^8.6.0",
+    "@capacitor/splash-screen": "^8.0.2",
     "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",

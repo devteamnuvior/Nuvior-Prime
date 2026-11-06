@@ -20,9 +20,9 @@ const EASE = "cubic-bezier(0.2, 0.8, 0.3, 1)";
 
 /**
  * NUVIOR route logo (Logo-Path.svg): start pin → route → finish pin.
- * Plays once on mount and replays on hover (the drawing is remounted). Colour is `primary.main`.
+ * Plays once on mount and replays on hover (the drawing is remounted). Colour defaults to `primary.main`.
  */
-export function BrandMark({ size = 36, animate = true }: { size?: number; animate?: boolean }) {
+export function BrandMark({ size = 36, animate = true, color = "primary.main" }: { size?: number; animate?: boolean; color?: string }) {
   // Bumping the key remounts the drawing, which restarts the CSS animations.
   const [run, setRun] = React.useState(0);
   return (
@@ -37,7 +37,7 @@ export function BrandMark({ size = 36, animate = true }: { size?: number; animat
       sx={{
         display: "block",
         flexShrink: 0,
-        color: "primary.main",
+        color,
         overflow: "visible",
         "& .route": { strokeDasharray: 1 },
         "& .pin": { transformBox: "fill-box", transformOrigin: "50% 100%" },

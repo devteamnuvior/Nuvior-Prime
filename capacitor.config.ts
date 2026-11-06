@@ -21,8 +21,27 @@ const config: CapacitorConfig = {
     cleartext: serverUrl.startsWith("http://"),
     errorPath: "index.html",
   },
+  // Lets the server tell app requests apart (src/lib/nativeApp.ts): the app gets
+  // the launch splash and no search button.
+  appendUserAgent: "NuviorPrimeApp",
+  // The WebView paints the strip under the status bar itself (contentInset
+  // "automatic" keeps the page below it), so it carries the brand green: it
+  // matches the launch splash and stays as a green status bar afterwards.
+  backgroundColor: "#1f7366",
   ios: {
     contentInset: "automatic",
+  },
+  plugins: {
+    // The native launch screen (green gradient, Splash.imageset) stays up until
+    // the page's web splash takes over (SPLASH_HANDOFF_SCRIPT). If the site
+    // can't load, it hides on its own after launchShowDuration.
+    SplashScreen: {
+      launchShowDuration: 8000,
+      launchAutoHide: true,
+      launchFadeOutDuration: 300,
+      backgroundColor: "#1f7366",
+      showSpinner: false,
+    },
   },
 };
 

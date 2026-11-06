@@ -22,7 +22,7 @@ export function DashboardShell({
   return (
     <ShellProvider user={user}>
       <Box sx={{ display: "flex", minHeight: "100vh" }}>
-        <Sidebar groups={groups} />
+        <Sidebar groups={groups} signOutAction={signOutAction} />
         <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0, minHeight: "100vh" }}>
           <Header groups={groups} signOutAction={signOutAction} today={today} />
           <Box component="main" id="main" sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>

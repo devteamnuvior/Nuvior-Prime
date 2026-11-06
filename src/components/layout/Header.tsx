@@ -141,12 +141,6 @@ export function Header({
               })}
             </Box>
           </Box>
-          {/* Today's Route: the rep's live-location switch sits beside the page title. */}
-          {pathname === "/" && user && hasPermission(user.role as AppRoleName, "position.report") && (
-            <Box sx={{ flexShrink: 0, animation: `${settle} 420ms ${EASE} both`, animationDelay: "240ms", [REDUCED]: { animation: "none" } }}>
-              <LiveLocationToggle />
-            </Box>
-          )}
         </Box>
 
         <Box
@@ -155,11 +149,18 @@ export function Header({
             alignItems: "center",
             gap: 2,
             mr: user ? { md: -1.5 } : 0,
+            "html[data-native-app] &": { mr: 0 },
             animation: `${settle} 420ms ${EASE} both`,
             animationDelay: "120ms",
             [REDUCED]: { animation: "none" },
           }}
         >
+          {/* Today's Route: the rep's live-location switch leads the right-hand actions. */}
+          {pathname === "/" && user && hasPermission(user.role as AppRoleName, "position.report") && (
+            <Box sx={{ flexShrink: 0 }}>
+              <LiveLocationToggle />
+            </Box>
+          )}
           <Box
             sx={{
               display: { xs: "none", xl: "inline-flex" },
@@ -177,8 +178,22 @@ export function Header({
               {today}
             </Typography>
           </Box>
-          <CommandSearch groups={groups} />
-          {user && <UserMenu user={user} signOutAction={signOutAction} />}
+          {/* No search button on narrow screens (under 990px) or in the iOS app; a keyboard's ⌘K still opens the palette. */}
+          <Box
+            sx={{
+              display: "none",
+              "@media (min-width: 990px)": { display: "block" },
+              "html[data-native-app] &": { display: "none" },
+            }}
+          >
+            <CommandSearch groups={groups} />
+          </Box>
+          {/* On phones (under md) and in the iOS app the account lives in the navigation drawer instead. */}
+          {user && (
+            <Box sx={{ display: { xs: "none", md: "block" }, "html[data-native-app] &": { display: "none" } }}>
+              <UserMenu user={user} signOutAction={signOutAction} />
+            </Box>
+          )}
         </Box>
       </Toolbar>
     </AppBar>

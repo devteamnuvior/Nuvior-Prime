@@ -187,7 +187,7 @@ export function LiveLocationToggle() {
         label={
           <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
             {sharing && <Box component="span" aria-hidden sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "success.main", animation: `${blink} 1.6s ease-in-out infinite`, "@media (prefers-reduced-motion: reduce)": { animation: "none" } }} />}
-            {sharing ? "Sharing location" : "Share location"}
+            {sharing ? "Sharing Location" : "Share Location"}
           </Box>
         }
         sx={{

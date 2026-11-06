@@ -15,5 +15,9 @@
     <p>Check your internet connection and try again.</p>
     <button onclick="location.reload()">Try again</button>
   </main>
+  <script>
+    // Offline page: take down the native launch screen right away.
+    try { window.Capacitor.Plugins.SplashScreen.hide(); } catch (e) {}
+  </script>
 </body>
 </html>
