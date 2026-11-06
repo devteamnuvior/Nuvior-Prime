@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter } from "next/font/google";
 import NextTopLoader from "nextjs-toploader";
 import "./globals.css";
@@ -22,6 +22,17 @@ const serif = Fraunces({
 export const metadata: Metadata = {
   title: "NUVIOR Prime",
   description: "Daily field-sales territory planning for NUVIOR representatives",
+};
+
+/*
+ * maximumScale stops iOS (Safari and the iOS app's WebView) from zooming in
+ * whenever a text field under 16px gets focus. iOS still lets people
+ * pinch-zoom, so this doesn't take zoom away.
+ */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

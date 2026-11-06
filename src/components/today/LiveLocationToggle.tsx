@@ -10,6 +10,7 @@ import LocationDisabledOutlined from "@mui/icons-material/LocationDisabledOutlin
 import { REPORT_INTERVAL_MS } from "@/domain/live/positions";
 import { classifyPositionError, geolocationAllowedByDocumentPolicy, isEmbeddedDocument, messageForGeolocationFailure } from "@/lib/browserGeolocation";
 import { toast } from "@/components/feedback/toast";
+import { isNativeApp, openNativeLocationSettings, watchNativeLocation, type LocationFix } from "@/lib/nativeLocation";
 
 const STORAGE_KEY = "nuvior.live.share";
 
@@ -20,44 +21,51 @@ const blink = keyframes`
 
 /**
  * "Share live location" — opt-in. Once the rep turns it on, the browser's
- * watchPosition feeds /api/positions every few seconds so admins see them on
- * the live map. The choice is remembered per browser and resumed on the next
+ * watchPosition (or, inside the iOS app, the native background watcher)
+ * feeds /api/positions every few seconds so admins see them on the live map. The choice is remembered per browser and resumed on the next
  * visit (the rep already granted the permission); nothing is requested before
  * the first explicit click.
  */
 export function LiveLocationToggle() {
   const [sharing, setSharing] = useState(false);
   const [ready, setReady] = useState(false);
+  const [native, setNative] = useState(false);
   const watchId = useRef<number | null>(null);
+  const stopNative = useRef<(() => void) | null>(null);
+  // Bumped on every stop so a native watcher that finishes starting after the
+  // rep already turned sharing off is removed instead of leaking.
+  const generation = useRef(0);
   const lastSent = useRef(0);
   const pending = useRef<AbortController | null>(null);
 
   const stop = useCallback(() => {
+    generation.current += 1;
     if (watchId.current != null && typeof navigator !== "undefined") navigator.geolocation?.clearWatch(watchId.current);
     watchId.current = null;
+    stopNative.current?.();
+    stopNative.current = null;
     pending.current?.abort();
   }, []);
 
-  const send = useCallback(async (pos: GeolocationPosition) => {
+  const send = useCallback(async (fix: LocationFix) => {
     const now = Date.now();
     if (now - lastSent.current < REPORT_INTERVAL_MS) return;
     lastSent.current = now;
     pending.current?.abort();
     const ctrl = new AbortController();
     pending.current = ctrl;
-    const c = pos.coords;
     try {
       await fetch("/api/positions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         signal: ctrl.signal,
         body: JSON.stringify({
-          lat: c.latitude,
-          lng: c.longitude,
-          accuracyM: c.accuracy ?? null,
-          headingDeg: c.heading != null && !Number.isNaN(c.heading) ? c.heading : null,
-          speedMps: c.speed != null && !Number.isNaN(c.speed) ? c.speed : null,
-          recordedAt: new Date(pos.timestamp).toISOString(),
+          lat: fix.lat,
+          lng: fix.lng,
+          accuracyM: fix.accuracyM,
+          headingDeg: fix.headingDeg,
+          speedMps: fix.speedMps,
+          recordedAt: new Date(fix.recordedAt).toISOString(),
         }),
       });
     } catch {
@@ -65,7 +73,47 @@ export function LiveLocationToggle() {
     }
   }, []);
 
+  const fail = useCallback(
+    (message: string) => {
+      toast.error(message);
+      stop();
+      setSharing(false);
+      try {
+        window.localStorage.removeItem(STORAGE_KEY);
+      } catch {
+        /* ignore */
+      }
+    },
+    [stop],
+  );
+
   const start = useCallback(() => {
+    stop();
+    lastSent.current = 0;
+
+    if (native) {
+      const gen = generation.current;
+      watchNativeLocation(
+        (fix) => void send(fix),
+        (reason) => {
+          if (reason === "denied") {
+            fail("Location access is off for Nuvior Prime. In Settings, set Location to \"Always\" so your admin can see you while the phone is locked.");
+            openNativeLocationSettings();
+          } else {
+            fail(messageForGeolocationFailure("unavailable"));
+          }
+        },
+      )
+        .then((remove) => {
+          if (gen === generation.current) stopNative.current = remove;
+          else remove();
+        })
+        .catch(() => {
+          if (gen === generation.current) fail(messageForGeolocationFailure("unavailable"));
+        });
+      return;
+    }
+
     const geo = typeof navigator !== "undefined" ? navigator.geolocation : null;
     const embedded = isEmbeddedDocument(typeof window !== "undefined" ? window : null);
     const policyAllowed = geolocationAllowedByDocumentPolicy(typeof document !== "undefined" ? (document as unknown as Parameters<typeof geolocationAllowedByDocumentPolicy>[0]) : null);
@@ -74,27 +122,27 @@ export function LiveLocationToggle() {
       setSharing(false);
       return;
     }
-    stop();
-    lastSent.current = 0;
     watchId.current = geo.watchPosition(
-      (pos) => void send(pos),
-      (err) => {
-        toast.error(messageForGeolocationFailure(classifyPositionError(err.code, { policyAllowed, embedded })));
-        stop();
-        setSharing(false);
-        try {
-          window.localStorage.removeItem(STORAGE_KEY);
-        } catch {
-          /* ignore */
-        }
+      (pos) => {
+        const c = pos.coords;
+        void send({
+          lat: c.latitude,
+          lng: c.longitude,
+          accuracyM: c.accuracy ?? null,
+          headingDeg: c.heading != null && !Number.isNaN(c.heading) ? c.heading : null,
+          speedMps: c.speed != null && !Number.isNaN(c.speed) ? c.speed : null,
+          recordedAt: pos.timestamp,
+        });
       },
+      (err) => fail(messageForGeolocationFailure(classifyPositionError(err.code, { policyAllowed, embedded }))),
       { enableHighAccuracy: true, maximumAge: REPORT_INTERVAL_MS, timeout: 30_000 },
     );
-  }, [send, stop]);
+  }, [native, send, stop, fail]);
 
   // Resume a previously enabled share; never start on a fresh browser.
   useEffect(() => {
     try {
+      setNative(isNativeApp());
       if (window.localStorage.getItem(STORAGE_KEY) === "1") setSharing(true);
     } catch {
       /* ignore */
@@ -121,7 +169,15 @@ export function LiveLocationToggle() {
   };
 
   return (
-    <Tooltip title={sharing ? "Your position is shared with your admin while this page is open. Click to stop." : "Share your live position with your admin while you work today."}>
+    <Tooltip
+      title={
+        sharing
+          ? native
+            ? "Your position is shared with your admin, even while the phone is locked. Tap to stop."
+            : "Your position is shared with your admin while this page is open. Click to stop."
+          : "Share your live position with your admin while you work today."
+      }
+    >
       <Chip
         clickable
         onClick={toggle}
